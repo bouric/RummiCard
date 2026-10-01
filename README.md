@@ -67,12 +67,14 @@ C'est le cœur de l'interface :
 | Glisser une carte qui ne rentre nulle part | ✨ La table **se réorganise entièrement** pour l'accueillir (ex. : `4♠5♠6♠7♠8♠` + un second `6♠` devient `4♠5♠6♠` + `6♠7♠8♠`) — l'aperçu est visible avant de lâcher. |
 | Clic simple sur une carte de la main | Placement automatique au meilleur endroit. |
 | Glisser vers sa main une carte posée ce tour-ci | On la récupère. |
+| **💡 Indices** | Met en avant les cartes de votre main qui peuvent être posées — sans dire où. Aide intermédiaire entre chercher seul et laisser jouer la machine. Une carte est signalée si le solveur sait repartir la table en l'incluant : complément d'une combinaison, nouvelle combinaison avec d'autres cartes de la main, ou réorganisation. |
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
+| **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Revenir avant l'IA** | Annule le dernier coup des joueurs virtuels : la partie repart du début de votre tour précédent, dans l'état exact (mains, table, pioche). Plusieurs appuis remontent plus loin. |
 
 Raccourcis : `Entrée` valider · `⌫` annuler · `P` piocher · `A` jouer au mieux ·
-`T` trier · `R` revenir avant l'IA. Les mêmes commandes sont dans le menu
+`T` trier · `I` indices · `R` revenir avant l'IA. Les mêmes commandes sont dans le menu
 **Partie** (⇧⌘Z pour annuler le coup de l'IA).
 
 ## Architecture
@@ -130,9 +132,11 @@ le navigateur dans son `localStorage`.
   couleur ne se superposent — et deux suites qui ne se croisent pas (♦2-3-4 et
   ♦9-10-V par exemple) partagent la même colonne.
 
-  À droite, **aucun recouvrement** : une ligne pleine par valeur présente, de la
-  plus petite à la plus haute, et une colonne de plus quand une valeur compte
-  plusieurs groupes ou que la hauteur ne suffit plus.
+  À droite, **une case fixe par valeur**, de l'As au Roi : sept lignes puis la
+  colonne suivante. La case d'une valeur est dessinée même vide, donc on sait
+  toujours où regarder, et les cartes ne se recouvrent jamais de ce côté. Un
+  second groupe de même valeur (possible avec deux jeux) se range dans une
+  colonne d'appoint, sur la ligne de sa valeur.
 
   L'autre réglage, *table libre*, laisse les combinaisons se suivre au fil des
   coups.

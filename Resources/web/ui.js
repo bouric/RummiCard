@@ -16,7 +16,7 @@
        tri        : 'suit' = par couleur puis valeur
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
-  var prefs = { tri: 'suit', keepPlaces: true };
+  var prefs = { tri: 'suit', keepPlaces: true, hints: false };
 
   function loadPrefs() {
     var p = window.APP_PREFS || null;
@@ -27,6 +27,7 @@
     if (p) {
       if (p.tri === 'suit' || p.tri === 'rank') prefs.tri = p.tri;
       if (typeof p.keepPlaces === 'boolean') prefs.keepPlaces = p.keepPlaces;
+      if (typeof p.hints === 'boolean') prefs.hints = p.hints;
     }
     E.options.keepPlaces = prefs.keepPlaces;
   }
@@ -40,6 +41,7 @@
   var busy = false;
   var drag = null;
   var history = [];          // état au début de chacun de vos tours
+  var turnStack = [];        // états successifs pendant le tour en cours
 
   /* ================= Accueil ====================================== */
 
@@ -62,6 +64,7 @@
   function newGame() {
     game = new E.Game(nVirtual);
     history = [game.captureState()];
+    turnStack = [];
     $('#menu').classList.add('hidden');
     $('#game').classList.remove('hidden');
     $('#overlay').classList.add('hidden');
@@ -304,32 +307,23 @@
     addSuitMarks(zRuns, m);
     var newRunsX = runsWidth(m);
 
-    // Groupes : une ligne pleine par valeur présente, de la plus petite à la
-    // plus grande. Les cartes ne se recouvrent jamais de ce côté ; quand la
-    // hauteur ne suffit plus, les lignes continuent dans une colonne voisine.
-    groups.sort(function (a, b) { return a.low - b.low; });
-    var rowH = m.ch + 10;
+    // Groupes : une case fixe par valeur, As à Roi — 7 lignes puis la colonne
+    // suivante. Une valeur est donc toujours au même endroit, qu'elle soit
+    // posée ou non. Un éventuel second groupe de même valeur se range dans une
+    // colonne d'appoint, sur la ligne de sa valeur.
+    var rowH = m.ch + 6;
     var groupW = 4 * (m.cw + 3) + 18;
-    var rowOf = {}, nRows = 0, occ = {}, maxOcc = 1;
+    addValueCells(zGroups, rowH, groupW, m);
+    var occ = {}, maxX = GROUP_X + 2 * groupW;
     for (i = 0; i < groups.length; i++) {
-      var v0 = groups[i].low;
-      if (rowOf[v0] === undefined) rowOf[v0] = nRows++;
-      occ[v0] = (occ[v0] || 0) + 1;
-      if (occ[v0] > maxOcc) maxOcc = occ[v0];
-    }
-    var perCol = Math.max(1, Math.floor((avail - GRID_TOP - 8) / rowH));
-    var cellW = maxOcc * groupW;
-    occ = {};
-    var maxX = GROUP_X;
-    for (i = 0; i < groups.length; i++) {
-      var v = groups[i].low, r0 = rowOf[v];
+      var v = groups[i].low;
       var n = occ[v] || 0;
       occ[v] = n + 1;
-      var gx = GROUP_X + Math.floor(r0 / perCol) * cellW + n * groupW;
-      place(zGroups, groups[i].el, gx, GRID_TOP + (r0 % perCol) * rowH);
+      var gx = GROUP_X + (n ? 1 + n : valueCol(v)) * groupW;
+      place(zGroups, groups[i].el, gx, GRID_TOP + valueRow(v) * rowH);
       if (gx + groupW > maxX) maxX = gx + groupW;
     }
-    var groupsH = Math.max(Math.min(nRows, perCol), 3) * rowH;
+    var groupsH = VALUE_ROWS * rowH;
 
     var needRuns = newRunsX, needGroups = maxX;
     if (isHumanTurn() && !view.newSlot) {
@@ -359,6 +353,25 @@
     d.style.width = w + 'px';
     d.style.height = h + 'px';
     zone.appendChild(d);
+  }
+
+  var VALUE_ROWS = 7;    // 7 valeurs par colonne : A..7 puis 8..R
+  function valueCol(v) { return v <= VALUE_ROWS ? 0 : 1; }
+  function valueRow(v) { return (v - 1) % VALUE_ROWS; }
+
+  /* Trame des valeurs côté groupes : chaque valeur garde sa case, occupée ou
+     non, pour qu'on sache toujours où regarder. */
+  function addValueCells(zone, rowH, groupW, m) {
+    for (var v = 1; v <= 13; v++) {
+      var cell = document.createElement('div');
+      cell.className = 'valuecell';
+      cell.style.left = (GROUP_X + valueCol(v) * groupW) + 'px';
+      cell.style.top = (GRID_TOP + valueRow(v) * rowH) + 'px';
+      cell.style.width = (groupW - 10) + 'px';
+      cell.style.height = m.ch + 'px';
+      cell.innerHTML = '<i>' + E.RANK_LABEL[v] + '</i>';
+      zone.appendChild(cell);
+    }
   }
 
   /* Repère de couleur au-dessus de chaque paire de colonnes. */
@@ -435,10 +448,10 @@
     }
     for (var d = 0; d < DENSITIES.length; d++) {
       var m = METRICS[DENSITIES[d]];
-      var need = runsWidth(m) + 2 * (m.cw + 10) + 28 +
-                 Math.min(nCols, 2) * (4 * (m.cw + 3) + 18);
-      var high = Math.max(12 * Math.round(m.ch * 0.28) + m.ch, m.ch + 10) +
-                 GRID_TOP + 10;
+      var need = runsWidth(m) + (m.cw + 10) + GROUP_X +
+                 (2 + (nCols > 1 ? 1 : 0)) * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24;
+      var high = GRID_TOP + Math.max(12 * Math.round(m.ch * 0.28) + m.ch,
+                                     VALUE_ROWS * (m.ch + 6));
       if (need <= width && high <= height) return DENSITIES[d];
     }
     return 'denser';
@@ -483,8 +496,11 @@
     var hand = game.human().hand.filter(function (c) {
       return !(drag && drag.card.id === c.id);
     });
+    var hints = drag ? hintCache.ids : playableIds();
     for (var i = 0; i < hand.length; i++) {
-      rack.appendChild(cardEl(hand[i], { pickable: isHumanTurn() }));
+      var el = cardEl(hand[i], { pickable: isHumanTurn() });
+      if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
+      rack.appendChild(el);
     }
     $('#handcount').textContent = game.human().hand.length;
   }
@@ -561,11 +577,12 @@
     var staged = game.stagedCards().length;
     var check = human ? game.checkCommit() : { ok: false, reason: '' };
     $('#commit').disabled = !human || !check.ok;
-    $('#undo').disabled = !human || !staged;
+    $('#undo').disabled = !human || !turnStack.length;
     $('#draw').disabled = !human;
     $('#auto').disabled = !human;
     $('#sort').disabled = !human;
     $('#rewind').disabled = !canRewind();
+    $('#hints').classList.toggle('on', !!prefs.hints);
 
     var msg = $('#msg');
     msg.className = '';
@@ -577,9 +594,61 @@
     } else if (staged) {
       msg.className = 'warn';
       msg.textContent = check.reason;
+    } else if (prefs.hints) {
+      var ids = playableIds(), n = 0;
+      for (var id in ids) if (ids[id]) n++;
+      msg.className = n ? 'good' : 'warn';
+      msg.innerHTML = n
+        ? '\ud83d\udca1 ' + n + ' carte' + (n > 1 ? 's' : '') + ' de votre main ' +
+          (n > 1 ? 'peuvent' : 'peut') + ' \u00eatre pos\u00e9e' + (n > 1 ? 's' : '') + '.'
+        : '\ud83d\udca1 Aucune carte posable pour l\u2019instant — piochez.';
     } else {
       msg.innerHTML = 'Glissez une carte sur la table — elle trouvera sa place toute seule.';
     }
+  }
+
+  /* ================= Aide : cartes posables ======================= */
+
+  var hintCache = { key: '', ids: null };
+
+  /* Une carte est « posable » si la table peut être repartie en combinaisons
+     valides en l'incluant — qu'elle complète une combinaison, en forme une
+     nouvelle avec d'autres cartes de la main, ou oblige à réorganiser. */
+  function playableIds() {
+    if (!prefs.hints || !game || !isHumanTurn()) return null;
+    var hand = game.human().hand, staged = game.stagedCards(), i, k;
+    var key = game.boardCards().map(function (c) { return c.id; }).sort().join(',') +
+      '|' + hand.map(function (c) { return c.id; }).sort().join(',');
+    if (hintCache.key === key) return hintCache.ids;
+
+    // On raisonne sur la table telle qu'elle était au début du tour : les
+    // combinaisons en cours de construction ne faussent pas le calcul.
+    var board = [], sets = game.snapshot ? game.snapshot.board : game.board;
+    for (i = 0; i < sets.length; i++) board = board.concat(sets[i].cards);
+    var pool = hand.concat(staged);
+    var ids = {};
+    for (i = 0; i < hand.length; i++) {
+      var card = hand[i], ok = false;
+      for (k = 0; k < sets.length; k++) {
+        if (E.acceptIndex(sets[k].cards, card) >= 0 &&
+            E.isValidSet(sets[k].cards.concat([card]))) { ok = true; break; }
+      }
+      if (!ok) ok = !!Solver.solve(board, pool, { objective: 'count', mustUse: [card] });
+      if (ok) ids[card.id] = true;
+    }
+    hintCache = { key: key, ids: ids };
+    return ids;
+  }
+
+  function toggleHints() {
+    prefs.hints = !prefs.hints;
+    savePrefs();
+    hintCache = { key: '', ids: null };
+    render();
+    updateBar();
+    toast(prefs.hints
+      ? '\ud83d\udca1 Les cartes posables sont mises en avant'
+      : 'Aide d\u00e9sactiv\u00e9e');
   }
 
   /* ================= Sons ========================================= */
@@ -861,6 +930,7 @@
     if (t.kind === 'hand') {
       if (d.origin.type === 'hand') { render(); return; }
       if (!isStaged(card)) { toast('Cette carte appartient déjà à la table.'); render(); return; }
+      pushTurnState();
       removeFromBoard(card);
       game.human().hand.push(card);
       game.sortHand(game.human(), prefs.tri);
@@ -869,6 +939,7 @@
       return;
     }
 
+    pushTurnState();
     // retire la carte de son origine
     if (d.origin.type === 'hand') {
       game.human().hand = game.human().hand.filter(function (c) { return c.id !== card.id; });
@@ -922,6 +993,7 @@
 
   /* Mémorise l'état au début de chaque tour du joueur réel. */
   function pushHistory() {
+    turnStack = [];
     if (!game || game.finished || !game.player().human) return;
     history.push(game.captureState());
     if (history.length > 50) history.shift();
@@ -937,6 +1009,7 @@
     if (!canRewind()) return;
     history.pop();
     game.applyState(history[history.length - 1]);
+    turnStack = [];
     render();
     updateBar();
     sndLift();
@@ -955,11 +1028,19 @@
     aiPhase();
   }
 
+  /* Mémorise l'état avant chaque mouvement, pour les défaire un par un. */
+  function pushTurnState() {
+    turnStack.push(cloneState());
+    if (turnStack.length > 200) turnStack.shift();
+  }
+
   function doUndo() {
-    if (!isHumanTurn()) return;
-    game.restoreTurn();
-    render(); updateBar();
-    toast('Tour remis à zéro');
+    if (!isHumanTurn() || !turnStack.length) return;
+    restoreState(turnStack.pop());
+    render(); updateBar(); sndLift();
+    toast(turnStack.length
+      ? 'Mouvement annulé'
+      : 'Mouvement annulé — vous êtes revenu au début du tour');
   }
 
   function doDraw() {
@@ -978,11 +1059,13 @@
   function doAuto() {
     if (!isHumanTurn()) return;
     var before = cloneState();
+    pushTurnState();
     game.restoreTurn();
     var p = game.human();
     var play = AI.findBestPlay(game, p, null);
     if (!play) {
       restoreState(before);
+      turnStack.pop();
       render();
       toast('Aucun coup possible avec cette main — piochez.');
       return;
@@ -1140,7 +1223,11 @@
       'les <b>brelans et carrés à droite</b>, et chaque carte à la <b>hauteur de sa ' +
       'valeur</b> — un 7 est toujours sur la ligne des 7. Vous savez d’avance où regarder.</li>' +
       '<li>Un simple <b>clic</b> sur une carte la place au meilleur endroit.</li>' +
+      '<li><b>\ud83d\udca1 Indices</b> met en avant les cartes de votre main qui ' +
+      'peuvent \u00eatre pos\u00e9es, sans vous dire o\u00f9 : une aide interm\u00e9diaire ' +
+      'entre chercher seul et laisser jouer la machine.</li>' +
       '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
+      '<li><b>Annuler</b> d\u00e9fait vos mouvements un par un, dans l\u2019ordre inverse.</li>' +
       '<li><b>Revenir avant l\u2019IA</b> annule le dernier coup des joueurs ' +
       'virtuels : la partie repart du début de votre tour précédent. ' +
       'Appuyez plusieurs fois pour remonter plus loin.</li>' +
@@ -1149,7 +1236,7 @@
       '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : valider · ⌫ : annuler · P : piocher · ' +
-      'A : jouer au mieux · T : trier · R : revenir avant l\u2019IA</p>' +
+      'A : jouer au mieux · T : trier · I : indices · R : revenir avant l\u2019IA</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
@@ -1166,6 +1253,7 @@
   $('#auto').onclick = doAuto;
   $('#sort').onclick = doSort;
   $('#rewind').onclick = doRewind;
+  $('#hints').onclick = toggleHints;
   function confirmQuit() {
     return window.confirm('Abandonner la partie en cours ?');
   }
@@ -1193,6 +1281,7 @@
     else if (e.key === 'a' || e.key === 'A') { doAuto(); }
     else if (e.key === 't' || e.key === 'T') { doSort(); }
     else if (e.key === 'r' || e.key === 'R') { doRewind(); }
+    else if (e.key === 'i' || e.key === 'I') { toggleHints(); }
   });
 
   window.addEventListener('resize', function () { if (game) render({ animate: false }); });
