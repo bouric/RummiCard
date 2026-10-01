@@ -630,12 +630,12 @@
       msg.className = 'warn';
       msg.textContent = check.reason;
     } else if (prefs.hints) {
-      var ids = playableIds(), n = 0;
-      for (var id in ids) if (ids[id]) n++;
+      playableIds();
+      var n = hintCache.total;
       msg.className = n ? 'good' : 'warn';
       msg.innerHTML = n
-        ? '\ud83d\udca1 ' + n + ' carte' + (n > 1 ? 's' : '') + ' de votre main ' +
-          (n > 1 ? 'peuvent' : 'peut') + ' \u00eatre pos\u00e9e' + (n > 1 ? 's' : '') + '.'
+        ? '\ud83d\udca1 Meilleur coup : ' + n + ' carte' + (n > 1 ? 's' : '') +
+          ' de votre main, mise' + (n > 1 ? 's' : '') + ' en avant.'
         : '\ud83d\udca1 Aucune carte posable pour l\u2019instant — piochez.';
     } else {
       msg.innerHTML = 'Glissez une carte sur la table — elle trouvera sa place toute seule.';
@@ -644,34 +644,35 @@
 
   /* ================= Aide : cartes posables ======================= */
 
-  var hintCache = { key: '', ids: null };
+  var hintCache = { key: '', ids: null, total: 0 };
 
-  /* Une carte est « posable » si la table peut être repartie en combinaisons
-     valides en l'incluant — qu'elle complète une combinaison, en forme une
-     nouvelle avec d'autres cartes de la main, ou oblige à réorganiser. */
+  /* Les cartes mises en avant sont celles du MEILLEUR coup du tour — celui
+     que « Jouer au mieux » jouerait. Signaler toutes les cartes jouables une
+     à une n'aurait pas de sens : leurs placements s'excluent souvent, et on
+     ne pourrait pas les poser ensemble. */
   function playableIds() {
     if (!prefs.hints || !game || !isHumanTurn()) return null;
-    var hand = game.human().hand, staged = game.stagedCards(), i, k;
+    var hand = game.human().hand, i;
     var key = game.boardCards().map(function (c) { return c.id; }).sort().join(',') +
       '|' + hand.map(function (c) { return c.id; }).sort().join(',');
     if (hintCache.key === key) return hintCache.ids;
 
-    // On raisonne sur la table telle qu'elle était au début du tour : les
-    // combinaisons en cours de construction ne faussent pas le calcul.
-    var board = [], sets = game.snapshot ? game.snapshot.board : game.board;
+    // On repart de la table du début de tour : une combinaison en cours de
+    // construction ne doit pas fausser le calcul.
+    var sets = game.snapshot ? game.snapshot.board : game.board;
+    var board = [];
     for (i = 0; i < sets.length; i++) board = board.concat(sets[i].cards);
-    var pool = hand.concat(staged);
-    var ids = {};
-    for (i = 0; i < hand.length; i++) {
-      var card = hand[i], ok = false;
-      for (k = 0; k < sets.length; k++) {
-        if (E.acceptIndex(sets[k].cards, card) >= 0 &&
-            E.isValidSet(sets[k].cards.concat([card]))) { ok = true; break; }
+    var pool = hand.concat(game.stagedCards());
+
+    var best = Solver.solve(board, pool, { objective: 'count' });
+    var ids = {}, inHand = {}, n = 0;
+    for (i = 0; i < hand.length; i++) inHand[hand[i].id] = true;
+    if (best) {
+      for (i = 0; i < best.played.length; i++) {
+        if (inHand[best.played[i].id]) { ids[best.played[i].id] = true; n++; }
       }
-      if (!ok) ok = !!Solver.solve(board, pool, { objective: 'count', mustUse: [card] });
-      if (ok) ids[card.id] = true;
     }
-    hintCache = { key: key, ids: ids };
+    hintCache = { key: key, ids: ids, total: n };
     return ids;
   }
 
@@ -707,19 +708,19 @@
   function sndSnap() { tone(760, .07, 'triangle', .05); tone(1180, .05, 'triangle', .035, .02); }
   function sndLift() { tone(420, .05, 'sine', .035); }
   function sndMagic() { tone(620, .08, 'sine', .05); tone(880, .08, 'sine', .045, .06); tone(1240, .1, 'sine', .04, .12); }
-  /* « Hmm » pensif : un fredonnement bouche fermée. Fondamentale basse,
-     léger vibrato, la hauteur monte puis retombe comme une hésitation, et un
-     passe-bas étouffe les aigus. Chaque joueur a sa voix. */
-  function sndHmm(voice, resigned) {
+  /* « Hmm » pensif : un fredonnement bouche fermée, le même pour tous les
+     joueurs. Fondamentale grave, léger vibrato, la hauteur monte puis retombe
+     comme une hésitation, et un passe-bas étouffe les aigus. */
+  function sndHmm(resigned) {
     if (!soundOn) return;
     try {
       if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
       if (actx.state === 'suspended') actx.resume();
       var t0 = actx.currentTime;
-      var base = 166 + ((voice || 0) % 6) * 21;
+      var base = 110;
       var dur = resigned ? 0.55 : 0.46;
-      var peak = resigned ? base * 0.98 : base * 1.13;
-      var end = resigned ? base * 0.78 : base * 0.9;
+      var peak = resigned ? base * 0.97 : base * 1.12;
+      var end = resigned ? base * 0.74 : base * 0.88;
 
       var osc = actx.createOscillator();
       osc.type = 'triangle';
@@ -745,11 +746,11 @@
 
       var filt = actx.createBiquadFilter();   // bouche fermée
       filt.type = 'lowpass';
-      filt.frequency.value = 700;
+      filt.frequency.value = 460;
       filt.Q.value = 0.7;
       var nasal = actx.createBiquadFilter();  // résonance nasale
       nasal.type = 'peaking';
-      nasal.frequency.value = 340;
+      nasal.frequency.value = 215;
       nasal.Q.value = 2.5;
       nasal.gain.value = 7;
 
@@ -1191,7 +1192,7 @@
     var had = game.stagedCards().length;
     var card = game.draw();
     render(); updateBar();
-    sndHmm(0, !card);
+    sndHmm(!card);
     if (card) toast('Vous piochez ' + E.label(card) + (had ? ' — vos cartes sont revenues en main' : ''));
     else toast('La pioche est vide — vous passez');
     if (game.finished) { gameOver(); return; }
@@ -1245,10 +1246,10 @@
         sndSnap();
       } else if (r.kind === 'draw') {
         toast('<span class="who">' + p.name + '</span> pioche');
-        sndHmm(p.index, false);
+        sndHmm(false);
       } else {
         toast('<span class="who">' + p.name + '</span> passe');
-        sndHmm(p.index, true);
+        sndHmm(true);
       }
       render();
       await sleep(620);
@@ -1373,9 +1374,10 @@
       '<li>Deux suites de m\u00eame couleur qui se suivent (\u20265\u2660 et 6\u2660\u2026) ' +
       'sont <b>r\u00e9unies automatiquement</b>. Pour les s\u00e9parer de nouveau, d\u00e9posez ' +
       'une carte au milieu de la colonne : la suite est <b>coup\u00e9e \u00e0 cet endroit</b>.</li>' +
-      '<li><b>\ud83d\udca1 Indices</b> met en avant les cartes de votre main qui ' +
-      'peuvent \u00eatre pos\u00e9es, sans vous dire o\u00f9 : une aide interm\u00e9diaire ' +
-      'entre chercher seul et laisser jouer la machine.</li>' +
+      '<li><b>\ud83d\udca1 Indices</b> met en avant les cartes du <b>meilleur coup</b> ' +
+      'du tour, sans vous dire o\u00f9 les poser : une aide interm\u00e9diaire entre ' +
+      'chercher seul et laisser jouer la machine. Ces cartes se posent toutes ' +
+      'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
       '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
       '<li><b>Annuler</b> d\u00e9fait vos mouvements un par un, dans l\u2019ordre inverse.</li>' +
       '<li><b>Revenir avant l\u2019IA</b> annule le dernier coup des joueurs ' +

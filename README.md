@@ -68,7 +68,7 @@ C'est le cœur de l'interface :
 | Glisser une carte qui ne rentre nulle part | ✨ La table **se réorganise entièrement** pour l'accueillir (ex. : `4♠5♠6♠7♠8♠` + un second `6♠` devient `4♠5♠6♠` + `6♠7♠8♠`) — l'aperçu est visible avant de lâcher. |
 | Clic simple sur une carte de la main | Placement automatique au meilleur endroit. |
 | Glisser vers sa main une carte posée ce tour-ci | On la récupère. |
-| **💡 Indices** | Met en avant les cartes de votre main qui peuvent être posées — sans dire où. Aide intermédiaire entre chercher seul et laisser jouer la machine. Une carte est signalée si le solveur sait repartir la table en l'incluant : complément d'une combinaison, nouvelle combinaison avec d'autres cartes de la main, ou réorganisation. |
+| **💡 Indices** | Met en avant les cartes du **meilleur coup** du tour — celui que « Jouer au mieux » jouerait — sans dire où les poser. Aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes forment un coup cohérent : elles se posent toutes ensemble, et l'indication se met à jour au fur et à mesure. |
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
 | **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
 | Suites qui se suivent | Deux suites de même couleur contiguës (…5♠ et 6♠…) sont **réunies automatiquement** : le solveur en produit souvent deux là où une seule suffit. |
@@ -123,9 +123,9 @@ pendant un glisser-déposer.
 Tout est synthétisé à la volée (Web Audio), sans aucun fichier : un claquement
 bref quand une carte se pose, un arpège quand la table se réorganise, une
 fanfare à la victoire, et un **« hmm » pensif quand un joueur pioche** —
-fredonnement bouche fermée, hauteur qui monte puis retombe, léger vibrato, avec
-une voix par joueur. La version « je passe », faute de pioche, est plus grave et
-plus traînante. Le haut-parleur de l'en-tête coupe l'ensemble.
+fredonnement grave bouche fermée (110 Hz), hauteur qui monte puis retombe, léger
+vibrato, identique pour tous les joueurs. La version « je passe », faute de
+pioche, est plus grave et plus traînante. Le haut-parleur de l'en-tête coupe l'ensemble.
 
 ## Options
 
