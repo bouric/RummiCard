@@ -138,7 +138,8 @@
         else cards.push(src[k]);
       }
       if (cards.length || hole >= 0) {
-        out.push({ id: game.board[i].id, cards: cards, slot: -1, hole: hole });
+        out.push({ id: game.board[i].id, cards: cards, slot: -1, hole: hole,
+                   zone: game.board[i].zone });
       }
     }
     return out;
@@ -149,50 +150,258 @@
     return { sets: baseSets() };
   }
 
-  function paintBoard() {
-    var view = currentView();
-    var board = $('#board');
-    var total = game.boardCards().length;
-    board.className = total > 70 ? 'denser' : (total > 42 ? 'dense' : '');
-    board.innerHTML = '';
+  /* Zone d'affichage d'une combinaison : suites à gauche, groupes à droite.
+     Tant qu'une combinaison n'a qu'une carte, son type est indécidable : on
+     garde alors la zone où le joueur l'a déposée. */
+  function zoneOf(set, cards) {
+    if (cards.length >= 2) return isRunLayout(cards) ? 'runs' : 'groups';
+    return set.zone === 'runs' ? 'runs' : 'groups';
+  }
 
+  /* Clé de rangement : les suites d'abord, par couleur puis par valeur de
+     départ — donc les suites d'une même couleur côte à côte — puis les
+     groupes par valeur. */
+  function setKey(s) {
+    var cards = s.cards, i;
+    if (!cards.length) return [2, 0, 0];
+    if (zoneOf(s, cards) === 'runs') {
+      var min = cards[0].rank;
+      for (i = 1; i < cards.length; i++) if (cards[i].rank < min) min = cards[i].rank;
+      return [0, cards[0].suit, min];
+    }
+    return [1, cards[0].rank, cards.length];
+  }
+
+  /* Range la table (uniquement si le joueur a choisi de la garder ordonnée).
+     Jamais pendant un glissement : les repères mesurés resteraient faux. */
+  function tidyBoard() {
+    if (!E.options.keepPlaces) return;
+    game.board.sort(function (a, b) {
+      var ka = setKey(a), kb = setKey(b);
+      return (ka[0] - kb[0]) || (ka[1] - kb[1]) || (ka[2] - kb[2]);
+    });
+  }
+
+  function makeZone(kind, title) {
+    var d = document.createElement('div');
+    d.className = 'zone ' + kind;
+    d.dataset.zonekind = kind;
+    if (title) {
+      var h = document.createElement('div');
+      h.className = 'zonehead';
+      h.textContent = title;
+      d.appendChild(h);
+    }
+    return d;
+  }
+
+  /* Dimensions des cartes selon la densité (doivent suivre style.css). */
+  var METRICS = {
+    '': { cw: 62, ch: 88 },
+    'dense': { cw: 48, ch: 68 },
+    'denser': { cw: 40, ch: 57 }
+  };
+  var GRID_TOP = 20;     // sous l'intitulé de la zone
+  var RULER_W = 22;      // colonne des valeurs
+
+  function setEl(s) {
+    var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
+    var el = document.createElement('div');
+    el.className = 'set' + (isRunLayout(full) ? ' run' : '') +
+      (E.isValidSet(full) ? '' : ' bad') + (s.slot >= 0 ? ' target' : '');
+    el.dataset.set = s.id;
+    for (var k = 0; k <= s.cards.length; k++) {
+      if (k === s.slot) el.appendChild(slotEl());
+      if (k === s.hole) el.appendChild(holeEl());
+      if (k < s.cards.length) {
+        el.appendChild(cardEl(s.cards[k], {
+          staged: isStaged(s.cards[k]),
+          pickable: isHumanTurn()
+        }));
+      }
+    }
+    return el;
+  }
+
+  /* Valeur la plus basse d'une combinaison : elle fixe sa hauteur. */
+  function lowRank(s) {
+    var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
+    if (!cards.length) return 1;
+    var min = cards[0].rank;
+    for (var i = 1; i < cards.length; i++) if (cards[i].rank < min) min = cards[i].rank;
+    return min;
+  }
+
+  /* ---- Table rangée : la hauteur d'une carte = sa valeur -------------
+     Chaque valeur a sa ligne, de l'As en haut au Roi en bas, dans les deux
+     zones. Une suite occupe donc toujours les lignes de ses valeurs, et un
+     brelan la ligne de sa valeur : on sait d'avance où regarder. */
+  function paintGrid(view, board, dens) {
+    var m = METRICS[dens] || METRICS[''];
+    var step = Math.round(m.ch * 0.28);
+    board.style.setProperty('--step', step + 'px');
+    var gridH = 12 * step + m.ch;
+
+    var zRuns = makeZone('runs grid', 'Suites');
+    var zGroups = makeZone('groups grid', 'Brelans et carrés');
+    board.appendChild(zRuns);
+    board.appendChild(zGroups);
+    addRuler(zRuns, step, gridH);
+    addRuler(zGroups, step, gridH);
+
+    var runs = [], groups = [], i;
+    for (i = 0; i < view.sets.length; i++) {
+      var s = view.sets[i];
+      var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
+      var item = { s: s, el: setEl(s), low: lowRank(s), suit: full.length ? full[0].suit : 0 };
+      (zoneOf(s, full) === 'runs' ? runs : groups).push(item);
+    }
+    if (view.newSlot) {
+      var ghost = { s: { id: '__new', cards: [], slot: 0, hole: -1 }, low: drag.card.rank,
+                    suit: drag.card.suit };
+      ghost.el = document.createElement('div');
+      ghost.el.className = 'set target' + (view.newZone === 'runs' ? ' run' : '');
+      ghost.el.appendChild(slotEl());
+      (view.newZone === 'runs' ? runs : groups).push(ghost);
+    }
+
+    // Suites : une colonne par suite, couleurs regroupées, valeurs croissantes.
+    runs.sort(function (a, b) { return (a.suit - b.suit) || (a.low - b.low); });
+    var x = RULER_W, prevSuit = -1;
+    for (i = 0; i < runs.length; i++) {
+      if (prevSuit >= 0 && runs[i].suit !== prevSuit) x += 14;
+      prevSuit = runs[i].suit;
+      place(zRuns, runs[i].el, x, GRID_TOP + (runs[i].low - 1) * step);
+      x += m.cw + 8;
+    }
+    var newRunsX = x;
+
+    // Groupes : chacun sur la ligne de sa valeur, en colonnes si doublons.
+    groups.sort(function (a, b) { return a.low - b.low; });
+    var occ = {}, maxX = RULER_W;
+    for (i = 0; i < groups.length; i++) {
+      var n = occ[groups[i].low] || 0;
+      occ[groups[i].low] = n + 1;
+      var gx = RULER_W + n * (4 * (m.cw + 3) + 18);
+      place(zGroups, groups[i].el, gx, GRID_TOP + (groups[i].low - 1) * step);
+      if (gx + 4 * (m.cw + 3) + 18 > maxX) maxX = gx + 4 * (m.cw + 3) + 18;
+    }
+
+    var needRuns = newRunsX, needGroups = maxX;
+    if (isHumanTurn() && !view.newSlot) {
+      placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, gridH, 'runs', 'Nouvelle suite');
+      placeNewZone(zGroups, maxX, GRID_TOP, m.cw, gridH, 'groups', 'Nouveau groupe');
+      needRuns += m.cw + 10;
+      needGroups += m.cw + 10;
+    }
+    // Chaque zone reçoit une part de largeur proportionnelle à son contenu.
+    zRuns.style.flex = '1 1 ' + Math.max(160, needRuns + 16) + 'px';
+    zGroups.style.flex = '1 1 ' + Math.max(160, needGroups + 16) + 'px';
+    spacer(zRuns, gridH + GRID_TOP + 12);
+    spacer(zGroups, gridH + GRID_TOP + 12);
+  }
+
+  function place(zone, el, x, y) {
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    zone.appendChild(el);
+  }
+
+  function placeNewZone(zone, x, y, w, h, kind, label) {
+    var d = newZone(kind, label);
+    d.classList.add('tall');
+    d.style.left = x + 'px';
+    d.style.top = y + 'px';
+    d.style.width = w + 'px';
+    d.style.height = h + 'px';
+    zone.appendChild(d);
+  }
+
+  function addRuler(zone, step, gridH) {
+    var r = document.createElement('div');
+    r.className = 'ruler';
+    for (var v = 1; v <= 13; v++) {
+      var line = document.createElement('div');
+      line.className = 'gridline';
+      line.style.top = (GRID_TOP + (v - 1) * step) + 'px';
+      r.appendChild(line);
+      var lab = document.createElement('i');
+      lab.textContent = E.RANK_LABEL[v];
+      lab.style.top = (GRID_TOP + (v - 1) * step) + 'px';
+      r.appendChild(lab);
+    }
+    zone.appendChild(r);
+  }
+
+  function spacer(zone, h) {
+    var d = document.createElement('div');
+    d.className = 'spacer';
+    d.style.height = h + 'px';
+    zone.appendChild(d);
+  }
+
+  /* ---- Table libre : les combinaisons se suivent simplement ---------- */
+  function paintFlow(view, board) {
+    var zone = makeZone('full', '');
+    board.appendChild(zone);
     if (!view.sets.length && !view.newSlot) {
       var empty = document.createElement('div');
       empty.className = 'empty';
       empty.innerHTML = '<b>La table est vide</b>Glissez vos cartes ici : elles se placeront toutes seules';
-      board.appendChild(empty);
-      if (isHumanTurn()) board.appendChild(newZone());
+      zone.appendChild(empty);
+      if (isHumanTurn()) zone.appendChild(newZone('any', 'Nouvelle<br>combinaison'));
       return;
     }
-
-    var target = drag && drag.target ? drag.target : null;
-    for (var i = 0; i < view.sets.length; i++) {
-      var s = view.sets[i];
-      var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
-      var el = document.createElement('div');
-      el.className = 'set' + (isRunLayout(full) ? ' run' : '') +
-        (E.isValidSet(full) ? '' : ' bad') + (s.slot >= 0 ? ' target' : '');
-      el.dataset.set = s.id;
-      for (var k = 0; k <= s.cards.length; k++) {
-        if (k === s.slot) el.appendChild(slotEl());
-        if (k === s.hole) el.appendChild(holeEl());
-        if (k < s.cards.length) {
-          el.appendChild(cardEl(s.cards[k], {
-            staged: isStaged(s.cards[k]),
-            pickable: isHumanTurn()
-          }));
-        }
-      }
-      board.appendChild(el);
-    }
+    for (var i = 0; i < view.sets.length; i++) zone.appendChild(setEl(view.sets[i]));
     if (view.newSlot) {
       var ns = document.createElement('div');
       ns.className = 'set target';
       ns.appendChild(slotEl());
-      board.appendChild(ns);
+      zone.appendChild(ns);
     } else if (isHumanTurn()) {
-      board.appendChild(newZone());
+      zone.appendChild(newZone('any', 'Nouvelle<br>combinaison'));
     }
+  }
+
+  var DENSITIES = ['', 'dense', 'denser'];
+
+  /* Taille des cartes : assez petite pour que toutes les colonnes tiennent. */
+  function pickDensity(view, width) {
+    var nRuns = 0, ranks = {}, nCols = 1, i;
+    for (i = 0; i < view.sets.length; i++) {
+      var s = view.sets[i];
+      var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
+      if (zoneOf(s, cards) === 'runs') { nRuns++; continue; }
+      var r = cards.length ? cards[0].rank : 0;
+      ranks[r] = (ranks[r] || 0) + 1;
+      if (ranks[r] > nCols) nCols = ranks[r];
+    }
+    for (var d = 0; d < DENSITIES.length; d++) {
+      var m = METRICS[DENSITIES[d]];
+      var need = 2 * RULER_W + (nRuns + 1) * (m.cw + 8) + 42 +
+                 nCols * (4 * (m.cw + 3) + 18) + m.cw + 24;
+      if (need <= width) return DENSITIES[d];
+    }
+    return 'denser';
+  }
+
+  function paintBoard() {
+    if (!drag) tidyBoard();
+    var view = currentView();
+    var board = $('#board');
+    var total = game.boardCards().length;
+    var split = !!E.options.keepPlaces;
+    var dens = total > 70 ? 'denser' : (total > 42 ? 'dense' : '');
+    if (split) {
+      var byWidth = pickDensity(view, board.clientWidth || 1200);
+      if (DENSITIES.indexOf(byWidth) > DENSITIES.indexOf(dens)) dens = byWidth;
+    }
+    board.className = dens + (split ? ' split' : '');
+    board.style.setProperty('--step',
+      Math.round((METRICS[dens] || METRICS['']).ch * 0.28) + 'px');
+    board.innerHTML = '';
+    if (split) paintGrid(view, board, dens);
+    else paintFlow(view, board);
   }
 
   /* Suite (même couleur, valeurs qui se suivent) -> affichage vertical.
@@ -201,11 +410,11 @@
     return cards.length >= 2 && E.sameSuit(cards) && !E.sameRank(cards);
   }
 
-  function newZone() {
+  function newZone(kind, label) {
     var d = document.createElement('div');
     d.className = 'newzone';
-    d.dataset.zone = 'new';
-    d.innerHTML = 'Nouvelle<br>combinaison';
+    d.dataset.zone = kind || 'any';
+    d.innerHTML = label;
     return d;
   }
 
@@ -411,8 +620,14 @@
     for (var i = 0; i < sets.length; i++) {
       drag.rects[sets[i].dataset.set] = sets[i].getBoundingClientRect();
     }
-    var nz = document.querySelector('#board .newzone');
-    drag.rects.__new = nz ? nz.getBoundingClientRect() : null;
+    var zones = document.querySelectorAll('#board .zone');
+    for (var z = 0; z < zones.length; z++) {
+      drag.rects['__zone_' + zones[z].dataset.zonekind] = zones[z].getBoundingClientRect();
+    }
+    var nzs = document.querySelectorAll('#board .newzone');
+    for (var n = 0; n < nzs.length; n++) {
+      drag.rects['__new_' + nzs[n].dataset.zone] = nzs[n].getBoundingClientRect();
+    }
   }
 
   function moveGhost(x, y) {
@@ -434,7 +649,8 @@
 
   function setTarget(x, y, force) {
     var t = computeTarget(x, y);
-    var key = t.kind + ':' + (t.setId || '') + ':' + (t.index === undefined ? '' : t.index);
+    var key = t.kind + ':' + (t.setId || '') + ':' +
+      (t.index === undefined ? '' : t.index) + ':' + (t.zone || '');
     if (!force && key === drag.targetKey) return;
     drag.targetKey = key;
     drag.target = t;
@@ -447,16 +663,22 @@
   }
 
   function markTargets() {
-    $('#rackwrap').classList.toggle('target', !!drag && drag.target && drag.target.kind === 'hand');
-    var nz = document.querySelector('#board .newzone');
-    if (nz) nz.classList.toggle('target', !!drag && drag.target && drag.target.kind === 'new');
+    var t = drag && drag.target;
+    $('#rackwrap').classList.toggle('target', !!t && t.kind === 'hand');
+    var nzs = document.querySelectorAll('#board .newzone');
+    for (var i = 0; i < nzs.length; i++) {
+      nzs[i].classList.toggle('target',
+        !!t && t.kind === 'new' && (nzs[i].dataset.zone === 'any' || nzs[i].dataset.zone === t.zone));
+    }
   }
 
   function computeTarget(x, y) {
     var card = drag.card;
     if (inRect(drag.rects.__rack, x, y, 6)) return { kind: 'hand' };
     if (!inRect(drag.rects.__board, x, y, 4)) return { kind: 'none' };
-    if (inRect(drag.rects.__new, x, y, 4)) return { kind: 'new' };
+    if (inRect(drag.rects.__new_any, x, y, 4)) return { kind: 'new' };
+    if (inRect(drag.rects.__new_runs, x, y, 4)) return { kind: 'new', zone: 'runs' };
+    if (inRect(drag.rects.__new_groups, x, y, 4)) return { kind: 'new', zone: 'groups' };
 
     var sets = baseSets(), i;
 
@@ -495,7 +717,8 @@
     // 3) sinon, reorganisation complete de la table
     var re = rearrangement();
     if (re) return { kind: 'rearrange' };
-    return { kind: 'new' };
+    // Pas de place trouvée : nouvelle combinaison, dans la zone survolée.
+    return { kind: 'new', zone: inRect(drag.rects.__zone_runs, x, y, 0) ? 'runs' : 'groups' };
   }
 
   function rearrangement() {
@@ -517,7 +740,7 @@
       }
       return { sets: sets };
     }
-    if (t.kind === 'new') return { sets: sets, newSlot: true };
+    if (t.kind === 'new') return { sets: sets, newSlot: true, newZone: t.zone };
     if (t.kind === 'rearrange') {
       var src = rearrangement(), out = [];
       for (i = 0; i < src.length; i++) {
@@ -609,7 +832,9 @@
       sndMagic();
       toast('✨ La table s’est réorganisée pour accueillir ' + E.label(card));
     } else {
-      game.board.push(game.newSet([card]));
+      var fresh = game.newSet([card]);
+      fresh.zone = t.zone;
+      game.board.push(fresh);
       sndSnap();
     }
     game.compact();
@@ -801,10 +1026,10 @@
       optionRow('tri', 'suit', prefs.tri === 'suit', 'Par valeur dans les couleurs',
         'toute une couleur dans l\u2019ordre, puis la suivante') +
       '<h3>Combinaisons sur la table</h3>' +
-      optionRow('keepPlaces', '1', prefs.keepPlaces, 'Ne pas les d\u00e9placer',
-        'une combinaison r\u00e9organis\u00e9e garde sa place sur la table') +
-      optionRow('keepPlaces', '0', !prefs.keepPlaces, 'Laisser la table se redisposer',
-        'les combinaisons sont replac\u00e9es apr\u00e8s chaque r\u00e9organisation') +
+      optionRow('keepPlaces', '1', prefs.keepPlaces, 'Table rang\u00e9e',
+        'suites \u00e0 gauche, groupes \u00e0 droite, chaque carte \u00e0 la hauteur de sa valeur') +
+      optionRow('keepPlaces', '0', !prefs.keepPlaces, 'Table libre',
+        'les combinaisons se placent au fil des coups, sans zones') +
       '<div class="row"><button class="cta" id="closeopts" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
@@ -852,6 +1077,9 @@
       'et la carte s’y pose toute seule.</li>' +
       '<li>Si la carte ne rentre nulle part, la table <b>se réorganise</b> ' +
       'automatiquement pour l’accueillir (✨).</li>' +
+      '<li>Table rangée (option par défaut) : les <b>suites à gauche</b>, par couleur, ' +
+      'les <b>brelans et carrés à droite</b>, et chaque carte à la <b>hauteur de sa ' +
+      'valeur</b> — un 7 est toujours sur la ligne des 7. Vous savez d’avance où regarder.</li>' +
       '<li>Un simple <b>clic</b> sur une carte la place au meilleur endroit.</li>' +
       '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
       '<li><b>Revenir avant l\u2019IA</b> annule le dernier coup des joueurs ' +

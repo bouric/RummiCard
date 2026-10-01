@@ -138,10 +138,42 @@ header .brand span { color: var(--gold); }
   background-image: radial-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px);
   background-size: 4px 4px;
 }
-#board {
-  position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
-  padding: 14px; display: flex; flex-wrap: wrap; align-content: flex-start;
-  align-items: flex-start; gap: 11px;
+#board { position: absolute; inset: 0; display: flex; overflow: hidden; }
+
+/* Zones de la table : à gauche les suites, à droite les brelans et carrés. */
+.zone {
+  flex: 1 1 50%; min-width: 0; padding: 13px; overflow-y: auto; overflow-x: hidden;
+  display: flex; flex-wrap: wrap; align-content: flex-start; align-items: flex-start;
+  gap: 11px;
+}
+.zone.full { flex: 1 1 100%; }
+
+/* Table rangée : la hauteur d'une carte vaut sa valeur. */
+.zone.grid { display: block; position: relative; overflow-x: auto; }
+.zone.grid .zonehead { position: absolute; top: 0; left: 0; margin: 0; }
+.zone.grid .set {
+  position: absolute; padding: 0; background: none; border: 0; border-radius: 0;
+}
+.zone.grid .set.bad > .card { box-shadow: 0 0 0 1.5px rgba(240, 180, 41, .8), 0 2px 5px rgba(0, 0, 0, .34); }
+.zone.grid .set.target > .card, .zone.grid .set.target > .slot { z-index: 2; }
+.zone.grid .newzone.tall {
+  position: absolute; writing-mode: vertical-rl; text-orientation: mixed;
+  padding: 10px 0; min-width: 0; line-height: 1.2;
+}
+.zone .ruler { position: absolute; inset: 0; pointer-events: none; }
+.zone .ruler i {
+  position: absolute; left: 0; width: 16px; text-align: right; font-style: normal;
+  font-size: 9.5px; font-weight: 600; color: rgba(255, 255, 255, .34); line-height: 1;
+}
+.zone .gridline {
+  position: absolute; left: 20px; right: 6px; height: 1px;
+  background: rgba(255, 255, 255, .055);
+}
+.zone .spacer { width: 1px; }
+#board.split .zone + .zone { border-left: 1px dashed rgba(255, 255, 255, .16); }
+.zonehead {
+  width: 100%; margin-bottom: -4px; font-size: 10px; font-weight: 600;
+  letter-spacing: .13em; text-transform: uppercase; color: rgba(255, 255, 255, .38);
 }
 #board.dense { --cw: 48px; --ch: 68px; }
 #board.denser { --cw: 40px; --ch: 57px; }
@@ -212,7 +244,7 @@ header .brand span { color: var(--gold); }
 /* Une suite se lit de haut en bas, cartes décalées : seul le coin
    (valeur + couleur) de chaque carte dépasse, la dernière est entière. */
 .set.run { flex-direction: column; gap: 0; }
-.set.run > * + * { margin-top: calc(var(--ch) * -0.72); }
+.set.run > * + * { margin-top: calc(var(--step, calc(var(--ch) * 0.28)) - var(--ch)); }
 .set.run .card.pickable:hover { transform: translateX(7px); }
 .set.run .card { box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 -1px 4px rgba(0, 0, 0, .3); }
 

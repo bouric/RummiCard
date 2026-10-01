@@ -48,6 +48,8 @@ assemble `RummiCard.app` (≈650 Ko).
   solitaire : seul le coin (valeur + couleur) de chaque carte dépasse, la
   dernière est entière. Une suite de 13 cartes reste donc compacte.
 - Les **groupes** (brelans et carrés) s'affichent **horizontalement**, en ligne.
+- En *table rangée*, le décalage vaut exactement une ligne de la graduation :
+  les cartes d'une suite tombent donc pile sur les lignes de leurs valeurs.
 
 L'orientation est déduite du contenu et bascule en direct, y compris pendant
 l'aperçu d'un glisser-déposer : deux cartes de même couleur à la suite passent
@@ -112,10 +114,14 @@ le navigateur dans son `localStorage`.
 
 - **Tri de la main** : *par valeur puis couleur* (`A A 2 2 3 3…`) ou *par valeur
   dans les couleurs* (toute une couleur dans l'ordre, puis la suivante).
-- **Combinaisons sur la table** : *ne pas les déplacer* — après une
-  réorganisation, chaque combinaison reprend la place de celle avec laquelle
-  elle partage le plus de cartes, et les nouvelles s'ajoutent à la fin — ou
-  *laisser la table se redisposer* librement.
+- **Table rangée** (par défaut) : le tapis est coupé en deux — les **suites à
+  gauche**, regroupées par couleur, les **brelans et carrés à droite** — et
+  surtout l'axe vertical vaut la **valeur des cartes** : l'As tout en haut, le
+  Roi tout en bas, une règle graduée de chaque côté. Un 7 est donc toujours à la
+  même hauteur, où qu'il soit. Une suite se place en fonction de ses valeurs, et
+  quand on lui ajoute une carte par le bas elle remonte d'une ligne sans que les
+  cartes déjà posées ne bougent. L'autre réglage, *table libre*, laisse les
+  combinaisons se suivre au fil des coups.
 
 ## Version
 
