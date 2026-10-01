@@ -5,24 +5,26 @@ en application macOS native. Un joueur réel, de 1 à 5 joueurs virtuels.
 
 <img src="docs/icon.png" width="128" alt="Icône RummiCard : deux cartes sur tapis vert">
 
-## Lancer le jeu
-
-```bash
-open RummiCard.app
-```
-
-Pour l'avoir en permanence sous la main, glissez `RummiCard.app` dans
-`/Applications` (ou dans le Dock).
-
-## Reconstruire
+## Installer et lancer
 
 ```bash
 ./build.sh
 ```
 
+Le script compile l'hôte natif, génère l'icône, assemble le bundle dans
+`build/` puis l'**installe dans `/Applications`** en remplaçant la version
+précédente (il ferme l'app au passage si elle tourne). Il ne laisse
+volontairement aucun bundle dans le dossier du projet : deux copies du même
+`.app` sur le disque, et macOS affiche deux icônes dans le Launchpad et
+Spotlight.
+
+```bash
+open /Applications/RummiCard.app
+./build.sh --no-install    # garde l'app dans build/, sans toucher à /Applications
+```
+
 Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installés
-(`swiftc`, `iconutil`). Le script compile l'hôte natif, génère l'icône et
-assemble `RummiCard.app` (≈650 Ko).
+(`swiftc`, `iconutil`), pour un bundle de ≈680 Ko.
 
 ## Les règles
 
