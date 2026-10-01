@@ -117,13 +117,19 @@ le navigateur dans son `localStorage`.
 - **Tri de la main** : *par valeur puis couleur* (`A A 2 2 3 3…`) ou *par valeur
   dans les couleurs* (toute une couleur dans l'ordre, puis la suivante).
 - **Table rangée** (par défaut) : le tapis est coupé en deux — les **suites à
-  gauche**, regroupées par couleur, les **brelans et carrés à droite** — et
-  surtout l'axe vertical vaut la **valeur des cartes** : l'As tout en haut, le
-  Roi tout en bas, une règle graduée de chaque côté. Un 7 est donc toujours à la
-  même hauteur, où qu'il soit. Une suite se place en fonction de ses valeurs, et
-  quand on lui ajoute une carte par le bas elle remonte d'une ligne sans que les
-  cartes déjà posées ne bougent. L'autre réglage, *table libre*, laisse les
-  combinaisons se suivre au fil des coups.
+  gauche**, les **brelans et carrés à droite**.
+
+  À gauche, l'axe vertical vaut la **valeur des cartes** : l'As tout en haut, le
+  Roi tout en bas, avec sa règle graduée. Une suite se place donc en fonction de
+  ses valeurs, les couleurs sont regroupées, et lui ajouter une carte par le bas
+  la fait remonter d'une ligne sans déplacer les cartes déjà posées.
+
+  À droite, **aucun recouvrement** : une ligne pleine par valeur présente, de la
+  plus petite à la plus haute, et une colonne de plus quand une valeur compte
+  plusieurs groupes ou que la hauteur ne suffit plus.
+
+  L'autre réglage, *table libre*, laisse les combinaisons se suivre au fil des
+  coups.
 
 ## Version
 

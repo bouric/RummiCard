@@ -202,7 +202,8 @@
     'denser': { cw: 40, ch: 57 }
   };
   var GRID_TOP = 20;     // sous l'intitulé de la zone
-  var RULER_W = 22;      // colonne des valeurs
+  var RULER_W = 22;      // colonne des valeurs, côté suites
+  var GROUP_X = 6;       // marge gauche côté brelans et carrés
 
   function setEl(s) {
     var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
@@ -238,6 +239,7 @@
      brelan la ligne de sa valeur : on sait d'avance où regarder. */
   function paintGrid(view, board, dens) {
     var m = METRICS[dens] || METRICS[''];
+    var avail = board.clientHeight || 520;
     var step = Math.round(m.ch * 0.28);
     board.style.setProperty('--step', step + 'px');
     var gridH = 12 * step + m.ch;
@@ -247,7 +249,6 @@
     board.appendChild(zRuns);
     board.appendChild(zGroups);
     addRuler(zRuns, step, gridH);
-    addRuler(zGroups, step, gridH);
 
     var runs = [], groups = [], i;
     for (i = 0; i < view.sets.length; i++) {
@@ -276,21 +277,37 @@
     }
     var newRunsX = x;
 
-    // Groupes : chacun sur la ligne de sa valeur, en colonnes si doublons.
+    // Groupes : une ligne pleine par valeur présente, de la plus petite à la
+    // plus grande. Les cartes ne se recouvrent jamais de ce côté ; quand la
+    // hauteur ne suffit plus, les lignes continuent dans une colonne voisine.
     groups.sort(function (a, b) { return a.low - b.low; });
-    var occ = {}, maxX = RULER_W;
+    var rowH = m.ch + 10;
+    var groupW = 4 * (m.cw + 3) + 18;
+    var rowOf = {}, nRows = 0, occ = {}, maxOcc = 1;
     for (i = 0; i < groups.length; i++) {
-      var n = occ[groups[i].low] || 0;
-      occ[groups[i].low] = n + 1;
-      var gx = RULER_W + n * (4 * (m.cw + 3) + 18);
-      place(zGroups, groups[i].el, gx, GRID_TOP + (groups[i].low - 1) * step);
-      if (gx + 4 * (m.cw + 3) + 18 > maxX) maxX = gx + 4 * (m.cw + 3) + 18;
+      var v0 = groups[i].low;
+      if (rowOf[v0] === undefined) rowOf[v0] = nRows++;
+      occ[v0] = (occ[v0] || 0) + 1;
+      if (occ[v0] > maxOcc) maxOcc = occ[v0];
     }
+    var perCol = Math.max(1, Math.floor((avail - GRID_TOP - 8) / rowH));
+    var cellW = maxOcc * groupW;
+    occ = {};
+    var maxX = GROUP_X;
+    for (i = 0; i < groups.length; i++) {
+      var v = groups[i].low, r0 = rowOf[v];
+      var n = occ[v] || 0;
+      occ[v] = n + 1;
+      var gx = GROUP_X + Math.floor(r0 / perCol) * cellW + n * groupW;
+      place(zGroups, groups[i].el, gx, GRID_TOP + (r0 % perCol) * rowH);
+      if (gx + groupW > maxX) maxX = gx + groupW;
+    }
+    var groupsH = Math.max(Math.min(nRows, perCol), 3) * rowH;
 
     var needRuns = newRunsX, needGroups = maxX;
     if (isHumanTurn() && !view.newSlot) {
       placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, gridH, 'runs', 'Nouvelle suite');
-      placeNewZone(zGroups, maxX, GRID_TOP, m.cw, gridH, 'groups', 'Nouveau groupe');
+      placeNewZone(zGroups, maxX, GRID_TOP, m.cw, groupsH - 10, 'groups', 'Nouveau groupe');
       needRuns += m.cw + 10;
       needGroups += m.cw + 10;
     }
@@ -298,7 +315,7 @@
     zRuns.style.flex = '1 1 ' + Math.max(160, needRuns + 16) + 'px';
     zGroups.style.flex = '1 1 ' + Math.max(160, needGroups + 16) + 'px';
     spacer(zRuns, gridH + GRID_TOP + 12);
-    spacer(zGroups, gridH + GRID_TOP + 12);
+    spacer(zGroups, groupsH + GRID_TOP + 12);
   }
 
   function place(zone, el, x, y) {
@@ -366,13 +383,14 @@
   var DENSITIES = ['', 'dense', 'denser'];
 
   /* Taille des cartes : assez petite pour que toutes les colonnes tiennent. */
-  function pickDensity(view, width) {
-    var nRuns = 0, ranks = {}, nCols = 1, i;
+  function pickDensity(view, width, height) {
+    var nRuns = 0, ranks = {}, nCols = 1, nRows = 0, i;
     for (i = 0; i < view.sets.length; i++) {
       var s = view.sets[i];
       var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
       if (zoneOf(s, cards) === 'runs') { nRuns++; continue; }
       var r = cards.length ? cards[0].rank : 0;
+      if (!ranks[r]) nRows++;
       ranks[r] = (ranks[r] || 0) + 1;
       if (ranks[r] > nCols) nCols = ranks[r];
     }
@@ -380,7 +398,9 @@
       var m = METRICS[DENSITIES[d]];
       var need = 2 * RULER_W + (nRuns + 1) * (m.cw + 8) + 42 +
                  nCols * (4 * (m.cw + 3) + 18) + m.cw + 24;
-      if (need <= width) return DENSITIES[d];
+      var high = Math.max(12 * Math.round(m.ch * 0.28) + m.ch,
+                          nRows * (m.ch + 10)) + GRID_TOP + 10;
+      if (need <= width && high <= height) return DENSITIES[d];
     }
     return 'denser';
   }
@@ -393,8 +413,8 @@
     var split = !!E.options.keepPlaces;
     var dens = total > 70 ? 'denser' : (total > 42 ? 'dense' : '');
     if (split) {
-      var byWidth = pickDensity(view, board.clientWidth || 1200);
-      if (DENSITIES.indexOf(byWidth) > DENSITIES.indexOf(dens)) dens = byWidth;
+      var fit = pickDensity(view, board.clientWidth || 1200, board.clientHeight || 520);
+      if (DENSITIES.indexOf(fit) > DENSITIES.indexOf(dens)) dens = fit;
     }
     board.className = dens + (split ? ' split' : '');
     board.style.setProperty('--step',
