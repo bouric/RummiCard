@@ -65,7 +65,7 @@ C'est le cœur de l'interface :
 | Geste | Effet |
 |---|---|
 | Glisser une carte vers la table | L'emplacement exact s'affiche en direct (case en pointillés) et la carte s'y pose toute seule, même si on la lâche loin de la bonne combinaison. |
-| Glisser une carte qui ne rentre nulle part | ✨ La table **se réorganise entièrement** pour l'accueillir (ex. : `4♠5♠6♠7♠8♠` + un second `6♠` devient `4♠5♠6♠` + `6♠7♠8♠`) — l'aperçu est visible avant de lâcher. |
+| Glisser une carte qui ne rentre nulle part | Elle ouvre une **nouvelle combinaison** : à vous de réarranger la table. Une option confie cette réorganisation au jeu (✨ : `4♠5♠6♠7♠8♠` + un second `6♠` devient `4♠5♠6♠` + `6♠7♠8♠`, aperçu avant de lâcher), mais il décide alors quelles combinaisons casser — c'est une aide forte, désactivée par défaut. |
 | Clic simple sur une carte de la main | Placement automatique au meilleur endroit. |
 | Glisser vers sa main une carte posée ce tour-ci | On la récupère. |
 | **💡 Indices** | Met en avant les cartes du **meilleur coup** du tour — celui que « Jouer au mieux » jouerait — sans dire où les poser. Aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes forment un coup cohérent : elles se posent toutes ensemble, et l'indication se met à jour au fur et à mesure. |
@@ -133,6 +133,9 @@ Accessibles par l'engrenage (ou ⌘, / menu **Partie ▸ Options**), conservées
 d'une partie à l'autre — l'hôte natif les range dans les préférences de l'app,
 le navigateur dans son `localStorage`.
 
+- **Aide au placement** : *me laisser chercher* (par défaut) — une carte qui ne
+  rentre nulle part ouvre une nouvelle combinaison — ou *réorganiser la table
+  pour moi*, qui refait la table toute seule pour accueillir la carte.
 - **Tri de la main** : *par valeur puis couleur* (`A A 2 2 3 3…`) ou *par valeur
   dans les couleurs* (toute une couleur dans l'ordre, puis la suivante).
 - **Table rangée** (par défaut) : le tapis est coupé en deux — les **suites à

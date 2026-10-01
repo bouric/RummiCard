@@ -16,7 +16,7 @@
        tri        : 'suit' = par couleur puis valeur
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
-  var prefs = { tri: 'suit', keepPlaces: true, hints: false };
+  var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false };
 
   function loadPrefs() {
     var p = window.APP_PREFS || null;
@@ -28,6 +28,7 @@
       if (p.tri === 'suit' || p.tri === 'rank') prefs.tri = p.tri;
       if (typeof p.keepPlaces === 'boolean') prefs.keepPlaces = p.keepPlaces;
       if (typeof p.hints === 'boolean') prefs.hints = p.hints;
+      if (typeof p.autoArrange === 'boolean') prefs.autoArrange = p.autoArrange;
     }
     E.options.keepPlaces = prefs.keepPlaces;
   }
@@ -945,8 +946,8 @@
     if (best) return best;
 
     // 3) sinon, reorganisation complete de la table
-    var re = rearrangement();
-    if (re) return { kind: 'rearrange' };
+    // Réorganisation de la table : seulement si le joueur l'a demandée.
+    if (prefs.autoArrange && rearrangement()) return { kind: 'rearrange' };
     // Pas de place trouvée : nouvelle combinaison, dans la zone survolée.
     return { kind: 'new', zone: inRect(drag.rects.__zone_runs, x, y, 0) ? 'runs' : 'groups' };
   }
@@ -1314,6 +1315,11 @@
         'A A 2 2 3 3\u2026 les cartes de m\u00eame valeur voisines') +
       optionRow('tri', 'suit', prefs.tri === 'suit', 'Par valeur dans les couleurs',
         'toute une couleur dans l\u2019ordre, puis la suivante') +
+      '<h3>Aide au placement</h3>' +
+      optionRow('autoArrange', '0', !prefs.autoArrange, 'Me laisser chercher',
+        'une carte qui ne rentre nulle part ouvre une nouvelle combinaison') +
+      optionRow('autoArrange', '1', prefs.autoArrange, 'R\u00e9organiser la table pour moi',
+        'la table se refait toute seule pour accueillir la carte') +
       '<h3>Combinaisons sur la table</h3>' +
       optionRow('keepPlaces', '1', prefs.keepPlaces, 'Table rang\u00e9e',
         'suites \u00e0 gauche, groupes \u00e0 droite, chaque carte \u00e0 la hauteur de sa valeur') +
@@ -1330,6 +1336,8 @@
           prefs.tri = value;
           E.options.sort = value;
           if (game) { game.sortHand(game.human(), value); render(); }
+        } else if (name === 'autoArrange') {
+          prefs.autoArrange = (value === '1');
         } else {
           prefs.keepPlaces = (value === '1');
         }
@@ -1365,8 +1373,10 @@
       '<h3>Placement automatique</h3><ul>' +
       '<li><b>Glissez</b> une carte vers la table : l’emplacement exact apparaît ' +
       'et la carte s’y pose toute seule.</li>' +
-      '<li>Si la carte ne rentre nulle part, la table <b>se réorganise</b> ' +
-      'automatiquement pour l’accueillir (✨).</li>' +
+      '<li>Si la carte ne rentre nulle part, elle ouvre une <b>nouvelle ' +
+      'combinaison</b> : à vous de réarranger la table. Les options permettent ' +
+      'de confier cette réorganisation au jeu (✨), mais il décide alors à votre ' +
+      'place quelles combinaisons casser.</li>' +
       '<li>Table rangée (option par défaut) : les <b>suites à gauche</b>, par couleur, ' +
       'les <b>brelans et carrés à droite</b>, et chaque carte à la <b>hauteur de sa ' +
       'valeur</b> — un 7 est toujours sur la ligne des 7. Vous savez d’avance où regarder.</li>' +
