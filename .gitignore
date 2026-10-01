@@ -1,0 +1,6 @@
+# Artefacts de compilation
+build/
+RummiCard.app/
+
+# macOS
+.DS_Store

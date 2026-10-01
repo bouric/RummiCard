@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RummiCard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ Accueil ============ -->
+<div id="menu">
+  <div class="logo">
+    <div class="mini">
+      <div class="card s1"><div class="corner"><span class="rank">7</span><span class="cs">&hearts;</span></div><div class="suit">&hearts;</div></div>
+      <div class="card s2"><div class="corner"><span class="rank">8</span><span class="cs">&diams;</span></div><div class="suit">&diams;</div></div>
+      <div class="card s3"><div class="corner"><span class="rank">9</span><span class="cs">&clubs;</span></div><div class="suit">&clubs;</div></div>
+    </div>
+    Rummi<span style="color:#f0b429">Card</span>
+  </div>
+  <p class="tag">Les règles du Rummikub, jouées avec 2 jeux de 52 cartes.
+     Faites glisser une carte vers la table : elle se place toute seule au bon endroit.</p>
+  <h2>Joueurs virtuels</h2>
+  <div class="choices" id="choices"></div>
+  <button class="cta" id="start">Commencer la partie</button>
+  <button class="linkbtn" id="rules-link">Voir les règles</button>
+</div>
+
+<!-- ============ Jeu ============ -->
+<div id="game" class="hidden">
+  <header>
+    <div class="brand">Rummi<span>Card</span></div>
+    <div class="pill">Pioche&nbsp;<b id="deckcount">0</b></div>
+    <div class="pill" id="turnpill">Tour&nbsp;<b>—</b></div>
+    <div class="pill" id="meldpill">Première pose&nbsp;<b>30 pts</b></div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="sound" title="Son">&#128266;</button>
+    <button class="iconbtn" id="help" title="Règles">?</button>
+    <button class="iconbtn" id="restart" title="Nouvelle partie">&#8634;</button>
+  </header>
+
+  <div id="opponents"></div>
+
+  <div id="boardwrap"><div id="board"></div></div>
+
+  <div id="bar">
+    <button class="btn go" id="commit">&#10003; Valider</button>
+    <button class="btn" id="undo">&#8617; Annuler</button>
+    <button class="btn" id="draw">&#127183; Piocher</button>
+    <button class="btn magic" id="auto">&#10024; Jouer au mieux</button>
+    <button class="btn" id="sort">&#8645; Trier</button>
+    <div id="msg"></div>
+  </div>
+
+  <div id="rackwrap">
+    <div class="racklabel">Votre main — <span id="handcount">0</span> cartes</div>
+    <div id="rack"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="overlay" class="hidden"></div>
+
+<script src="solver.js"></script>
+<script src="engine.js"></script>
+<script src="ai.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+/* =====================================================================
+   ai.js — Joueurs virtuels + assistance de placement pour le joueur
+   Tout repose sur Solver.solve (partition exacte de la table).
+   ===================================================================== */
+(function (root) {
+  'use strict';
+
+  var Engine = root.Engine, Solver = root.Solver;
+
+  /**
+   * Cherche le meilleur coup pour un joueur.
+   * @param {Game} game
+   * @param {Object} player
+   * @param {Array} [mustUse] cartes de la main a placer obligatoirement
+   * @returns {?{sets: Array, played: Array, points: number, rebuild: boolean}}
+   */
+  function findBestPlay(game, player, mustUse) {
+    var hand = player.hand;
+    if (!hand.length) return null;
+
+    if (!player.melded) {
+      // Premiere pose : uniquement ses propres cartes, 30 points minimum.
+      var res = Solver.solve([], hand, { objective: 'sum', mustUse: mustUse || [] });
+      if (!res || res.points < Engine.MIN_FIRST_MELD) return null;
+      return { sets: res.sets, played: res.played, points: res.points, rebuild: false };
+    }
+    var board = game.boardCards();
+    var r = Solver.solve(board, hand, { objective: 'count', mustUse: mustUse || [] });
+    if (!r || !r.count) return null;
+    return { sets: r.sets, played: r.played, points: r.points, rebuild: true };
+  }
+
+  /**
+   * Applique un coup : remplace la table et retire les cartes de la main.
+   */
+  function applyPlay(game, player, play) {
+    var playedIds = {};
+    for (var i = 0; i < play.played.length; i++) playedIds[play.played[i].id] = true;
+    player.hand = player.hand.filter(function (c) { return !playedIds[c.id]; });
+
+    if (play.rebuild) {
+      // On reconstruit la table en reutilisant les identifiants existants
+      // pour que l'animation puisse suivre les combinaisons.
+      var oldIds = game.board.map(function (s) { return s.id; });
+      game.board = play.sets.map(function (cards, idx) {
+        return { id: oldIds[idx] || game.newSet().id, cards: Engine.orderSet(cards) };
+      });
+    } else {
+      for (var k = 0; k < play.sets.length; k++) {
+        game.board.push(game.newSet(Engine.orderSet(play.sets[k])));
+      }
+    }
+    game.compact();
+  }
+
+  /**
+   * Tour complet d'un joueur virtuel.
+   * @returns {{kind: 'play'|'draw'|'pass', played: number, points: number, drawn: ?Object}}
+   */
+  function playAITurn(game) {
+    var player = game.player();
+    var play = findBestPlay(game, player, null);
+    if (play) {
+      applyPlay(game, player, play);
+      player.melded = true;
+      game.passStreak = 0;
+      if (!player.hand.length) { game.finished = true; game.winner = player; }
+      return { kind: 'play', played: play.played.length, points: play.points, drawn: null };
+    }
+    var card = game.draw();
+    return { kind: card ? 'draw' : 'pass', played: 0, points: 0, drawn: card };
+  }
+
+  /* ---- Assistance pour le joueur humain --------------------------- */
+
+  /**
+   * Tente de reorganiser la table pour y intégrer `card`
+   * (toutes les cartes deja posees restent en jeu).
+   * @returns {?Array<Array>} nouvelle liste de combinaisons
+   */
+  function fitCard(game, card) {
+    var board = game.boardCards();
+    if (!board.length) return null;
+    var r = Solver.solve(board, [card], { objective: 'count', mustUse: [card] });
+    if (!r || !r.count) return null;
+    return r.sets;
+  }
+
+  root.AI = {
+    findBestPlay: findBestPlay,
+    applyPlay: applyPlay,
+    playAITurn: playAITurn,
+    fitCard: fitCard
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
