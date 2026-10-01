@@ -70,6 +70,8 @@ C'est le cœur de l'interface :
 | **💡 Indices** | Met en avant les cartes de votre main qui peuvent être posées — sans dire où. Aide intermédiaire entre chercher seul et laisser jouer la machine. Une carte est signalée si le solveur sait repartir la table en l'incluant : complément d'une combinaison, nouvelle combinaison avec d'autres cartes de la main, ou réorganisation. |
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
 | **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
+| Suites qui se suivent | Deux suites de même couleur contiguës (…5♠ et 6♠…) sont **réunies automatiquement** : le solveur en produit souvent deux là où une seule suffit. |
+| Couper une suite | Déposez une carte **au milieu d'une colonne** : la suite est coupée à cet endroit et occupe les deux colonnes de sa couleur. Les deux morceaux doivent garder trois cartes. |
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Revenir avant l'IA** | Annule le dernier coup des joueurs virtuels : la partie repart du début de votre tour précédent, dans l'état exact (mains, table, pioche). Plusieurs appuis remontent plus loin. |
 

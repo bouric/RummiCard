@@ -175,6 +175,42 @@
     return [1, cards[0].rank, cards.length];
   }
 
+  function minRank(cards) {
+    var v = cards[0].rank;
+    for (var i = 1; i < cards.length; i++) if (cards[i].rank < v) v = cards[i].rank;
+    return v;
+  }
+  function maxRank(cards) {
+    var v = cards[0].rank;
+    for (var i = 1; i < cards.length; i++) if (cards[i].rank > v) v = cards[i].rank;
+    return v;
+  }
+
+  /* Deux suites de même couleur qui se suivent (…5♠ et 6♠…) n'ont pas de
+     raison de rester séparées : on les réunit. Le joueur peut toujours les
+     recouper en déposant une carte au milieu. */
+  function mergeRuns() {
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (var i = 0; i < game.board.length && !changed; i++) {
+        var A = game.board[i];
+        if (!E.isRun(A.cards)) continue;
+        for (var j = 0; j < game.board.length; j++) {
+          if (i === j) continue;
+          var B = game.board[j];
+          if (!E.isRun(B.cards)) continue;
+          if (A.cards[0].suit !== B.cards[0].suit) continue;
+          if (maxRank(A.cards) + 1 !== minRank(B.cards)) continue;
+          A.cards = E.orderSet(A.cards.concat(B.cards));
+          game.board.splice(j, 1);
+          changed = true;
+          break;
+        }
+      }
+    }
+  }
+
   /* Range la table (uniquement si le joueur a choisi de la garder ordonnée).
      Jamais pendant un glissement : les repères mesurés resteraient faux. */
   function tidyBoard() {
@@ -458,7 +494,7 @@
   }
 
   function paintBoard() {
-    if (!drag) tidyBoard();
+    if (!drag) { mergeRuns(); tidyBoard(); }
     var view = currentView();
     var board = $('#board');
     var total = game.boardCards().length;
@@ -818,6 +854,8 @@
     if (hover) {
       var hi = E.acceptIndex(hover.cards, card);
       if (hi >= 0) return { kind: 'insert', setId: hover.id, index: hi };
+      // Carte déposée au milieu d'une suite : on la coupe là.
+      if (splitParts(hover.cards, card)) return { kind: 'split', setId: hover.id };
     }
 
     // 2) sinon, la meilleure combinaison du plateau
@@ -849,6 +887,20 @@
     return { kind: 'new', zone: inRect(drag.rects.__zone_runs, x, y, 0) ? 'runs' : 'groups' };
   }
 
+  /* Déposer une carte au milieu d'une suite la coupe en deux : …a→r et r→b.
+     Les deux morceaux doivent garder au moins trois cartes. */
+  function splitParts(cards, card) {
+    if (!E.isRun(cards) || cards[0].suit !== card.suit) return null;
+    var a = minRank(cards), b = maxRank(cards), r = card.rank;
+    if (r < a + 2 || r > b - 2) return null;
+    var sorted = E.orderSet(cards), first = [], second = [];
+    for (var i = 0; i < sorted.length; i++) {
+      if (sorted[i].rank <= r) first.push(sorted[i]); else second.push(sorted[i]);
+    }
+    if (first.length < 3 || second.length + 1 < 3) return null;
+    return { first: first, second: second };
+  }
+
   function rearrangement() {
     if (drag.cache.re !== undefined) return drag.cache.re;
     var sets = baseSets(), cards = [];
@@ -865,6 +917,18 @@
     if (t.kind === 'insert') {
       for (i = 0; i < sets.length; i++) {
         if (sets[i].id === t.setId) { sets[i].slot = t.index; sets[i].hole = -1; }
+      }
+      return { sets: sets };
+    }
+    if (t.kind === 'split') {
+      for (i = 0; i < sets.length; i++) {
+        if (sets[i].id !== t.setId) continue;
+        var parts = splitParts(sets[i].cards, drag.card);
+        if (!parts) break;
+        sets.splice(i, 1,
+          { id: sets[i].id, cards: parts.first, slot: -1, hole: -1 },
+          { id: sets[i].id + '~b', cards: parts.second, slot: 0, hole: -1 });
+        break;
       }
       return { sets: sets };
     }
@@ -895,7 +959,8 @@
       txt = E.isValidSet(full)
         ? '✓ s’insère ici'
         : 'en construction…';
-    } else if (t.kind === 'rearrange') txt = '<b>✨ la table se réorganise</b>';
+    } else if (t.kind === 'split') txt = '<b>✂\ufe0f coupe la suite ici</b>';
+    else if (t.kind === 'rearrange') txt = '<b>✨ la table se réorganise</b>';
     else if (t.kind === 'new') txt = 'nouvelle combinaison';
     else if (t.kind === 'hand') txt = 'reprendre en main';
     else txt = 'relâchez sur la table';
@@ -956,6 +1021,20 @@
         game.board.push(game.newSet([card]));
       }
       sndSnap();
+    } else if (t.kind === 'split') {
+      var cut = game.setById(t.setId);
+      var parts = cut ? splitParts(cut.cards, card) : null;
+      if (parts) {
+        cut.cards = parts.first;
+        var piece = game.newSet(E.orderSet([card].concat(parts.second)));
+        piece.zone = 'runs';
+        game.board.push(piece);
+        sndSnap();
+        toast('\u2702\ufe0f Suite coup\u00e9e en deux');
+      } else {
+        game.board.push(game.newSet([card]));
+        sndSnap();
+      }
     } else if (t.kind === 'rearrange') {
       var src = t.sets || (d.cache && d.cache.re);
       game.board = E.alignBoard(game.board, src);
@@ -1223,6 +1302,9 @@
       'les <b>brelans et carrés à droite</b>, et chaque carte à la <b>hauteur de sa ' +
       'valeur</b> — un 7 est toujours sur la ligne des 7. Vous savez d’avance où regarder.</li>' +
       '<li>Un simple <b>clic</b> sur une carte la place au meilleur endroit.</li>' +
+      '<li>Deux suites de m\u00eame couleur qui se suivent (\u20265\u2660 et 6\u2660\u2026) ' +
+      'sont <b>r\u00e9unies automatiquement</b>. Pour les s\u00e9parer de nouveau, d\u00e9posez ' +
+      'une carte au milieu de la colonne : la suite est <b>coup\u00e9e \u00e0 cet endroit</b>.</li>' +
       '<li><b>\ud83d\udca1 Indices</b> met en avant les cartes de votre main qui ' +
       'peuvent \u00eatre pos\u00e9es, sans vous dire o\u00f9 : une aide interm\u00e9diaire ' +
       'entre chercher seul et laisser jouer la machine.</li>' +
