@@ -201,9 +201,21 @@
     'dense': { cw: 48, ch: 68 },
     'denser': { cw: 40, ch: 57 }
   };
-  var GRID_TOP = 20;     // sous l'intitulé de la zone
+  var GRID_TOP = 34;     // sous l'intitulé de la zone et les repères de couleur
   var RULER_W = 22;      // colonne des valeurs, côté suites
   var GROUP_X = 6;       // marge gauche côté brelans et carrés
+  var SUIT_GAP = 16;     // écart entre deux couleurs
+  var RUN_GAP = 8;       // écart entre les deux colonnes d'une couleur
+
+  /* Deux colonnes fixes par couleur : chaque valeur n'existant qu'en deux
+     exemplaires, jamais plus de deux suites d'une même couleur ne se
+     superposent, donc deux colonnes suffisent toujours. */
+  function runColX(suit, k, m) {
+    return RULER_W + suit * (2 * (m.cw + RUN_GAP) + SUIT_GAP) + k * (m.cw + RUN_GAP);
+  }
+  function runsWidth(m) {
+    return runColX(3, 1, m) + m.cw + 10;
+  }
 
   function setEl(s) {
     var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
@@ -222,6 +234,15 @@
       }
     }
     return el;
+  }
+
+  /* Valeur la plus haute d'une combinaison. */
+  function highRank(s) {
+    var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
+    if (!cards.length) return 1;
+    var max = cards[0].rank;
+    for (var i = 1; i < cards.length; i++) if (cards[i].rank > max) max = cards[i].rank;
+    return max;
   }
 
   /* Valeur la plus basse d'une combinaison : elle fixe sa hauteur. */
@@ -254,28 +275,34 @@
     for (i = 0; i < view.sets.length; i++) {
       var s = view.sets[i];
       var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
-      var item = { s: s, el: setEl(s), low: lowRank(s), suit: full.length ? full[0].suit : 0 };
+      var item = { s: s, el: setEl(s), low: lowRank(s), high: highRank(s),
+                   suit: full.length ? full[0].suit : 0 };
       (zoneOf(s, full) === 'runs' ? runs : groups).push(item);
     }
     if (view.newSlot) {
       var ghost = { s: { id: '__new', cards: [], slot: 0, hole: -1 }, low: drag.card.rank,
-                    suit: drag.card.suit };
+                    high: drag.card.rank, suit: drag.card.suit };
       ghost.el = document.createElement('div');
       ghost.el.className = 'set target' + (view.newZone === 'runs' ? ' run' : '');
       ghost.el.appendChild(slotEl());
       (view.newZone === 'runs' ? runs : groups).push(ghost);
     }
 
-    // Suites : une colonne par suite, couleurs regroupées, valeurs croissantes.
+    // Suites : deux colonnes fixes par couleur. Une suite prend la première
+    // colonne encore libre à sa hauteur, sinon la moins encombrée.
     runs.sort(function (a, b) { return (a.suit - b.suit) || (a.low - b.low); });
-    var x = RULER_W, prevSuit = -1;
+    var pad = Math.ceil(m.ch / step) - 1;      // rangées couvertes par la dernière carte
+    var busy = [[-99, -99], [-99, -99], [-99, -99], [-99, -99]];
     for (i = 0; i < runs.length; i++) {
-      if (prevSuit >= 0 && runs[i].suit !== prevSuit) x += 14;
-      prevSuit = runs[i].suit;
-      place(zRuns, runs[i].el, x, GRID_TOP + (runs[i].low - 1) * step);
-      x += m.cw + 8;
+      var r = runs[i], ends = busy[r.suit], k;
+      if (ends[0] < r.low) k = 0;
+      else if (ends[1] < r.low) k = 1;
+      else k = ends[0] <= ends[1] ? 0 : 1;
+      ends[k] = r.high + pad;
+      place(zRuns, r.el, runColX(r.suit, k, m), GRID_TOP + (r.low - 1) * step);
     }
-    var newRunsX = x;
+    addSuitMarks(zRuns, m);
+    var newRunsX = runsWidth(m);
 
     // Groupes : une ligne pleine par valeur présente, de la plus petite à la
     // plus grande. Les cartes ne se recouvrent jamais de ce côté ; quand la
@@ -311,8 +338,8 @@
       needRuns += m.cw + 10;
       needGroups += m.cw + 10;
     }
-    // Chaque zone reçoit une part de largeur proportionnelle à son contenu.
-    zRuns.style.flex = '1 1 ' + Math.max(160, needRuns + 16) + 'px';
+    // La zone des suites garde une largeur fixe : ses colonnes ne bougent pas.
+    zRuns.style.flex = '0 0 ' + (needRuns + 12) + 'px';
     zGroups.style.flex = '1 1 ' + Math.max(160, needGroups + 16) + 'px';
     spacer(zRuns, gridH + GRID_TOP + 12);
     spacer(zGroups, groupsH + GRID_TOP + 12);
@@ -332,6 +359,18 @@
     d.style.width = w + 'px';
     d.style.height = h + 'px';
     zone.appendChild(d);
+  }
+
+  /* Repère de couleur au-dessus de chaque paire de colonnes. */
+  function addSuitMarks(zone, m) {
+    for (var s = 0; s < 4; s++) {
+      var d = document.createElement('div');
+      d.className = 'suitmark s' + s;
+      d.textContent = E.SUIT_GLYPH[s];
+      d.style.left = runColX(s, 0, m) + 'px';
+      d.style.width = (2 * m.cw + RUN_GAP) + 'px';
+      zone.appendChild(d);
+    }
   }
 
   function addRuler(zone, step, gridH) {
@@ -384,11 +423,11 @@
 
   /* Taille des cartes : assez petite pour que toutes les colonnes tiennent. */
   function pickDensity(view, width, height) {
-    var nRuns = 0, ranks = {}, nCols = 1, nRows = 0, i;
+    var ranks = {}, nCols = 1, nRows = 0, i;
     for (i = 0; i < view.sets.length; i++) {
       var s = view.sets[i];
       var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
-      if (zoneOf(s, cards) === 'runs') { nRuns++; continue; }
+      if (zoneOf(s, cards) === 'runs') continue;
       var r = cards.length ? cards[0].rank : 0;
       if (!ranks[r]) nRows++;
       ranks[r] = (ranks[r] || 0) + 1;
@@ -396,10 +435,10 @@
     }
     for (var d = 0; d < DENSITIES.length; d++) {
       var m = METRICS[DENSITIES[d]];
-      var need = 2 * RULER_W + (nRuns + 1) * (m.cw + 8) + 42 +
-                 nCols * (4 * (m.cw + 3) + 18) + m.cw + 24;
-      var high = Math.max(12 * Math.round(m.ch * 0.28) + m.ch,
-                          nRows * (m.ch + 10)) + GRID_TOP + 10;
+      var need = runsWidth(m) + 2 * (m.cw + 10) + 28 +
+                 Math.min(nCols, 2) * (4 * (m.cw + 3) + 18);
+      var high = Math.max(12 * Math.round(m.ch * 0.28) + m.ch, m.ch + 10) +
+                 GRID_TOP + 10;
       if (need <= width && high <= height) return DENSITIES[d];
     }
     return 'denser';

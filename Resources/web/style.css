@@ -170,6 +170,14 @@ header .brand span { color: var(--gold); }
   background: rgba(255, 255, 255, .055);
 }
 .zone .spacer { width: 1px; }
+.zone .suitmark {
+  position: absolute; top: 16px; text-align: center; font-size: 13px; line-height: 1;
+  opacity: .5; pointer-events: none;
+}
+.zone .suitmark.s0 { color: #cfd6e6; }
+.zone .suitmark.s1 { color: #ff8a93; }
+.zone .suitmark.s2 { color: #7fb4ff; }
+.zone .suitmark.s3 { color: #6fdcae; }
 #board.split .zone + .zone { border-left: 1px dashed rgba(255, 255, 255, .16); }
 .zonehead {
   width: 100%; margin-bottom: -4px; font-size: 10px; font-weight: 600;

@@ -121,8 +121,14 @@ le navigateur dans son `localStorage`.
 
   À gauche, l'axe vertical vaut la **valeur des cartes** : l'As tout en haut, le
   Roi tout en bas, avec sa règle graduée. Une suite se place donc en fonction de
-  ses valeurs, les couleurs sont regroupées, et lui ajouter une carte par le bas
-  la fait remonter d'une ligne sans déplacer les cartes déjà posées.
+  ses valeurs, et lui ajouter une carte par le bas la fait remonter d'une ligne
+  sans déplacer les cartes déjà posées.
+
+  Les colonnes y sont **fixes : deux par couleur, toujours au même endroit**,
+  repérées par leur symbole. Deux colonnes suffisent toujours — chaque valeur
+  n'existant qu'en deux exemplaires, jamais plus de deux suites d'une même
+  couleur ne se superposent — et deux suites qui ne se croisent pas (♦2-3-4 et
+  ♦9-10-V par exemple) partagent la même colonne.
 
   À droite, **aucun recouvrement** : une ligne pleine par valeur présente, de la
   plus petite à la plus haute, et une colonne de plus quand une valeur compte
