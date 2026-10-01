@@ -707,6 +707,70 @@
   function sndSnap() { tone(760, .07, 'triangle', .05); tone(1180, .05, 'triangle', .035, .02); }
   function sndLift() { tone(420, .05, 'sine', .035); }
   function sndMagic() { tone(620, .08, 'sine', .05); tone(880, .08, 'sine', .045, .06); tone(1240, .1, 'sine', .04, .12); }
+  /* « Hmm » pensif : un fredonnement bouche fermée. Fondamentale basse,
+     léger vibrato, la hauteur monte puis retombe comme une hésitation, et un
+     passe-bas étouffe les aigus. Chaque joueur a sa voix. */
+  function sndHmm(voice, resigned) {
+    if (!soundOn) return;
+    try {
+      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'suspended') actx.resume();
+      var t0 = actx.currentTime;
+      var base = 166 + ((voice || 0) % 6) * 21;
+      var dur = resigned ? 0.55 : 0.46;
+      var peak = resigned ? base * 0.98 : base * 1.13;
+      var end = resigned ? base * 0.78 : base * 0.9;
+
+      var osc = actx.createOscillator();
+      osc.type = 'triangle';
+      var harm = actx.createOscillator();
+      harm.type = 'sine';
+      var ratio = 2;
+      [[osc, 1], [harm, ratio]].forEach(function (pair) {
+        var o = pair[0], k = pair[1];
+        o.frequency.setValueAtTime(base * k, t0);
+        o.frequency.linearRampToValueAtTime(peak * k, t0 + dur * 0.38);
+        o.frequency.linearRampToValueAtTime(end * k, t0 + dur);
+      });
+      var harmGain = actx.createGain();
+      harmGain.gain.value = 0.22;
+
+      var lfo = actx.createOscillator();      // vibrato
+      lfo.frequency.value = 5.4;
+      var lfoGain = actx.createGain();
+      lfoGain.gain.value = base * 0.022;
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      lfoGain.connect(harm.frequency);
+
+      var filt = actx.createBiquadFilter();   // bouche fermée
+      filt.type = 'lowpass';
+      filt.frequency.value = 700;
+      filt.Q.value = 0.7;
+      var nasal = actx.createBiquadFilter();  // résonance nasale
+      nasal.type = 'peaking';
+      nasal.frequency.value = 340;
+      nasal.Q.value = 2.5;
+      nasal.gain.value = 7;
+
+      var g = actx.createGain();
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(0.075, t0 + 0.08);
+      g.gain.setValueAtTime(0.075, t0 + dur * 0.62);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+      osc.connect(filt);
+      harm.connect(harmGain);
+      harmGain.connect(filt);
+      filt.connect(nasal);
+      nasal.connect(g);
+      g.connect(actx.destination);
+
+      osc.start(t0); harm.start(t0); lfo.start(t0);
+      osc.stop(t0 + dur + 0.05); harm.stop(t0 + dur + 0.05); lfo.stop(t0 + dur + 0.05);
+    } catch (e) { /* audio indisponible */ }
+  }
+
   function sndWin() { [523, 659, 784, 1046].forEach(function (f, i) { tone(f, .22, 'triangle', .07, i * .11); }); }
 
   /* ================= Bulles / toasts ============================== */
@@ -1127,6 +1191,7 @@
     var had = game.stagedCards().length;
     var card = game.draw();
     render(); updateBar();
+    sndHmm(0, !card);
     if (card) toast('Vous piochez ' + E.label(card) + (had ? ' — vos cartes sont revenues en main' : ''));
     else toast('La pioche est vide — vous passez');
     if (game.finished) { gameOver(); return; }
@@ -1180,8 +1245,10 @@
         sndSnap();
       } else if (r.kind === 'draw') {
         toast('<span class="who">' + p.name + '</span> pioche');
+        sndHmm(p.index, false);
       } else {
         toast('<span class="who">' + p.name + '</span> passe');
+        sndHmm(p.index, true);
       }
       render();
       await sleep(620);

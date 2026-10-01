@@ -118,6 +118,15 @@ Mesures : ~6 ms en moyenne sur un tour de fin de partie (70 cartes sur la table,
 joueurs virtuels, le bouton « Jouer au mieux » et la réorganisation automatique
 pendant un glisser-déposer.
 
+## Son
+
+Tout est synthétisé à la volée (Web Audio), sans aucun fichier : un claquement
+bref quand une carte se pose, un arpège quand la table se réorganise, une
+fanfare à la victoire, et un **« hmm » pensif quand un joueur pioche** —
+fredonnement bouche fermée, hauteur qui monte puis retombe, léger vibrato, avec
+une voix par joueur. La version « je passe », faute de pioche, est plus grave et
+plus traînante. Le haut-parleur de l'en-tête coupe l'ensemble.
+
 ## Options
 
 Accessibles par l'engrenage (ou ⌘, / menu **Partie ▸ Options**), conservées
