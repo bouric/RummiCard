@@ -3,7 +3,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="RummiCard.app"
+# L'app est fabriquée dans build/ puis installée dans /Applications :
+# un seul bundle sur le disque, donc une seule icône dans le Launchpad.
+INSTALL_DIR="/Applications"
+[ "${1:-}" = "--no-install" ] && INSTALL_DIR=""
+APP="build/RummiCard.app"
 ARCH="$(uname -m)"
 # La version est l'horodatage de compilation : date + heure.
 BUILD_VERSION="$(date '+%Y.%m.%d.%H%M')"
@@ -13,6 +17,8 @@ COPYRIGHT="© $(date '+%Y') Richard Boulais &amp; Claude"
 echo "▸ Nettoyage"
 rm -rf "$APP" build/RummiCard.iconset build/icons
 mkdir -p build/icons build/RummiCard.iconset
+# Vestige des versions précédentes, qui faisait doublon dans le Launchpad.
+rm -rf RummiCard.app
 
 echo "▸ Icône"
 swiftc -O Tools/makeicon.swift -o build/makeicon
@@ -62,4 +68,18 @@ PLIST
 echo "▸ Signature locale"
 codesign --force --sign - "$APP" 2>/dev/null || echo "  (signature ad-hoc ignorée)"
 
-echo "✓ $APP prêt — version ${BUILD_VERSION} (${BUILD_DATE}) — $(du -sh "$APP" | cut -f1)"
+if [ -n "$INSTALL_DIR" ]; then
+  echo "▸ Installation dans $INSTALL_DIR"
+  if pgrep -f "$INSTALL_DIR/RummiCard.app/Contents/MacOS/RummiCard" >/dev/null; then
+    osascript -e 'quit app "RummiCard"' >/dev/null 2>&1 || true
+    sleep 1
+  fi
+  rm -rf "$INSTALL_DIR/RummiCard.app"
+  cp -R "$APP" "$INSTALL_DIR/RummiCard.app"
+  rm -rf "$APP"
+  FINAL="$INSTALL_DIR/RummiCard.app"
+else
+  FINAL="$APP"
+fi
+
+echo "✓ $FINAL — version ${BUILD_VERSION} (${BUILD_DATE}) — $(du -sh "$FINAL" | cut -f1)"
