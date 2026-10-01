@@ -1,3 +1,4 @@
+/* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
    solver.js — Solveur Rummikub exact (programmation dynamique)
    ---------------------------------------------------------------------

@@ -1,3 +1,4 @@
+/* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
    ai.js — Joueurs virtuels + assistance de placement pour le joueur
    Tout repose sur Solver.solve (partition exacte de la table).

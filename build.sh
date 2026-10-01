@@ -5,6 +5,11 @@ cd "$(dirname "$0")"
 
 APP="RummiCard.app"
 ARCH="$(uname -m)"
+# La version est l'horodatage de compilation : date + heure.
+BUILD_VERSION="$(date '+%Y.%m.%d.%H%M')"
+BUILD_DATE="$(date '+%d/%m/%Y à %H:%M')"
+# (&amp; : le plist est du XML)
+COPYRIGHT="© $(date '+%Y') Richard Boulais &amp; Claude"
 echo "▸ Nettoyage"
 rm -rf "$APP" build/RummiCard.iconset build/icons
 mkdir -p build/icons build/RummiCard.iconset
@@ -30,7 +35,7 @@ cp build/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 cp -R Resources/web "$APP/Contents/Resources/web"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -42,12 +47,13 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>${BUILD_VERSION}</string>
+  <key>CFBundleVersion</key><string>${BUILD_VERSION}</string>
+  <key>RCBuildDate</key><string>${BUILD_DATE}</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.card-games</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSHumanReadableCopyright</key><string>RummiCard</string>
+  <key>NSHumanReadableCopyright</key><string>${COPYRIGHT}</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
 </dict>
 </plist>
@@ -56,4 +62,4 @@ PLIST
 echo "▸ Signature locale"
 codesign --force --sign - "$APP" 2>/dev/null || echo "  (signature ad-hoc ignorée)"
 
-echo "✓ $APP prêt — $(du -sh "$APP" | cut -f1)"
+echo "✓ $APP prêt — version ${BUILD_VERSION} (${BUILD_DATE}) — $(du -sh "$APP" | cut -f1)"

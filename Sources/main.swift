@@ -1,3 +1,4 @@
+// RummiCard — © 2026 Richard Boulais & Claude
 //
 //  RummiCard — hôte natif macOS
 //  Une fenêtre AppKit qui héberge le jeu (WKWebView, ressources locales).
@@ -6,7 +7,31 @@
 import AppKit
 import WebKit
 
+/// Échappe une chaîne pour l'insérer telle quelle dans du JavaScript.
+func jsLiteral(_ s: String) -> String {
+    var out = "\""
+    for ch in s.unicodeScalars {
+        switch ch {
+        case "\"": out += "\\\""
+        case "\\": out += "\\\\"
+        case "\n": out += "\\n"
+        default:
+            if ch.value < 0x20 {
+                out += String(format: "\\u%04x", ch.value)
+            } else {
+                out.unicodeScalars.append(ch)
+            }
+        }
+    }
+    return out + "\""
+}
+
 final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
+
+    static let info = Bundle.main.infoDictionary ?? [:]
+    static let version = info["CFBundleShortVersionString"] as? String ?? "—"
+    static let buildDate = info["RCBuildDate"] as? String ?? "—"
+    static let copyright = info["NSHumanReadableCopyright"] as? String ?? ""
 
     var window: NSWindow!
     var web: WKWebView!
@@ -21,6 +46,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         let config = WKWebViewConfiguration()
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         config.defaultWebpagePreferences.allowsContentJavaScript = true
+
+        // La page affiche la version et le copyright du bundle.
+        let stamp = "window.APP_VERSION=\(jsLiteral(Self.version));" +
+                    "window.APP_BUILD=\(jsLiteral(Self.buildDate));" +
+                    "window.APP_COPYRIGHT=\(jsLiteral(Self.copyright));"
+        config.userContentController.addUserScript(
+            WKUserScript(source: stamp, injectionTime: .atDocumentStart, forMainFrameOnly: true))
 
         web = WKWebView(frame: NSRect(x: 0, y: 0, width: 1280, height: 840), configuration: config)
         web.navigationDelegate = self
@@ -93,6 +125,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         gameMenu.addItem(.separator())
         gameMenu.addItem(withTitle: "Valider le tour", action: #selector(commitTurn), keyEquivalent: "\r").target = self
         gameMenu.addItem(withTitle: "Annuler le tour", action: #selector(undoTurn), keyEquivalent: "z").target = self
+        let rewind = gameMenu.addItem(withTitle: "Annuler le coup de l’IA",
+                                      action: #selector(rewindAI), keyEquivalent: "z")
+        rewind.keyEquivalentModifierMask = [.command, .shift]
+        rewind.target = self
         gameMenu.addItem(withTitle: "Piocher", action: #selector(drawCard), keyEquivalent: "p").target = self
         gameMenu.addItem(withTitle: "Jouer au mieux", action: #selector(autoPlay), keyEquivalent: "j").target = self
         gameMenu.addItem(withTitle: "Trier la main", action: #selector(sortHand), keyEquivalent: "t").target = self
@@ -135,15 +171,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     @objc private func autoPlay()   { js("document.getElementById('auto').click()") }
     @objc private func sortHand()   { js("document.getElementById('sort').click()") }
     @objc private func showRules()  { js("window.RC && RC.showRules()") }
+    @objc private func rewindAI()   { js("document.getElementById('rewind').click()") }
 
     @objc private func about() {
         let alert = NSAlert()
-        alert.messageText = "RummiCard 1.0"
+        alert.messageText = "RummiCard"
         alert.informativeText = """
-        Les règles du Rummikub, jouées avec 2 jeux de 52 cartes.
+        Version \(Self.version)
+        Compilée le \(Self.buildDate)
 
+        Les règles du Rummikub, jouées avec 2 jeux de 52 cartes.
         Glissez une carte vers la table : elle se place toute seule \
         au bon endroit, et la table se réorganise si nécessaire.
+
+        \(Self.copyright)
         """
         alert.addButton(withTitle: "Fermer")
         alert.runModal()

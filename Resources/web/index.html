@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- RummiCard — © 2026 Richard Boulais & Claude -->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
@@ -24,6 +25,8 @@
   <div class="choices" id="choices"></div>
   <button class="cta" id="start">Commencer la partie</button>
   <button class="linkbtn" id="rules-link">Voir les règles</button>
+  <div class="foot"><span id="version">Version de développement</span>
+    &nbsp;·&nbsp; © 2026 Richard Boulais &amp; Claude</div>
 </div>
 
 <!-- ============ Jeu ============ -->
@@ -45,10 +48,12 @@
 
   <div id="bar">
     <button class="btn go" id="commit">&#10003; Valider</button>
-    <button class="btn" id="undo">&#8617; Annuler</button>
+    <button class="btn" id="undo" title="Remettre votre tour en cours à zéro (⌫)">&#8617; Annuler</button>
     <button class="btn" id="draw">&#127183; Piocher</button>
     <button class="btn magic" id="auto">&#10024; Jouer au mieux</button>
     <button class="btn" id="sort">&#8645; Trier</button>
+    <button class="btn" id="rewind"
+            title="Annuler le dernier coup des joueurs virtuels et revenir au début de votre tour précédent (R)">&#10226; Revenir avant l'IA</button>
     <div id="msg"></div>
   </div>
 

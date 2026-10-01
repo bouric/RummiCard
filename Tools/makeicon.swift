@@ -1,3 +1,4 @@
+// RummiCard — © 2026 Richard Boulais & Claude
 // Génère les PNG de l'icône de l'app (dessin vectoriel, une passe par taille).
 import AppKit
 import Foundation

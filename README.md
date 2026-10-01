@@ -30,10 +30,17 @@ assemble `RummiCard.app` (≈650 Ko).
   As = 1, Valet = 11, Dame = 12, Roi = 13.
 - **Groupe** : 3 ou 4 cartes de même valeur, toutes de couleurs différentes.
 - **Suite** : 3 cartes ou plus de même couleur, de valeurs consécutives.
+  L'As vaut **1** et se place avant le 2 : `A-2-3` est une suite, `D-R-A` n'en
+  est pas une (pas de bouclage).
 - 14 cartes distribuées à chacun.
 - **Première pose : 30 points minimum**, en n'utilisant que ses propres cartes.
 - Ensuite, la table entière peut être réorganisée librement, à condition que
-  toutes les combinaisons soient valides à la fin du tour.
+  toutes les combinaisons soient valides à la fin du tour : on peut prendre une
+  carte d'une combinaison posée (le 4ᵉ d'un carré, par exemple) pour la glisser
+  sur une autre.
+- Tant que la première pose n'est pas faite, les cartes de la table sont
+  intouchables — y compris pour compléter un brelan. Le jeu le signale pendant
+  le glisser.
 - Rien à poser → on pioche et le tour passe.
 - Le premier à vider sa main gagne ; pioche épuisée, c'est le moins de points.
 
@@ -59,9 +66,11 @@ C'est le cœur de l'interface :
 | Clic simple sur une carte de la main | Placement automatique au meilleur endroit. |
 | Glisser vers sa main une carte posée ce tour-ci | On la récupère. |
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
+| **⟲ Revenir avant l'IA** | Annule le dernier coup des joueurs virtuels : la partie repart du début de votre tour précédent, dans l'état exact (mains, table, pioche). Plusieurs appuis remontent plus loin. |
 
 Raccourcis : `Entrée` valider · `⌫` annuler · `P` piocher · `A` jouer au mieux ·
-`T` trier. Les mêmes commandes sont dans le menu **Partie**.
+`T` trier · `R` revenir avant l'IA. Les mêmes commandes sont dans le menu
+**Partie** (⇧⌘Z pour annuler le coup de l'IA).
 
 ## Architecture
 
@@ -96,6 +105,13 @@ cas (les 104 cartes sur la table). C'est ce même solveur qui alimente les
 joueurs virtuels, le bouton « Jouer au mieux » et la réorganisation automatique
 pendant un glisser-déposer.
 
+## Version
+
+Le numéro de version est l'**horodatage de compilation** : `build.sh` écrit
+`AAAA.MM.JJ.HHMM` dans `CFBundleShortVersionString` et la date lisible dans
+`RCBuildDate`. L'hôte natif les injecte dans la page, qui les affiche en bas de
+l'écran d'accueil ; le menu **RummiCard ▸ À propos** les reprend aussi.
+
 ## Développement
 
 Le jeu est du JavaScript sans dépendance : on peut l'ouvrir directement dans un
@@ -107,3 +123,7 @@ python3 -m http.server 8777 --directory Resources/web
 
 `window.RC` expose l'état de la partie (`RC.game`, `RC.render()`,
 `RC.setVirtual(n)`, `RC.newGame()`) pour scripter des situations de test.
+
+---
+
+© 2026 Richard Boulais & Claude

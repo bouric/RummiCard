@@ -1,3 +1,4 @@
+/* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
    ui.js — Interface : rendu, glisser-deposer avec placement automatique,
    animations FLIP, tours des joueurs virtuels.
@@ -15,6 +16,7 @@
   var soundOn = true;
   var busy = false;
   var drag = null;
+  var history = [];          // état au début de chacun de vos tours
 
   /* ================= Accueil ====================================== */
 
@@ -36,6 +38,7 @@
 
   function newGame() {
     game = new E.Game(nVirtual);
+    history = [game.captureState()];
     $('#menu').classList.add('hidden');
     $('#game').classList.remove('hidden');
     $('#overlay').classList.add('hidden');
@@ -255,6 +258,7 @@
     $('#draw').disabled = !human;
     $('#auto').disabled = !human;
     $('#sort').disabled = !human;
+    $('#rewind').disabled = !canRewind();
 
     var msg = $('#msg');
     msg.className = '';
@@ -397,7 +401,8 @@
 
   function setTarget(x, y, force) {
     var t = computeTarget(x, y);
-    var key = t.kind + ':' + (t.setId || '') + ':' + (t.index === undefined ? '' : t.index);
+    var key = t.kind + ':' + (t.setId || '') + ':' +
+      (t.index === undefined ? '' : t.index) + ':' + (t.blocked ? 'x' : '');
     if (!force && key === drag.targetKey) return;
     drag.targetKey = key;
     drag.target = t;
@@ -423,27 +428,37 @@
 
     var sets = baseSets(), i;
     var melded = game.human().melded;
+    // Vrai si une combinaison aurait accueilli la carte mais que la règle de
+    // la première pose l'interdit : on le dira au joueur au lieu de l'ignorer.
+    var blocked = false;
 
     // 1) la combinaison directement sous le curseur
     var hover = null;
     for (i = 0; i < sets.length; i++) {
       if (inRect(drag.rects[sets[i].id], x, y, 6)) hover = sets[i];
     }
-    if (hover && allowed(hover, melded)) {
+    if (hover) {
       var hi = E.acceptIndex(hover.cards, card);
-      if (hi >= 0) return { kind: 'insert', setId: hover.id, index: hi };
+      if (hi >= 0) {
+        if (allowed(hover, melded)) return { kind: 'insert', setId: hover.id, index: hi };
+        blocked = true;
+      }
     }
 
     // 2) sinon, la meilleure combinaison du plateau
     var best = null, bestScore = -1e9;
     for (i = 0; i < sets.length; i++) {
       var s = sets[i];
-      if (!allowed(s, melded)) continue;
       var idx = E.acceptIndex(s.cards, card);
       if (idx < 0) continue;
+      if (!allowed(s, melded)) { blocked = true; continue; }
       var score = 0;
       if (E.isValidSet(s.cards.concat([card]))) score += 5000;
       score += s.cards.length * 120;
+      // Une carte sortie d'une combinaison ne doit pas y retourner d'elle-même :
+      // sinon impossible de déplacer une carte d'un carré vers un autre groupe
+      // sans viser au pixel près. On y revient en relâchant dessus.
+      if (drag.origin.type === 'set' && s.id === drag.origin.setId) score -= 4000;
       var r = drag.rects[s.id];
       if (r) {
         var dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
@@ -458,7 +473,7 @@
       var re = rearrangement();
       if (re) return { kind: 'rearrange' };
     }
-    return { kind: 'new' };
+    return { kind: 'new', blocked: blocked };
   }
 
   /* Pendant la premiere pose, seules les combinaisons entierement
@@ -514,7 +529,11 @@
         ? '✓ s’insère ici'
         : 'en construction…';
     } else if (t.kind === 'rearrange') txt = '<b>✨ la table se réorganise</b>';
-    else if (t.kind === 'new') txt = 'nouvelle combinaison';
+    else if (t.kind === 'new') {
+      txt = t.blocked
+        ? '<b>⚠ première pose</b> : 30 points avec vos cartes d’abord'
+        : 'nouvelle combinaison';
+    }
     else if (t.kind === 'hand') txt = 'reprendre en main';
     else txt = 'relâchez sur la table';
     h.innerHTML = txt;
@@ -580,6 +599,10 @@
     } else {
       game.board.push(game.newSet([card]));
       sndSnap();
+      if (t.blocked) {
+        toast('Première pose : impossible de compléter une combinaison de la table. ' +
+              'Posez d’abord 30 points avec vos seules cartes.');
+      }
     }
     game.compact();
     render({ land: card.id });
@@ -603,6 +626,29 @@
   function restoreState(st) {
     game.board = st.board.map(function (s) { return { id: s.id, cards: s.cards.slice() }; });
     game.human().hand = st.hand.slice();
+  }
+
+  /* Mémorise l'état au début de chaque tour du joueur réel. */
+  function pushHistory() {
+    if (!game || game.finished || !game.player().human) return;
+    history.push(game.captureState());
+    if (history.length > 50) history.shift();
+  }
+
+  function canRewind() {
+    return history.length >= 2 && game && !game.finished && game.player().human && !busy;
+  }
+
+  /* Annule le dernier coup des joueurs virtuels : on revient au début de
+     votre tour précédent, donc avant leurs réponses. */
+  function doRewind() {
+    if (!canRewind()) return;
+    history.pop();
+    game.applyState(history[history.length - 1]);
+    render();
+    updateBar();
+    sndLift();
+    toast('\u27f2 Retour avant le coup des joueurs virtuels');
   }
 
   function doCommit() {
@@ -690,6 +736,7 @@
       game.nextPlayer();
     }
     busy = false;
+    pushHistory();
     render();
     updateBar();
     if (game.finished) gameOver();
@@ -740,7 +787,9 @@
       'remplacent les couleurs des tuiles.</p>' +
       '<h3>Combinaisons</h3><ul>' +
       '<li><b>Groupe</b> : 3 ou 4 cartes de même valeur, toutes de couleurs différentes.</li>' +
-      '<li><b>Suite</b> : 3 cartes ou plus de même couleur, valeurs consécutives.</li></ul>' +
+      '<li><b>Suite</b> : 3 cartes ou plus de même couleur, valeurs consécutives. ' +
+      'L\u2019As vaut <b>1</b> et se place avant le 2 : A-2-3 est une suite, ' +
+      'mais D-R-A n\u2019en est pas une.</li></ul>' +
       '<h3>Déroulement</h3><ul>' +
       '<li>14 cartes chacun. Votre <b>première pose</b> doit totaliser <b>30 points</b> ' +
       'et n’utiliser que vos propres cartes.</li>' +
@@ -756,9 +805,16 @@
       'automatiquement pour l’accueillir (✨).</li>' +
       '<li>Un simple <b>clic</b> sur une carte la place au meilleur endroit.</li>' +
       '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
-      '<li>Glissez une carte posée ce tour-ci vers votre main pour la récupérer.</li></ul>' +
+      '<li><b>Revenir avant l\u2019IA</b> annule le dernier coup des joueurs ' +
+      'virtuels : la partie repart du début de votre tour précédent. ' +
+      'Appuyez plusieurs fois pour remonter plus loin.</li>' +
+      '<li>Glissez une carte posée ce tour-ci vers votre main pour la récupérer.</li>' +
+      '<li>Une fois votre première pose faite, vous pouvez prendre une carte ' +
+      'd\u2019une combinaison de la table (le 4<sup>e</sup> d\u2019un carré par exemple) ' +
+      'et la glisser sur une autre combinaison.</li>' +
+      '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : valider · ⌫ : annuler · P : piocher · ' +
-      'A : jouer au mieux · T : trier</p>' +
+      'A : jouer au mieux · T : trier · R : revenir avant l\u2019IA</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
@@ -774,6 +830,7 @@
   $('#draw').onclick = doDraw;
   $('#auto').onclick = doAuto;
   $('#sort').onclick = doSort;
+  $('#rewind').onclick = doRewind;
   function confirmQuit() {
     return window.confirm('Abandonner la partie en cours ?');
   }
@@ -798,10 +855,21 @@
     else if (e.key === 'p' || e.key === 'P') { doDraw(); }
     else if (e.key === 'a' || e.key === 'A') { doAuto(); }
     else if (e.key === 't' || e.key === 'T') { doSort(); }
+    else if (e.key === 'r' || e.key === 'R') { doRewind(); }
   });
 
   window.addEventListener('resize', function () { if (game) render({ animate: false }); });
 
+  /* Version et copyright : fournis par l'hôte natif, sinon mode navigateur. */
+  function stampFooter() {
+    var v = $('#version');
+    if (!v) return;
+    v.textContent = window.APP_BUILD
+      ? 'Version du ' + window.APP_BUILD
+      : 'Version de développement';
+  }
+
+  stampFooter();
   buildMenu();
 
   /* Point d'acces utilise par les tests automatises. */
@@ -813,6 +881,7 @@
     newGame: newGame,
     setVirtual: function (n) { nVirtual = n; },
     showRules: showRules,
+    rewind: doRewind,
     showMenu: function () {
       if (game && !game.finished && !confirmQuit()) return;
       $('#overlay').classList.add('hidden');

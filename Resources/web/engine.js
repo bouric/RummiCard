@@ -1,3 +1,4 @@
+/* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
    engine.js — Moteur de jeu : cartes, combinaisons, règles Rummikub
    ---------------------------------------------------------------------
@@ -279,6 +280,37 @@
     }
     this.current = (this.current + 1) % this.players.length;
     this.turnCount++;
+    this.beginTurn();
+  };
+
+  /* ---- Historique : photographie complète d'une partie ----------- */
+
+  Game.prototype.captureState = function () {
+    return {
+      board: this.board.map(function (s) { return { id: s.id, cards: s.cards.slice() }; }),
+      hands: this.players.map(function (p) { return p.hand.slice(); }),
+      melded: this.players.map(function (p) { return p.melded; }),
+      deck: this.deck.slice(),
+      current: this.current,
+      passStreak: this.passStreak,
+      turnCount: this.turnCount,
+      finished: this.finished,
+      winner: this.winner ? this.winner.index : -1
+    };
+  };
+
+  Game.prototype.applyState = function (st) {
+    this.board = st.board.map(function (s) { return { id: s.id, cards: s.cards.slice() }; });
+    for (var i = 0; i < this.players.length; i++) {
+      this.players[i].hand = st.hands[i].slice();
+      this.players[i].melded = st.melded[i];
+    }
+    this.deck = st.deck.slice();
+    this.current = st.current;
+    this.passStreak = st.passStreak;
+    this.turnCount = st.turnCount;
+    this.finished = st.finished;
+    this.winner = st.winner >= 0 ? this.players[st.winner] : null;
     this.beginTurn();
   };
 
