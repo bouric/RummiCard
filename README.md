@@ -32,8 +32,9 @@ Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installé
   As = 1, Valet = 11, Dame = 12, Roi = 13.
 - **Groupe** : 3 ou 4 cartes de même valeur, toutes de couleurs différentes.
 - **Suite** : 3 cartes ou plus de même couleur, de valeurs consécutives.
-  L'As vaut **1** et se place avant le 2 : `A-2-3` est une suite, `D-R-A` n'en
-  est pas une (pas de bouclage).
+  L'As se place **avant le 2 ou après le Roi** : `A-2-3` et `D-R-A` sont deux
+  suites valides. La boucle reste interdite : `R-A-2` n'en est pas une. Les deux
+  usages peuvent coexister dans une même couleur, avec les deux exemplaires.
 - 14 cartes distribuées à chacun.
 - À chaque tour, il faut poser **au moins une carte** de sa main — n'importe où,
   y compris sur les combinaisons déjà sur la table. **Pas de minimum de points
@@ -99,7 +100,11 @@ build.sh                  compilation + assemblage du bundle .app
 cartes de la table plus un sous-ensemble d'une main en combinaisons valides, en
 maximisant le nombre (ou la somme) des cartes posées.*
 
-Programmation dynamique sur les valeurs 1 → 13. L'état retient, pour chacune des
+Programmation dynamique sur les valeurs 1 → 14, la 14ᵉ étant l'As placé après
+le Roi. Comme les deux emplacements de l'As se disputent les mêmes cartes, le
+solveur énumère, par couleur, le nombre d'As joués haut (0, 1 ou 2) et garde la
+meilleure partition ; les couleurs sans Dame ni Roi disponibles sont écartées
+d'office, et l'énumération s'arrête dès qu'une variante pose toute la main. L'état retient, pour chacune des
 4 couleurs, le nombre de suites en cours se terminant à la valeur précédente,
 selon leur longueur (1, 2, ou ≥ 3) ; comme chaque carte n'existe qu'en deux
 exemplaires, ces trois compteurs totalisent au plus 2, ce qui borne l'espace
@@ -107,8 +112,9 @@ d'états. À chaque valeur, on énumère les groupes formables (21 configuration
 puis, couleur par couleur, la répartition des cartes entre prolongation de
 suites, nouvelles suites et groupes.
 
-Mesures : < 1 ms en moyenne sur un tour de partie réelle, ~110 ms dans le pire
-cas (les 104 cartes sur la table). C'est ce même solveur qui alimente les
+Mesures : ~6 ms en moyenne sur un tour de fin de partie (70 cartes sur la table,
+14 en main), 18 ms au pire ; 385 ms sur le cas artificiel des 104 cartes
+étalées. C'est ce même solveur qui alimente les
 joueurs virtuels, le bouton « Jouer au mieux » et la réorganisation automatique
 pendant un glisser-déposer.
 
@@ -124,7 +130,8 @@ le navigateur dans son `localStorage`.
   gauche**, les **brelans et carrés à droite**.
 
   À gauche, l'axe vertical vaut la **valeur des cartes** : l'As tout en haut, le
-  Roi tout en bas, avec sa règle graduée. Une suite se place donc en fonction de
+  Roi en bas, puis une **14ᵉ ligne** pour l'As joué après le Roi, avec sa règle
+  graduée. Une suite se place donc en fonction de
   ses valeurs, et lui ajouter une carte par le bas la fait remonter d'une ligne
   sans déplacer les cartes déjà posées.
 

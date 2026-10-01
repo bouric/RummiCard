@@ -63,13 +63,48 @@
     return true;
   }
 
-  function isRun(cards) {
-    if (cards.length < 3) return false;
-    var suit = cards[0].suit;
-    for (var i = 0; i < cards.length; i++) if (cards[i].suit !== suit) return false;
-    var ranks = cards.map(function (c) { return c.rank; }).sort(function (a, b) { return a - b; });
-    for (var k = 1; k < ranks.length; k++) if (ranks[k] !== ranks[k - 1] + 1) return false;
+  /* L'As vaut 1 (avant le 2) ou 14 (après le Roi), jamais les deux dans la
+     même suite : A-2-3 et D-R-A sont des suites, R-A-2 n'en est pas une. */
+  var ACE_HIGH = 14;
+
+  function effRank(card, high) {
+    return (high && card.rank === 1) ? ACE_HIGH : card.rank;
+  }
+
+  function consecutive(ranks) {
+    for (var i = 1; i < ranks.length; i++) if (ranks[i] !== ranks[i - 1] + 1) return false;
     return true;
+  }
+
+  function sortedEff(cards, high) {
+    var r = [], i;
+    for (i = 0; i < cards.length; i++) r.push(effRank(cards[i], high));
+    return r.sort(function (a, b) { return a - b; });
+  }
+
+  /**
+   * Suite d'une combinaison, As bas ou As haut.
+   * @returns {?Array<number>} valeurs triées, ou null si ce n'est pas une suite
+   */
+  function runSeq(cards) {
+    if (!cards.length || !sameSuit(cards)) return null;
+    var low = sortedEff(cards, false);
+    if (consecutive(low)) return low;
+    var hasAce = false, i;
+    for (i = 0; i < cards.length; i++) if (cards[i].rank === 1) hasAce = true;
+    if (!hasAce) return null;
+    var high = sortedEff(cards, true);
+    return consecutive(high) ? high : null;
+  }
+
+  /* Vrai si la combinaison se lit avec l'As après le Roi. */
+  function aceHighRun(cards) {
+    var seq = runSeq(cards);
+    return !!(seq && seq[seq.length - 1] === ACE_HIGH);
+  }
+
+  function isRun(cards) {
+    return cards.length >= 3 && !!runSeq(cards);
   }
 
   function isValidSet(cards) { return isGroup(cards) || isRun(cards); }
@@ -87,14 +122,15 @@
       for (var i = 0; i < cards.length; i++) used |= 1 << cards[i].suit;
       if (!(used & (1 << card.suit))) return cards.length;
     }
-    // --- mode suite : meme couleur, valeurs consecutives
+    // --- mode suite : meme couleur, valeurs consecutives, As bas ou haut
     if (sameSuit(cards) && cards[0].suit === card.suit) {
-      var ranks = cards.map(function (c) { return c.rank; }).sort(function (a, b) { return a - b; });
-      var contiguous = true;
-      for (var k = 1; k < ranks.length; k++) if (ranks[k] !== ranks[k - 1] + 1) contiguous = false;
-      if (contiguous) {
-        if (card.rank === ranks[0] - 1) return 0;
-        if (card.rank === ranks[ranks.length - 1] + 1) return cards.length;
+      for (var h = 0; h < 2; h++) {
+        var high = h === 1;
+        var ranks = sortedEff(cards, high);
+        if (!consecutive(ranks)) continue;
+        var cr = effRank(card, high);
+        if (cr === ranks[0] - 1) return 0;
+        if (cr === ranks[ranks.length - 1] + 1) return cards.length;
       }
     }
     return -1;
@@ -109,11 +145,16 @@
     return true;
   }
 
-  /* Range les cartes d'une combinaison dans l'ordre d'affichage. */
+  /* Range les cartes d'une combinaison dans l'ordre d'affichage : dans une
+     suite As haut, l'As se place après le Roi. */
   function orderSet(cards) {
     var out = cards.slice();
-    if (sameSuit(out)) out.sort(function (a, b) { return a.rank - b.rank; });
-    else out.sort(function (a, b) { return a.suit - b.suit; });
+    if (sameSuit(out)) {
+      var high = aceHighRun(out);
+      out.sort(function (a, b) { return effRank(a, high) - effRank(b, high); });
+    } else {
+      out.sort(function (a, b) { return a.suit - b.suit; });
+    }
     return out;
   }
 
@@ -371,6 +412,10 @@
     label: label,
     isGroup: isGroup,
     isRun: isRun,
+    runSeq: runSeq,
+    aceHighRun: aceHighRun,
+    effRank: effRank,
+    ACE_HIGH: ACE_HIGH,
     isValidSet: isValidSet,
     acceptIndex: acceptIndex,
     orderSet: orderSet,

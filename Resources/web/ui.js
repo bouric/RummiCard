@@ -168,23 +168,26 @@
     var cards = s.cards, i;
     if (!cards.length) return [2, 0, 0];
     if (zoneOf(s, cards) === 'runs') {
-      var min = cards[0].rank;
-      for (i = 1; i < cards.length; i++) if (cards[i].rank < min) min = cards[i].rank;
-      return [0, cards[0].suit, min];
+      return [0, cards[0].suit, bounds(cards).lo];
     }
     return [1, cards[0].rank, cards.length];
   }
 
-  function minRank(cards) {
-    var v = cards[0].rank;
-    for (var i = 1; i < cards.length; i++) if (cards[i].rank < v) v = cards[i].rank;
-    return v;
+  /* Bornes d'une combinaison en valeurs d'affichage : dans une suite As haut,
+     l'As compte 14 et se place sous le Roi. */
+  function bounds(cards) {
+    if (!cards.length) return { lo: 1, hi: 1 };
+    var seq = E.runSeq(cards);
+    if (seq) return { lo: seq[0], hi: seq[seq.length - 1] };
+    var lo = cards[0].rank, hi = cards[0].rank;
+    for (var i = 1; i < cards.length; i++) {
+      if (cards[i].rank < lo) lo = cards[i].rank;
+      if (cards[i].rank > hi) hi = cards[i].rank;
+    }
+    return { lo: lo, hi: hi };
   }
-  function maxRank(cards) {
-    var v = cards[0].rank;
-    for (var i = 1; i < cards.length; i++) if (cards[i].rank > v) v = cards[i].rank;
-    return v;
-  }
+  function minRank(cards) { return bounds(cards).lo; }
+  function maxRank(cards) { return bounds(cards).hi; }
 
   /* Deux suites de même couleur qui se suivent (…5♠ et 6♠…) n'ont pas de
      raison de rester séparées : on les réunit. Le joueur peut toujours les
@@ -278,19 +281,13 @@
   /* Valeur la plus haute d'une combinaison. */
   function highRank(s) {
     var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
-    if (!cards.length) return 1;
-    var max = cards[0].rank;
-    for (var i = 1; i < cards.length; i++) if (cards[i].rank > max) max = cards[i].rank;
-    return max;
+    return cards.length ? bounds(cards).hi : 1;
   }
 
   /* Valeur la plus basse d'une combinaison : elle fixe sa hauteur. */
   function lowRank(s) {
     var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
-    if (!cards.length) return 1;
-    var min = cards[0].rank;
-    for (var i = 1; i < cards.length; i++) if (cards[i].rank < min) min = cards[i].rank;
-    return min;
+    return cards.length ? bounds(cards).lo : 1;
   }
 
   /* ---- Table rangée : la hauteur d'une carte = sa valeur -------------
@@ -302,7 +299,7 @@
     var avail = board.clientHeight || 520;
     var step = Math.round(m.ch * 0.28);
     board.style.setProperty('--step', step + 'px');
-    var gridH = 12 * step + m.ch;
+    var gridH = 13 * step + m.ch;
 
     var zRuns = makeZone('runs grid', 'Suites');
     var zGroups = makeZone('groups grid', 'Brelans et carrés');
@@ -425,13 +422,15 @@
   function addRuler(zone, step, gridH) {
     var r = document.createElement('div');
     r.className = 'ruler';
-    for (var v = 1; v <= 13; v++) {
+    // 14 lignes : As, 2 … Roi, puis l'As haut sous le Roi.
+    for (var v = 1; v <= 14; v++) {
       var line = document.createElement('div');
       line.className = 'gridline';
       line.style.top = (GRID_TOP + (v - 1) * step) + 'px';
       r.appendChild(line);
       var lab = document.createElement('i');
-      lab.textContent = E.RANK_LABEL[v];
+      lab.textContent = v === 14 ? 'A' : E.RANK_LABEL[v];
+      if (v === 14) lab.className = 'acehigh';
       lab.style.top = (GRID_TOP + (v - 1) * step) + 'px';
       r.appendChild(lab);
     }
@@ -486,7 +485,7 @@
       var m = METRICS[DENSITIES[d]];
       var need = runsWidth(m) + (m.cw + 10) + GROUP_X +
                  (2 + (nCols > 1 ? 1 : 0)) * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24;
-      var high = GRID_TOP + Math.max(12 * Math.round(m.ch * 0.28) + m.ch,
+      var high = GRID_TOP + Math.max(13 * Math.round(m.ch * 0.28) + m.ch,
                                      VALUE_ROWS * (m.ch + 6));
       if (need <= width && high <= height) return DENSITIES[d];
     }
@@ -891,11 +890,12 @@
      Les deux morceaux doivent garder au moins trois cartes. */
   function splitParts(cards, card) {
     if (!E.isRun(cards) || cards[0].suit !== card.suit) return null;
-    var a = minRank(cards), b = maxRank(cards), r = card.rank;
+    var high = E.aceHighRun(cards);
+    var b0 = bounds(cards), a = b0.lo, b = b0.hi, r = E.effRank(card, high);
     if (r < a + 2 || r > b - 2) return null;
     var sorted = E.orderSet(cards), first = [], second = [];
     for (var i = 0; i < sorted.length; i++) {
-      if (sorted[i].rank <= r) first.push(sorted[i]); else second.push(sorted[i]);
+      if (E.effRank(sorted[i], high) <= r) first.push(sorted[i]); else second.push(sorted[i]);
     }
     if (first.length < 3 || second.length + 1 < 3) return null;
     return { first: first, second: second };
@@ -1282,8 +1282,9 @@
       '<h3>Combinaisons</h3><ul>' +
       '<li><b>Groupe</b> : 3 ou 4 cartes de même valeur, toutes de couleurs différentes.</li>' +
       '<li><b>Suite</b> : 3 cartes ou plus de même couleur, valeurs consécutives. ' +
-      'L\u2019As vaut <b>1</b> et se place avant le 2 : A-2-3 est une suite, ' +
-      'mais D-R-A n\u2019en est pas une.</li></ul>' +
+      'L\u2019As se place <b>avant le 2 ou après le Roi</b> : A-2-3 et D-R-A sont ' +
+      'deux suites valides. En revanche la boucle est interdite : R-A-2 n\u2019en ' +
+      'est pas une.</li></ul>' +
       '<h3>Déroulement</h3><ul>' +
       '<li>14 cartes chacun. À chaque tour, posez au moins une carte de votre ' +
       'main — où vous voulez, y compris sur les combinaisons déjà sur la table. ' +

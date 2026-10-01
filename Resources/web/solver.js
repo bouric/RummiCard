@@ -50,13 +50,19 @@
   function emptyCounts() {
     var a = [];
     for (var s = 0; s < 4; s++) {
-      a.push([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+      a.push([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
     }
     return a;
   }
 
   /**
    * Résout la table.
+   *
+   * L'As vaut 1 ou 14 (après le Roi). Comme les deux emplacements se
+   * disputent les mêmes cartes, on énumère, pour chaque couleur, le nombre
+   * d'As placés après le Roi (0, 1 ou 2) et on garde la meilleure partition.
+   * Les couleurs sans Dame ni Roi disponibles sont écartées d'office.
+   *
    * @param {Array} tableCards cartes imposées (toutes utilisées)
    * @param {Array} handCards  cartes disponibles (facultatives)
    * @param {Object} [opts] { objective: 'count' | 'sum', mustUse: [cartes de la main obligatoires] }
@@ -67,48 +73,98 @@
     var objective = opts.objective === 'sum' ? 'sum' : 'count';
     var mustUse = opts.mustUse || [];
 
-    // Les cartes « mustUse » sont traitées comme des cartes de table
-    // (obligatoirement placées) tout en comptant comme cartes jouées.
-    var forced = Object.create(null);
-    for (var m = 0; m < mustUse.length; m++) forced[mustUse[m].id] = true;
-
-    var table = emptyCounts();   // cartes obligatoires
-    var hand = emptyCounts();    // cartes optionnelles
-    var pool = [];               // pool[suit][rank] = cartes, obligatoires d'abord
-    for (var s = 0; s < 4; s++) {
-      pool.push([]);
-      for (var r = 0; r <= 13; r++) pool[s].push([]);
-    }
-
-    var i, card;
-    for (i = 0; i < tableCards.length; i++) {
-      card = tableCards[i];
-      table[card.suit][card.rank]++;
-      pool[card.suit][card.rank].unshift(card);
-    }
-    for (i = 0; i < handCards.length; i++) {
-      card = handCards[i];
-      if (forced[card.id]) {
-        table[card.suit][card.rank]++;
-        pool[card.suit][card.rank].unshift(card);
-      } else {
-        hand[card.suit][card.rank]++;
-        pool[card.suit][card.rank].push(card);
-      }
-    }
-    // Marque les cartes « jouées » : tout ce qui ne vient pas de la table.
+    var forced = Object.create(null), i;
+    for (i = 0; i < mustUse.length; i++) forced[mustUse[i].id] = true;
     var fromHand = Object.create(null);
     for (i = 0; i < handCards.length; i++) fromHand[handCards[i].id] = true;
 
-    var memo = new Map();
-
-    function valueOfCard(rank) {
-      return objective === 'sum' ? rank * 1000 + 1 : 1000 + rank;
+    // Cartes rangées par couleur et valeur, obligatoires d'abord.
+    var slots = [];
+    for (var s0 = 0; s0 < 4; s0++) {
+      slots.push([]);
+      for (var r0 = 0; r0 <= 14; r0++) slots[s0].push({ must: [], free: [] });
+    }
+    for (i = 0; i < tableCards.length; i++) {
+      slots[tableCards[i].suit][tableCards[i].rank].must.push(tableCards[i]);
+    }
+    for (i = 0; i < handCards.length; i++) {
+      var c = handCards[i];
+      if (forced[c.id]) slots[c.suit][c.rank].must.push(c);
+      else slots[c.suit][c.rank].free.push(c);
     }
 
-    /* ---- DP ------------------------------------------------------- */
+    // Combien d'As peuvent passer après le Roi, couleur par couleur ?
+    var maxHigh = [];
+    for (var sc = 0; sc < 4; sc++) {
+      var hasQ = slots[sc][12].must.length + slots[sc][12].free.length > 0;
+      var hasK = slots[sc][13].must.length + slots[sc][13].free.length > 0;
+      var aces = slots[sc][1].must.length + slots[sc][1].free.length;
+      maxHigh.push(hasQ && hasK ? Math.min(2, aces) : 0);
+    }
+
+    // On compare les variantes sur leur résultat réel : la valeur interne de
+    // la programmation dynamique ne compte pas les cartes imposées.
+    var best = null, done = false;
+    var k = [0, 0, 0, 0];
+    for (k[0] = 0; k[0] <= maxHigh[0] && !done; k[0]++) {
+      for (k[1] = 0; k[1] <= maxHigh[1] && !done; k[1]++) {
+        for (k[2] = 0; k[2] <= maxHigh[2] && !done; k[2]++) {
+          for (k[3] = 0; k[3] <= maxHigh[3] && !done; k[3]++) {
+            var res = attempt(slots, k, objective, fromHand);
+            if (res) {
+              res.score = objective === 'sum'
+                ? res.points * 10000 + res.count
+                : res.count * 10000 + res.points;
+              if (!best || res.score > best.score) best = res;
+              // Toute la main posée : aucune variante ne fera mieux.
+              if (objective === 'count' && res.count === handCards.length) done = true;
+            }
+          }
+        }
+      }
+    }
+    return best;
+  }
+
+  /* Résout avec une répartition fixée des As hauts. */
+  function attempt(slots, high, objective, fromHand) {
+    var table = emptyCounts(), hand = emptyCounts(), pool = [];
+    var s, r, i;
+    for (s = 0; s < 4; s++) {
+      pool.push([]);
+      for (r = 0; r <= 14; r++) pool[s].push([]);
+    }
+    for (s = 0; s < 4; s++) {
+      for (r = 1; r <= 13; r++) {
+        var slot = slots[s][r];
+        if (r === 1 && high[s]) {
+          // Les As hauts sont pris parmi les cartes imposées en priorité :
+          // une carte de la main est interchangeable avec une carte de table.
+          var all = slot.must.concat(slot.free);
+          var up = all.slice(0, high[s]), down = all.slice(high[s]);
+          for (i = 0; i < up.length; i++) pool[s][14].push(up[i]);
+          table[s][14] = up.length;              // placés d'office après le Roi
+          var mustLeft = Math.max(0, slot.must.length - high[s]);
+          for (i = 0; i < down.length; i++) pool[s][1].push(down[i]);
+          table[s][1] = mustLeft;
+          hand[s][1] = down.length - mustLeft;
+        } else {
+          for (i = 0; i < slot.must.length; i++) pool[s][r].push(slot.must[i]);
+          for (i = 0; i < slot.free.length; i++) pool[s][r].push(slot.free[i]);
+          table[s][r] = slot.must.length;
+          hand[s][r] = slot.free.length;
+        }
+      }
+    }
+
+    var memo = new Map();
+    function points(n) { return n === 14 ? 1 : n; }
+    function valueOfCard(n) {
+      return objective === 'sum' ? points(n) * 1000 + 1 : 1000 + points(n);
+    }
+
     function rec(n, st) {
-      if (n === 14) {
+      if (n === 15) {
         for (var c = 0; c < 4; c++) {
           if (st[3 * c] !== 0 || st[3 * c + 1] !== 0) return { val: NEG };
         }
@@ -121,9 +177,11 @@
       var best = { val: NEG };
       var next = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
       var choice = [null, null, null, null];
+      // Après le Roi, seules des suites peuvent continuer : pas de groupe d'As hauts.
+      var configs = n === 14 ? [GROUP_CONFIGS[0]] : GROUP_CONFIGS;
 
-      for (var ci = 0; ci < GROUP_CONFIGS.length; ci++) {
-        var cfg = GROUP_CONFIGS[ci];
+      for (var ci = 0; ci < configs.length; ci++) {
+        var cfg = configs[ci];
         var feasible = true;
         for (var c = 0; c < 4; c++) {
           var avail = table[c][n] + hand[c][n];
@@ -139,12 +197,8 @@
           if (sub.val === NEG) return;
           var total = gain + sub.val;
           if (total > best.val) {
-            best = {
-              val: total,
-              cfg: cfg,
-              per: [choice[0], choice[1], choice[2], choice[3]],
-              next: next.slice()
-            };
+            best = { val: total, cfg: cfg, per: [choice[0], choice[1], choice[2], choice[3]],
+                     next: next.slice() };
           }
           return;
         }
@@ -154,7 +208,7 @@
         for (var e3 = 0; e3 <= c3; e3++) {
           for (var ns = 0; base + g + e3 + ns <= avail; ns++) {
             var used = base + g + e3 + ns;
-            if (used < tbl) continue;           // toutes les cartes de table doivent servir
+            if (used < tbl) continue;
             var hu = used - tbl;
             next[3 * c] = ns;
             next[3 * c + 1] = a;
@@ -181,53 +235,46 @@
     if (res.val === NEG) return null;
 
     /* ---- Reconstruction ------------------------------------------ */
-    var cursor = [];              // index de consommation dans chaque pool
+    var cursor = [];
     for (var s2 = 0; s2 < 4; s2++) {
       cursor.push([]);
-      for (var r2 = 0; r2 <= 13; r2++) cursor[s2].push(0);
+      for (var r2 = 0; r2 <= 14; r2++) cursor[s2].push(0);
     }
     function take(suit, rank) {
-      var list = pool[suit][rank];
-      var idx = cursor[suit][rank]++;
-      return list[idx];
+      return pool[suit][rank][cursor[suit][rank]++];
     }
 
-    var runs1 = [[], [], [], []];   // suites de longueur 1 (tableaux de cartes)
+    var runs1 = [[], [], [], []];
     var runs2 = [[], [], [], []];
     var runs3 = [[], [], [], []];
     var sets = [];
     var st2 = start;
 
-    for (var n2 = 1; n2 <= 13; n2++) {
+    for (var n2 = 1; n2 <= 14; n2++) {
       var entry = memo.get(n2 * 20000000 + encode(st2));
       var cfg2 = entry.cfg, per = entry.per;
       var groupQueue = [[], [], [], []];
 
       for (var c2 = 0; c2 < 4; c2++) {
         var ch = per[c2];
-        var newRuns1 = [], newRuns2 = [], newRuns3 = [];
+        var newRuns1 = [], newRuns2 = [], newRuns3 = [], q, run;
 
-        // prolonge les suites de longueur 1 -> 2
-        for (var q = 0; q < runs1[c2].length; q++) {
-          var run = runs1[c2][q];
+        for (q = 0; q < runs1[c2].length; q++) {
+          run = runs1[c2][q];
           run.push(take(c2, n2));
           newRuns2.push(run);
         }
-        // prolonge les suites de longueur 2 -> 3
         for (q = 0; q < runs2[c2].length; q++) {
           run = runs2[c2][q];
           run.push(take(c2, n2));
           newRuns3.push(run);
         }
-        // prolonge ch.e3 suites deja completes, ferme les autres
         for (q = 0; q < runs3[c2].length; q++) {
           run = runs3[c2][q];
           if (q < ch.e3) { run.push(take(c2, n2)); newRuns3.push(run); }
           else sets.push(run);
         }
-        // demarre ch.ns nouvelles suites
         for (q = 0; q < ch.ns; q++) newRuns1.push([take(c2, n2)]);
-        // reserve les cartes destinees aux groupes
         for (q = 0; q < ch.g; q++) groupQueue[c2].push(take(c2, n2));
 
         runs1[c2] = newRuns1; runs2[c2] = newRuns2; runs3[c2] = newRuns3;
@@ -246,15 +293,14 @@
       for (var z = 0; z < runs3[c4].length; z++) sets.push(runs3[c4][z]);
     }
 
-    // Cartes de la main effectivement posées
-    var placed = [], points = 0;
+    var placed = [], pts = 0;
     for (var si = 0; si < sets.length; si++) {
       for (var k2 = 0; k2 < sets[si].length; k2++) {
         var cd = sets[si][k2];
-        if (fromHand[cd.id]) { placed.push(cd); points += cd.rank; }
+        if (fromHand[cd.id]) { placed.push(cd); pts += cd.rank; }
       }
     }
-    return { sets: sets, played: placed, count: placed.length, points: points };
+    return { sets: sets, played: placed, count: placed.length, points: pts, val: res.val };
   }
 
   root.Solver = { solve: solve, GROUP_CONFIGS: GROUP_CONFIGS };
