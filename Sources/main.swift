@@ -26,12 +26,14 @@ func jsLiteral(_ s: String) -> String {
     return out + "\""
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate,
+                        WKScriptMessageHandler {
 
     static let info = Bundle.main.infoDictionary ?? [:]
     static let version = info["CFBundleShortVersionString"] as? String ?? "—"
     static let buildDate = info["RCBuildDate"] as? String ?? "—"
     static let copyright = info["NSHumanReadableCopyright"] as? String ?? ""
+    static let prefsKey = "RCPreferences"
 
     var window: NSWindow!
     var web: WKWebView!
@@ -47,10 +49,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         config.defaultWebpagePreferences.allowsContentJavaScript = true
 
+        // Les réglages du joueur sont conservés d'une partie à l'autre.
+        config.userContentController.add(self, name: "prefs")
+        let saved = UserDefaults.standard.string(forKey: Self.prefsKey) ?? "null"
+
         // La page affiche la version et le copyright du bundle.
         let stamp = "window.APP_VERSION=\(jsLiteral(Self.version));" +
                     "window.APP_BUILD=\(jsLiteral(Self.buildDate));" +
-                    "window.APP_COPYRIGHT=\(jsLiteral(Self.copyright));"
+                    "window.APP_COPYRIGHT=\(jsLiteral(Self.copyright));" +
+                    "window.APP_PREFS=\(saved);"
         config.userContentController.addUserScript(
             WKUserScript(source: stamp, injectionTime: .atDocumentStart, forMainFrameOnly: true))
 
@@ -132,6 +139,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         gameMenu.addItem(withTitle: "Piocher", action: #selector(drawCard), keyEquivalent: "p").target = self
         gameMenu.addItem(withTitle: "Jouer au mieux", action: #selector(autoPlay), keyEquivalent: "j").target = self
         gameMenu.addItem(withTitle: "Trier la main", action: #selector(sortHand), keyEquivalent: "t").target = self
+        gameMenu.addItem(.separator())
+        gameMenu.addItem(withTitle: "Options…", action: #selector(showOptions), keyEquivalent: ",").target = self
         gameItem.submenu = gameMenu
         mainMenu.addItem(gameItem)
 
@@ -172,6 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     @objc private func sortHand()   { js("document.getElementById('sort').click()") }
     @objc private func showRules()  { js("window.RC && RC.showRules()") }
     @objc private func rewindAI()   { js("document.getElementById('rewind').click()") }
+    @objc private func showOptions() { js("window.RC && RC.showOptions()") }
 
     @objc private func about() {
         let alert = NSAlert()
@@ -188,6 +198,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         """
         alert.addButton(withTitle: "Fermer")
         alert.runModal()
+    }
+
+    // MARK: - Réglages persistants
+
+    func userContentController(_ controller: WKUserContentController,
+                               didReceive message: WKScriptMessage) {
+        guard message.name == "prefs",
+              let dict = message.body as? [String: Any],
+              JSONSerialization.isValidJSONObject(dict),
+              let data = try? JSONSerialization.data(withJSONObject: dict),
+              let json = String(data: data, encoding: .utf8) else { return }
+        UserDefaults.standard.set(json, forKey: Self.prefsKey)
     }
 
     // MARK: - WKUIDelegate (confirm / alert du jeu)

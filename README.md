@@ -33,14 +33,12 @@ assemble `RummiCard.app` (≈650 Ko).
   L'As vaut **1** et se place avant le 2 : `A-2-3` est une suite, `D-R-A` n'en
   est pas une (pas de bouclage).
 - 14 cartes distribuées à chacun.
-- **Première pose : 30 points minimum**, en n'utilisant que ses propres cartes.
-- Ensuite, la table entière peut être réorganisée librement, à condition que
-  toutes les combinaisons soient valides à la fin du tour : on peut prendre une
-  carte d'une combinaison posée (le 4ᵉ d'un carré, par exemple) pour la glisser
-  sur une autre.
-- Tant que la première pose n'est pas faite, les cartes de la table sont
-  intouchables — y compris pour compléter un brelan. Le jeu le signale pendant
-  le glisser.
+- À chaque tour, il faut poser **au moins une carte** de sa main — n'importe où,
+  y compris sur les combinaisons déjà sur la table. **Pas de minimum de points
+  à la première pose** (variante retenue ici ; le Rummikub officiel en impose 30).
+- La table entière peut être réorganisée librement, à condition que toutes les
+  combinaisons soient valides à la fin du tour : on peut prendre une carte d'une
+  combinaison posée (le 4ᵉ d'un carré, par exemple) pour la glisser sur une autre.
 - Rien à poser → on pioche et le tour passe.
 - Le premier à vider sa main gagne ; pioche épuisée, c'est le moins de points.
 
@@ -66,6 +64,7 @@ C'est le cœur de l'interface :
 | Clic simple sur une carte de la main | Placement automatique au meilleur endroit. |
 | Glisser vers sa main une carte posée ce tour-ci | On la récupère. |
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
+| Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Revenir avant l'IA** | Annule le dernier coup des joueurs virtuels : la partie repart du début de votre tour précédent, dans l'état exact (mains, table, pioche). Plusieurs appuis remontent plus loin. |
 
 Raccourcis : `Entrée` valider · `⌫` annuler · `P` piocher · `A` jouer au mieux ·
@@ -104,6 +103,19 @@ Mesures : < 1 ms en moyenne sur un tour de partie réelle, ~110 ms dans le pire
 cas (les 104 cartes sur la table). C'est ce même solveur qui alimente les
 joueurs virtuels, le bouton « Jouer au mieux » et la réorganisation automatique
 pendant un glisser-déposer.
+
+## Options
+
+Accessibles par l'engrenage (ou ⌘, / menu **Partie ▸ Options**), conservées
+d'une partie à l'autre — l'hôte natif les range dans les préférences de l'app,
+le navigateur dans son `localStorage`.
+
+- **Tri de la main** : *par valeur puis couleur* (`A A 2 2 3 3…`) ou *par valeur
+  dans les couleurs* (toute une couleur dans l'ordre, puis la suivante).
+- **Combinaisons sur la table** : *ne pas les déplacer* — après une
+  réorganisation, chaque combinaison reprend la place de celle avec laquelle
+  elle partage le plus de cartes, et les nouvelles s'ajoutent à la fin — ou
+  *laisser la table se redisposer* librement.
 
 ## Version
 

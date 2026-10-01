@@ -12,7 +12,30 @@
 
   var game = null;
   var nVirtual = 2;
-  var sortMode = 'suit';
+  /* Réglages du joueur (persistés par l'hôte natif, sinon localStorage).
+       tri        : 'suit' = par couleur puis valeur
+                    'rank' = par valeur puis couleur
+       keepPlaces : garder les combinaisons à leur place sur la table */
+  var prefs = { tri: 'suit', keepPlaces: true };
+
+  function loadPrefs() {
+    var p = window.APP_PREFS || null;
+    if (!p) {
+      try { p = JSON.parse(window.localStorage.getItem('rummicard.prefs') || 'null'); }
+      catch (e) { p = null; }
+    }
+    if (p) {
+      if (p.tri === 'suit' || p.tri === 'rank') prefs.tri = p.tri;
+      if (typeof p.keepPlaces === 'boolean') prefs.keepPlaces = p.keepPlaces;
+    }
+    E.options.keepPlaces = prefs.keepPlaces;
+  }
+
+  function savePrefs() {
+    E.options.keepPlaces = prefs.keepPlaces;
+    try { window.localStorage.setItem('rummicard.prefs', JSON.stringify(prefs)); } catch (e) { /* file:// */ }
+    try { window.webkit.messageHandlers.prefs.postMessage(prefs); } catch (e) { /* hors app */ }
+  }
   var soundOn = true;
   var busy = false;
   var drag = null;
@@ -44,7 +67,7 @@
     $('#overlay').classList.add('hidden');
     render();
     updateBar();
-    toast('À vous de jouer — première pose : 30 points');
+    toast('À vous de jouer');
   }
 
   function isHumanTurn() { return game && !game.finished && game.player().human && !busy; }
@@ -95,14 +118,28 @@
     return d;
   }
 
-  /* Combinaisons de reference, sans la carte en cours de deplacement. */
+  /* Emplacement laissé libre par la carte soulevée. */
+  function holeEl() {
+    var d = document.createElement('div');
+    d.className = 'hole';
+    return d;
+  }
+
+  /* Combinaisons de référence, sans la carte en cours de déplacement.
+     Celle-ci laisse un « trou » de la taille d'une carte : la table ne se
+     resserre pas pendant le glissement, donc l'endroit visé ne bouge pas
+     sous le curseur. */
   function baseSets() {
     var out = [];
     for (var i = 0; i < game.board.length; i++) {
-      var cards = game.board[i].cards;
-      if (drag) cards = cards.filter(function (c) { return c.id !== drag.card.id; });
-      else cards = cards.slice();
-      if (cards.length) out.push({ id: game.board[i].id, cards: cards, slot: -1 });
+      var src = game.board[i].cards, cards = [], hole = -1;
+      for (var k = 0; k < src.length; k++) {
+        if (drag && src[k].id === drag.card.id) hole = cards.length;
+        else cards.push(src[k]);
+      }
+      if (cards.length || hole >= 0) {
+        out.push({ id: game.board[i].id, cards: cards, slot: -1, hole: hole });
+      }
     }
     return out;
   }
@@ -138,6 +175,7 @@
       el.dataset.set = s.id;
       for (var k = 0; k <= s.cards.length; k++) {
         if (k === s.slot) el.appendChild(slotEl());
+        if (k === s.hole) el.appendChild(holeEl());
         if (k < s.cards.length) {
           el.appendChild(cardEl(s.cards[k], {
             staged: isStaged(s.cards[k]),
@@ -243,9 +281,10 @@
     var p = game.player();
     $('#turnpill').innerHTML = 'Tour&nbsp;<b>' + (game.finished ? 'terminé' : p.name) + '</b>';
     var hm = game.human();
-    $('#meldpill').innerHTML = hm.melded
-      ? 'Vous&nbsp;<b>en jeu</b>'
-      : 'Première pose&nbsp;<b>' + game.stagedPoints() + '/30 pts</b>';
+    var pts = game.stagedPoints();
+    $('#meldpill').innerHTML = pts
+      ? 'Pos\u00e9 ce tour&nbsp;<b>' + pts + ' pts</b>'
+      : 'Votre main&nbsp;<b>' + game.handScore(hm) + ' pts</b>';
     flip(prev, opts);
   }
 
@@ -270,8 +309,6 @@
     } else if (staged) {
       msg.className = 'warn';
       msg.textContent = check.reason;
-    } else if (!game.human().melded) {
-      msg.innerHTML = 'Première pose : posez au moins <b>30 points</b> avec vos propres cartes.';
     } else {
       msg.innerHTML = 'Glissez une carte sur la table — elle trouvera sa place toute seule.';
     }
@@ -337,10 +374,6 @@
     if (!card) return;
     var origin = cardOrigin(card.id);
     if (!origin) return;
-    if (origin.type === 'set' && !game.human().melded && !isStaged(card)) {
-      toast('Première pose : les cartes de la table sont intouchables.');
-      return;
-    }
     e.preventDefault();
 
     var r = el.getBoundingClientRect();
@@ -401,8 +434,7 @@
 
   function setTarget(x, y, force) {
     var t = computeTarget(x, y);
-    var key = t.kind + ':' + (t.setId || '') + ':' +
-      (t.index === undefined ? '' : t.index) + ':' + (t.blocked ? 'x' : '');
+    var key = t.kind + ':' + (t.setId || '') + ':' + (t.index === undefined ? '' : t.index);
     if (!force && key === drag.targetKey) return;
     drag.targetKey = key;
     drag.target = t;
@@ -427,10 +459,6 @@
     if (inRect(drag.rects.__new, x, y, 4)) return { kind: 'new' };
 
     var sets = baseSets(), i;
-    var melded = game.human().melded;
-    // Vrai si une combinaison aurait accueilli la carte mais que la règle de
-    // la première pose l'interdit : on le dira au joueur au lieu de l'ignorer.
-    var blocked = false;
 
     // 1) la combinaison directement sous le curseur
     var hover = null;
@@ -439,10 +467,7 @@
     }
     if (hover) {
       var hi = E.acceptIndex(hover.cards, card);
-      if (hi >= 0) {
-        if (allowed(hover, melded)) return { kind: 'insert', setId: hover.id, index: hi };
-        blocked = true;
-      }
+      if (hi >= 0) return { kind: 'insert', setId: hover.id, index: hi };
     }
 
     // 2) sinon, la meilleure combinaison du plateau
@@ -451,7 +476,6 @@
       var s = sets[i];
       var idx = E.acceptIndex(s.cards, card);
       if (idx < 0) continue;
-      if (!allowed(s, melded)) { blocked = true; continue; }
       var score = 0;
       if (E.isValidSet(s.cards.concat([card]))) score += 5000;
       score += s.cards.length * 120;
@@ -469,19 +493,9 @@
     if (best) return best;
 
     // 3) sinon, reorganisation complete de la table
-    if (melded) {
-      var re = rearrangement();
-      if (re) return { kind: 'rearrange' };
-    }
-    return { kind: 'new', blocked: blocked };
-  }
-
-  /* Pendant la premiere pose, seules les combinaisons entierement
-     composees des cartes du tour sont manipulables. */
-  function allowed(set, melded) {
-    if (melded) return true;
-    for (var i = 0; i < set.cards.length; i++) if (!isStaged(set.cards[i])) return false;
-    return true;
+    var re = rearrangement();
+    if (re) return { kind: 'rearrange' };
+    return { kind: 'new' };
   }
 
   function rearrangement() {
@@ -498,7 +512,9 @@
   function buildView(t) {
     var sets = baseSets(), i;
     if (t.kind === 'insert') {
-      for (i = 0; i < sets.length; i++) if (sets[i].id === t.setId) sets[i].slot = t.index;
+      for (i = 0; i < sets.length; i++) {
+        if (sets[i].id === t.setId) { sets[i].slot = t.index; sets[i].hole = -1; }
+      }
       return { sets: sets };
     }
     if (t.kind === 'new') return { sets: sets, newSlot: true };
@@ -511,7 +527,7 @@
           if (ordered[k].id === drag.card.id) slot = rest.length;
           else rest.push(ordered[k]);
         }
-        out.push({ id: 'p' + i, cards: rest, slot: slot });
+        out.push({ id: 'p' + i, cards: rest, slot: slot, hole: -1 });
       }
       return { sets: out, rearranged: true };
     }
@@ -529,11 +545,7 @@
         ? '✓ s’insère ici'
         : 'en construction…';
     } else if (t.kind === 'rearrange') txt = '<b>✨ la table se réorganise</b>';
-    else if (t.kind === 'new') {
-      txt = t.blocked
-        ? '<b>⚠ première pose</b> : 30 points avec vos cartes d’abord'
-        : 'nouvelle combinaison';
-    }
+    else if (t.kind === 'new') txt = 'nouvelle combinaison';
     else if (t.kind === 'hand') txt = 'reprendre en main';
     else txt = 'relâchez sur la table';
     h.innerHTML = txt;
@@ -569,7 +581,7 @@
       if (!isStaged(card)) { toast('Cette carte appartient déjà à la table.'); render(); return; }
       removeFromBoard(card);
       game.human().hand.push(card);
-      game.sortHand(game.human(), sortMode);
+      game.sortHand(game.human(), prefs.tri);
       game.compact();
       render(); updateBar(); sndSnap();
       return;
@@ -593,16 +605,12 @@
       sndSnap();
     } else if (t.kind === 'rearrange') {
       var src = t.sets || (d.cache && d.cache.re);
-      game.board = src.map(function (cards) { return game.newSet(E.orderSet(cards)); });
+      game.board = E.alignBoard(game.board, src);
       sndMagic();
       toast('✨ La table s’est réorganisée pour accueillir ' + E.label(card));
     } else {
       game.board.push(game.newSet([card]));
       sndSnap();
-      if (t.blocked) {
-        toast('Première pose : impossible de compléter une combinaison de la table. ' +
-              'Posez d’abord 30 points avec vos seules cartes.');
-      }
     }
     game.compact();
     render({ land: card.id });
@@ -692,9 +700,7 @@
     if (!play) {
       restoreState(before);
       render();
-      toast(p.melded
-        ? 'Aucun coup possible avec cette main — piochez.'
-        : 'Impossible d’atteindre 30 points pour l’instant — piochez.');
+      toast('Aucun coup possible avec cette main — piochez.');
       return;
     }
     AI.applyPlay(game, p, play);
@@ -705,10 +711,11 @@
 
   function doSort() {
     if (!isHumanTurn()) return;
-    sortMode = sortMode === 'suit' ? 'rank' : 'suit';
-    game.sortHand(game.human(), sortMode);
+    game.sortHand(game.human(), prefs.tri);
     render();
-    toast(sortMode === 'suit' ? 'Main triée par couleur' : 'Main triée par valeur');
+    toast(prefs.tri === 'suit'
+      ? 'Main triée par couleur, puis par valeur'
+      : 'Main triée par valeur, puis par couleur');
   }
 
   /* ================= Tours des joueurs virtuels =================== */
@@ -777,6 +784,47 @@
     };
   }
 
+  /* ================= Options ====================================== */
+
+  function optionRow(name, value, selected, title, desc) {
+    return '<button class="optrow' + (selected ? ' on' : '') + '" data-pref="' + name +
+      '" data-value="' + value + '"><span class="dot"></span>' +
+      '<span class="lbl"><b>' + title + '</b><em>' + desc + '</em></span></button>';
+  }
+
+  function showOptions() {
+    var ov = $('#overlay');
+    ov.innerHTML = '<div class="panel"><h2>Options</h2>' +
+      '<h3>Tri de votre main</h3>' +
+      optionRow('tri', 'rank', prefs.tri === 'rank', 'Par valeur, puis couleur',
+        'A A 2 2 3 3\u2026 les cartes de m\u00eame valeur voisines') +
+      optionRow('tri', 'suit', prefs.tri === 'suit', 'Par valeur dans les couleurs',
+        'toute une couleur dans l\u2019ordre, puis la suivante') +
+      '<h3>Combinaisons sur la table</h3>' +
+      optionRow('keepPlaces', '1', prefs.keepPlaces, 'Ne pas les d\u00e9placer',
+        'une combinaison r\u00e9organis\u00e9e garde sa place sur la table') +
+      optionRow('keepPlaces', '0', !prefs.keepPlaces, 'Laisser la table se redisposer',
+        'les combinaisons sont replac\u00e9es apr\u00e8s chaque r\u00e9organisation') +
+      '<div class="row"><button class="cta" id="closeopts" style="flex:1">Fermer</button></div></div>';
+    ov.classList.remove('hidden');
+    $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
+    var rows = ov.querySelectorAll('.optrow');
+    for (var i = 0; i < rows.length; i++) {
+      rows[i].onclick = function () {
+        var name = this.dataset.pref, value = this.dataset.value;
+        if (name === 'tri') {
+          prefs.tri = value;
+          E.options.sort = value;
+          if (game) { game.sortHand(game.human(), value); render(); }
+        } else {
+          prefs.keepPlaces = (value === '1');
+        }
+        savePrefs();
+        showOptions();
+      };
+    }
+  }
+
   /* ================= Regles ======================================= */
 
   function showRules() {
@@ -791,9 +839,10 @@
       'L\u2019As vaut <b>1</b> et se place avant le 2 : A-2-3 est une suite, ' +
       'mais D-R-A n\u2019en est pas une.</li></ul>' +
       '<h3>Déroulement</h3><ul>' +
-      '<li>14 cartes chacun. Votre <b>première pose</b> doit totaliser <b>30 points</b> ' +
-      'et n’utiliser que vos propres cartes.</li>' +
-      '<li>Ensuite vous pouvez compléter et <b>réorganiser librement</b> la table, ' +
+      '<li>14 cartes chacun. À chaque tour, posez au moins une carte de votre ' +
+      'main — où vous voulez, y compris sur les combinaisons déjà sur la table. ' +
+      'Pas de minimum de points à la première pose.</li>' +
+      '<li>À tout moment vous pouvez compléter et <b>réorganiser librement</b> la table, ' +
       'à condition que toutes les combinaisons soient valides à la fin du tour.</li>' +
       '<li>Rien à poser ? Vous piochez et le tour passe.</li>' +
       '<li>Le premier à vider sa main gagne. Si la pioche s’épuise, ' +
@@ -809,9 +858,8 @@
       'virtuels : la partie repart du début de votre tour précédent. ' +
       'Appuyez plusieurs fois pour remonter plus loin.</li>' +
       '<li>Glissez une carte posée ce tour-ci vers votre main pour la récupérer.</li>' +
-      '<li>Une fois votre première pose faite, vous pouvez prendre une carte ' +
-      'd\u2019une combinaison de la table (le 4<sup>e</sup> d\u2019un carré par exemple) ' +
-      'et la glisser sur une autre combinaison.</li>' +
+      '<li>Vous pouvez prendre une carte d\u2019une combinaison de la table ' +
+      '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : valider · ⌫ : annuler · P : piocher · ' +
       'A : jouer au mieux · T : trier · R : revenir avant l\u2019IA</p>' +
@@ -841,6 +889,8 @@
     $('#game').classList.add('hidden');
     $('#menu').classList.remove('hidden');
   };
+  $('#options').onclick = showOptions;
+  $('#menu-options').onclick = showOptions;
   $('#sound').onclick = function () {
     soundOn = !soundOn;
     $('#sound').innerHTML = soundOn ? '🔊' : '🔇';
@@ -869,6 +919,8 @@
       : 'Version de développement';
   }
 
+  loadPrefs();
+  E.options.sort = prefs.tri;
   stampFooter();
   buildMenu();
 
@@ -881,6 +933,7 @@
     newGame: newGame,
     setVirtual: function (n) { nVirtual = n; },
     showRules: showRules,
+    showOptions: showOptions,
     rewind: doRewind,
     showMenu: function () {
       if (game && !game.finished && !confirmQuit()) return;

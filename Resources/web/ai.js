@@ -19,12 +19,6 @@
     var hand = player.hand;
     if (!hand.length) return null;
 
-    if (!player.melded) {
-      // Premiere pose : uniquement ses propres cartes, 30 points minimum.
-      var res = Solver.solve([], hand, { objective: 'sum', mustUse: mustUse || [] });
-      if (!res || res.points < Engine.MIN_FIRST_MELD) return null;
-      return { sets: res.sets, played: res.played, points: res.points, rebuild: false };
-    }
     var board = game.boardCards();
     var r = Solver.solve(board, hand, { objective: 'count', mustUse: mustUse || [] });
     if (!r || !r.count) return null;
@@ -40,12 +34,7 @@
     player.hand = player.hand.filter(function (c) { return !playedIds[c.id]; });
 
     if (play.rebuild) {
-      // On reconstruit la table en reutilisant les identifiants existants
-      // pour que l'animation puisse suivre les combinaisons.
-      var oldIds = game.board.map(function (s) { return s.id; });
-      game.board = play.sets.map(function (cards, idx) {
-        return { id: oldIds[idx] || game.newSet().id, cards: Engine.orderSet(cards) };
-      });
+      game.board = Engine.alignBoard(game.board, play.sets);
     } else {
       for (var k = 0; k < play.sets.length; k++) {
         game.board.push(game.newSet(Engine.orderSet(play.sets[k])));

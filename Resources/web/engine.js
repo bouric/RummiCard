@@ -16,7 +16,9 @@
   var SUIT_NAME = ['pique', 'coeur', 'carreau', 'trèfle'];
   var RANK_LABEL = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'V', 'D', 'R'];
   var HAND_SIZE = 14;
-  var MIN_FIRST_MELD = 30;
+
+  /* Réglages partagés avec l'interface. */
+  var options = { keepPlaces: true, sort: 'suit' };
 
   var AI_NAMES = ['Camille', 'Hugo', 'Léa', 'Marin', 'Noa', 'Sacha'];
 
@@ -119,6 +121,53 @@
 
   var setSeq = 0;
 
+  /**
+   * Reconstruit la table à partir d'une nouvelle répartition des cartes.
+   * Si options.keepPlaces est vrai, chaque nouvelle combinaison reprend la
+   * place (et l'identifiant) de celle avec laquelle elle partage le plus de
+   * cartes : la table ne se remélange pas sous les yeux du joueur.
+   * @param {Array} oldSets combinaisons actuelles
+   * @param {Array<Array>} newSets nouvelles combinaisons (listes de cartes)
+   * @returns {Array} nouvelle table
+   */
+  function alignBoard(oldSets, newSets) {
+    var i, j, k;
+    if (!options.keepPlaces) {
+      return newSets.map(function (cards) {
+        return { id: 's' + (++setSeq), cards: orderSet(cards) };
+      });
+    }
+    var scored = [];
+    for (i = 0; i < oldSets.length; i++) {
+      var ids = {};
+      for (k = 0; k < oldSets[i].cards.length; k++) ids[oldSets[i].cards[k].id] = true;
+      for (j = 0; j < newSets.length; j++) {
+        var n = 0;
+        for (var m = 0; m < newSets[j].length; m++) if (ids[newSets[j][m].id]) n++;
+        if (n) scored.push({ o: i, n: j, score: n });
+      }
+    }
+    scored.sort(function (a, b) { return b.score - a.score; });
+
+    var pairs = {}, takenOld = {}, takenNew = {};
+    for (k = 0; k < scored.length; k++) {
+      if (takenOld[scored[k].o] || takenNew[scored[k].n]) continue;
+      takenOld[scored[k].o] = true;
+      takenNew[scored[k].n] = true;
+      pairs[scored[k].o] = scored[k].n;
+    }
+    var out = [];
+    for (i = 0; i < oldSets.length; i++) {
+      if (pairs[i] !== undefined) {
+        out.push({ id: oldSets[i].id, cards: orderSet(newSets[pairs[i]]) });
+      }
+    }
+    for (j = 0; j < newSets.length; j++) {
+      if (!takenNew[j]) out.push({ id: 's' + (++setSeq), cards: orderSet(newSets[j]) });
+    }
+    return out;
+  }
+
   function Game(nVirtual) {
     this.deck = shuffle(makeDeck());
     this.board = [];
@@ -137,7 +186,7 @@
     for (var p = 0; p < this.players.length; p++) {
       for (var k = 0; k < HAND_SIZE; k++) this.players[p].hand.push(this.deck.pop());
     }
-    this.sortHand(this.players[0], 'suit');
+    this.sortHand(this.players[0], options.sort);
     this.snapshot = null;
     this.beginTurn();
   }
@@ -225,24 +274,6 @@
         return { ok: false, reason: 'Une combinaison est incomplète ou invalide.' };
       }
     }
-    // premiere pose : 30 points, sans utiliser les cartes de la table
-    if (!this.player().melded) {
-      var stagedIds = {};
-      for (i = 0; i < staged.length; i++) stagedIds[staged[i].id] = true;
-      for (i = 0; i < this.board.length; i++) {
-        var cards = this.board[i].cards, hasNew = false, hasOld = false;
-        for (var k = 0; k < cards.length; k++) {
-          if (stagedIds[cards[k].id]) hasNew = true; else hasOld = true;
-        }
-        if (hasNew && hasOld) {
-          return { ok: false, reason: 'Première pose : vos combinaisons doivent être composées uniquement de vos cartes.' };
-        }
-      }
-      var pts = this.stagedPoints();
-      if (pts < MIN_FIRST_MELD) {
-        return { ok: false, reason: 'Première pose : ' + MIN_FIRST_MELD + ' points minimum (vous en avez ' + pts + ').' };
-      }
-    }
     return { ok: true, reason: '' };
   };
 
@@ -264,7 +295,7 @@
     if (!this.deck.length) { this.passStreak++; return null; }
     var card = this.deck.pop();
     p.hand.push(card);
-    if (p.human) this.sortHand(p, 'suit');
+    if (p.human) this.sortHand(p, options.sort);
     this.passStreak = 0;
     return card;
   };
@@ -332,8 +363,9 @@
     SUIT_GLYPH: SUIT_GLYPH,
     SUIT_NAME: SUIT_NAME,
     RANK_LABEL: RANK_LABEL,
-    MIN_FIRST_MELD: MIN_FIRST_MELD,
     HAND_SIZE: HAND_SIZE,
+    options: options,
+    alignBoard: alignBoard,
     makeDeck: makeDeck,
     shuffle: shuffle,
     label: label,
