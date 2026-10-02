@@ -368,6 +368,14 @@
      carte au milieu d'une suite. */
   var touchMode = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   function runStep(ch) { return Math.round(ch * (touchMode ? 0.4 : 0.28)); }
+  /* Chevauchement horizontal dans un brelan ou un carre : seule la tranche
+     gauche de chaque carte reste visible, celle qui porte sa valeur et sa
+     couleur — comme un eventail tenu en main. */
+  function groupStep(cw) { return Math.round(cw * (touchMode ? 0.55 : 0.45)); }
+  /* Pas minimal de la graduation : en dessous, la valeur d'une carte
+     recouverte n'est plus lisible. */
+  function minRunStep(ch) { return Math.round(ch * (touchMode ? 0.3 : 0.24)); }
+  function largeurGroupe(m) { return 3 * groupStep(m.cw) + m.cw + 18; }
 
   /* Sens de l'axe des valeurs côté suites : petites valeurs en haut (défaut)
      ou grandes valeurs en haut. */
@@ -400,7 +408,7 @@
     var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
     var vertical = isRunLayout(full);
     var el = document.createElement('div');
-    el.className = 'set' + (vertical ? ' run' : '') +
+    el.className = 'set' + (vertical ? ' run' : (full.length >= 2 ? ' group' : '')) +
       (E.isValidSet(full) ? '' : ' bad') + (s.slot >= 0 ? ' target' : '');
     el.dataset.set = s.id;
     var elems = [];
@@ -440,9 +448,20 @@
      brelan la ligne de sa valeur : on sait d'avance où regarder. */
   function paintGrid(view, board, dens) {
     var m = METRICS[dens] || METRICS[''];
+    var empile = board.classList.contains('stack');
     var avail = board.clientHeight || 520;
-    var step = runStep(m.ch);
+    // Les deux parties recoivent exactement la meme hauteur : toute la
+    // hauteur du plateau cote a cote, la moitie chacune quand elles sont
+    // empilees. Et chacune l'occupe : la graduation des suites s'etire ou
+    // se resserre, les valeurs des groupes se repartissent sur le nombre
+    // de colonnes qu'il faut.
+    // 34 px d'intitule et de reperes, 26 px de rembourrage de la zone,
+    // 12 px de respiration en bas : ce qui reste est pour la grille.
+    var hauteur = Math.max(60, (empile ? Math.floor(avail / 2) - 1 : avail) - GRID_TOP - 38);
+    var step = Math.max(minRunStep(m.ch), Math.min(m.ch, Math.floor((hauteur - m.ch) / 13)));
+    var gstep = groupStep(m.cw);
     board.style.setProperty('--step', step + 'px');
+    board.style.setProperty('--gstep', gstep + 'px');
     var gridH = 13 * step + m.ch;
 
     // Le type de zone sert aussi de repère au glisser-déposer : il doit rester
@@ -467,7 +486,7 @@
       var ghost = { s: { id: '__new', cards: [], slot: 0, hole: -1 }, low: drag.card.rank,
                     high: drag.card.rank, suit: drag.card.suit };
       ghost.el = document.createElement('div');
-      ghost.el.className = 'set target' + (view.newZone === 'runs' ? ' run' : '');
+      ghost.el.className = 'set target' + (view.newZone === 'runs' ? ' run' : ' group');
       ghost.el.appendChild(slotEl());
       (view.newZone === 'runs' ? runs : groups).push(ghost);
     }
@@ -508,19 +527,27 @@
     // suivante. Une valeur est donc toujours au même endroit, qu'elle soit
     // posée ou non. Un éventuel second groupe de même valeur se range dans une
     // colonne d'appoint, sur la ligne de sa valeur.
-    var rowH = m.ch + 6;
-    var groupW = 4 * (m.cw + 3) + 18;
-    addValueCells(zGroups, rowH, groupW, m);
-    var occ = {}, maxX = GROUP_X + 2 * groupW;
+    var groupW = largeurGroupe(m);
+    // Largeur dont dispose reellement la zone des groupes : tout le plateau
+    // si les deux parties sont empilees, ce que les suites laissent sinon.
+    var largeurG = empile ? (board.clientWidth || 1200) - 26
+      : Math.max(160, (board.clientWidth || 1200) - (newRunsX + m.cw + 34));
+    var lignesMax = Math.max(1, Math.floor(hauteur / (m.ch + 6)));
+    var cols = Math.max(1, Math.min(Math.floor((largeurG - GROUP_X) / groupW) || 1,
+                                    Math.ceil(14 / lignesMax), 14));
+    var rows = Math.ceil(14 / cols);
+    var rowH = Math.max(m.ch + 6, Math.floor(hauteur / rows));
+    addValueCells(zGroups, rowH, groupW, m, rows);
+    var occ = {}, maxX = GROUP_X + cols * groupW;
     for (i = 0; i < groups.length; i++) {
       var v = groups[i].low;
       var n = occ[v] || 0;
       occ[v] = n + 1;
-      var gx = GROUP_X + (n ? 1 + n : valueCol(v)) * groupW;
-      place(zGroups, groups[i].el, gx, GRID_TOP + valueRow(v) * rowH);
+      var gx = GROUP_X + (n ? cols + n - 1 : valueCol(v, rows)) * groupW;
+      place(zGroups, groups[i].el, gx, GRID_TOP + valueRow(v, rows) * rowH);
       if (gx + groupW > maxX) maxX = gx + groupW;
     }
-    var groupsH = VALUE_ROWS * rowH;
+    var groupsH = rows * rowH;
 
     var needRuns = newRunsX, needGroups = maxX;
     if (isHumanTurn() && !view.newSlot) {
@@ -529,11 +556,10 @@
       needRuns += m.cw + 10;
       needGroups += m.cw + 10;
     }
-    if (board.classList.contains('stack')) {
-      // L'une au-dessus de l'autre : on partage la hauteur au prorata de ce
-      // que chaque grille reclame, chacune defilant pour son compte.
-      zRuns.style.flex = '1 1 ' + (gridH + GRID_TOP + 12) + 'px';
-      zGroups.style.flex = '1 1 ' + (groupsH + GRID_TOP + 12) + 'px';
+    if (empile) {
+      // L'une au-dessus de l'autre, a parts egales.
+      zRuns.style.flex = '1 1 0';
+      zGroups.style.flex = '1 1 0';
     } else {
       // Cote a cote : les colonnes des suites ne bougent pas, mais la zone
       // reste compressible — sinon elle se sert la premiere et ne laisse
@@ -561,18 +587,20 @@
     zone.appendChild(d);
   }
 
-  var VALUE_ROWS = 7;    // 7 valeurs par colonne : A..7 puis 8..R
-  function valueCol(v) { return v <= VALUE_ROWS ? 0 : 1; }
-  function valueRow(v) { return (v - 1) % VALUE_ROWS; }
+  /* Les valeurs se repartissent en colonnes de `rows` lignes : A en haut de
+     la premiere colonne, et ainsi de suite. Le nombre de lignes depend de la
+     place, mais ne change pas en cours de partie a taille d'ecran egale. */
+  function valueCol(v, rows) { return Math.floor((v - 1) / rows); }
+  function valueRow(v, rows) { return (v - 1) % rows; }
 
   /* Trame des valeurs côté groupes : chaque valeur garde sa case, occupée ou
      non, pour qu'on sache toujours où regarder. */
-  function addValueCells(zone, rowH, groupW, m) {
+  function addValueCells(zone, rowH, groupW, m, rows) {
     for (var v = 1; v <= 13; v++) {
       var cell = document.createElement('div');
       cell.className = 'valuecell';
-      cell.style.left = (GROUP_X + valueCol(v) * groupW) + 'px';
-      cell.style.top = (GRID_TOP + valueRow(v) * rowH) + 'px';
+      cell.style.left = (GROUP_X + valueCol(v, rows) * groupW) + 'px';
+      cell.style.top = (GRID_TOP + valueRow(v, rows) * rowH) + 'px';
       cell.style.width = (groupW - 10) + 'px';
       cell.style.height = m.ch + 'px';
       cell.innerHTML = '<i>' + E.RANK_LABEL[v] + '</i>';
@@ -647,10 +675,12 @@
      decider entre les deux cote a cote et l'une au-dessus de l'autre. */
   function besoinSuites(m) { return runsWidth(m) + 2 * (m.cw + RUN_GAP) + 12; }
   function besoinGroupes(m, nCols) {
-    return GROUP_X + (2 + (nCols > 1 ? 1 : 0)) * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24;
+    return GROUP_X + (2 + (nCols > 1 ? 1 : 0)) * largeurGroupe(m) + (m.cw + 10) + 24;
   }
-  function hautSuites(m) { return GRID_TOP + 13 * runStep(m.ch) + m.ch + 12; }
-  function hautGroupes(m) { return GRID_TOP + VALUE_ROWS * (m.ch + 6) + 12; }
+  /* Hauteurs minimales : les deux grilles se compriment, l'une en resserrant
+     sa graduation, l'autre en repartissant ses valeurs sur plus de colonnes. */
+  function hautSuites(m) { return GRID_TOP + 13 * minRunStep(m.ch) + m.ch + 38; }
+  function hautGroupes(m) { return GRID_TOP + 2 * (m.ch + 6) + 38; }
 
   /* Combien de groupes d'une meme valeur cohabitent : une colonne d'appoint
      est alors necessaire cote groupes. */
@@ -672,7 +702,7 @@
      defiler. C'est ce minimum qui decide de l'empilement, pas la place
      ideale — sinon on empilerait des que la table est chargee. */
   function minSuites(m) { return runsWidth(m) + 12; }
-  function minGroupes(m) { return GROUP_X + 2 * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24; }
+  function minGroupes(m) { return GROUP_X + 2 * largeurGroupe(m) + (m.cw + 10) + 24; }
 
   /* Choisit la taille des cartes ET la disposition des deux zones.
      Un debordement vertical se rattrape en faisant defiler, et ne justifie
@@ -697,11 +727,13 @@
       if (minSuites(m) + minGroupes(m) <= width) return { dens: DENSITIES[d], stack: false };
     }
     // 3) la largeur ne suffit plus pour deux grilles : on les empile,
-    //    chacune disposant alors de toute la largeur.
+    //    chacune disposant alors de toute la largeur et de la moitie de la
+    //    hauteur — la meme pour les deux, d'ou le facteur 2 sur la plus
+    //    exigeante.
     for (d = 0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
       if (Math.max(minSuites(m), minGroupes(m)) <= width &&
-          hautSuites(m) + hautGroupes(m) <= height) {
+          2 * Math.max(hautSuites(m), hautGroupes(m)) <= height) {
         return { dens: DENSITIES[d], stack: true };
       }
     }
@@ -722,8 +754,12 @@
       stack = fit.stack;
     }
     board.className = dens + (split ? ' split' : '') + (stack ? ' stack' : '');
+    // Valeurs par defaut des deux chevauchements ; la table rangee affine
+    // ensuite le pas vertical pour occuper exactement la hauteur.
     board.style.setProperty('--step',
       runStep((METRICS[dens] || METRICS['']).ch) + 'px');
+    board.style.setProperty('--gstep',
+      groupStep((METRICS[dens] || METRICS['']).cw) + 'px');
     board.innerHTML = '';
     if (split) paintGrid(view, board, dens);
     else paintFlow(view, board);
