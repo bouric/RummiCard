@@ -17,7 +17,8 @@
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
   var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
-                niveau: 'normal', manches: 3, lastDeal: null, saved: null };
+                niveau: 'normal', manches: 3, sensSuites: 'asc',
+                lastDeal: null, saved: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
   var FELTS = [
@@ -62,6 +63,7 @@
         prefs.niveau = p.niveau;
       }
       if (p.manches === 1 || p.manches === 3 || p.manches === 5) prefs.manches = p.manches;
+      if (p.sensSuites === 'asc' || p.sensSuites === 'desc') prefs.sensSuites = p.sensSuites;
     }
     E.options.keepPlaces = prefs.keepPlaces;
     E.options.difficulty = prefs.niveau;
@@ -367,6 +369,12 @@
   var touchMode = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
   function runStep(ch) { return Math.round(ch * (touchMode ? 0.4 : 0.28)); }
 
+  /* Sens de l'axe des valeurs côté suites : petites valeurs en haut (défaut)
+     ou grandes valeurs en haut. */
+  function rowOfValue(v) {
+    return prefs.sensSuites === 'desc' ? (14 - v) : (v - 1);
+  }
+
   var GRID_TOP = 34;     // sous l'intitulé de la zone et les repères de couleur
   var RULER_W = 22;      // colonne des valeurs, côté suites
   var GROUP_X = 6;       // marge gauche côté brelans et carrés
@@ -390,21 +398,27 @@
 
   function setEl(s) {
     var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
+    var vertical = isRunLayout(full);
     var el = document.createElement('div');
-    el.className = 'set' + (isRunLayout(full) ? ' run' : '') +
+    el.className = 'set' + (vertical ? ' run' : '') +
       (E.isValidSet(full) ? '' : ' bad') + (s.slot >= 0 ? ' target' : '');
     el.dataset.set = s.id;
+    var elems = [];
     for (var k = 0; k <= s.cards.length; k++) {
-      if (k === s.slot) el.appendChild(slotEl());
-      if (k === s.hole) el.appendChild(holeEl());
+      if (k === s.slot) elems.push(slotEl());
+      if (k === s.hole) elems.push(holeEl());
       if (k < s.cards.length) {
-        el.appendChild(cardEl(s.cards[k], {
+        elems.push(cardEl(s.cards[k], {
           staged: isStaged(s.cards[k]),
           fromAI: !!aiJustPlayed[s.cards[k].id],
           pickable: isHumanTurn()
         }));
       }
     }
+    // Grandes valeurs en haut : la colonne se lit à l'envers, la carte la
+    // plus basse restant entièrement visible.
+    if (vertical && prefs.sensSuites === 'desc') elems.reverse();
+    for (k = 0; k < elems.length; k++) el.appendChild(elems[k]);
     return el;
   }
 
@@ -461,23 +475,30 @@
     // Suites : deux colonnes fixes par couleur. Une suite prend la première
     // colonne libre à sa hauteur ; si les deux sont occupées, elle part dans
     // une colonne d'appoint plutôt que de recouvrir une autre suite.
-    runs.sort(function (a, b) { return (a.suit - b.suit) || (a.low - b.low); });
-    var pad = Math.ceil(m.ch / step) - 1;      // rangées couvertes par la dernière carte
+    // Tout se raisonne en lignes d'écran, pour valoir dans les deux sens.
+    var pad = Math.ceil(m.ch / step) - 1;      // lignes couvertes par la dernière carte
+    for (i = 0; i < runs.length; i++) {
+      var a = rowOfValue(runs[i].low), b = rowOfValue(runs[i].high);
+      runs[i].haut = Math.min(a, b);
+      runs[i].bas = Math.max(a, b) + pad;
+    }
+    runs.sort(function (x, y) { return (x.suit - y.suit) || (x.haut - y.haut); });
+
     var busy = [[-99, -99], [-99, -99], [-99, -99], [-99, -99]];
     var extra = [];
     for (i = 0; i < runs.length; i++) {
       var r = runs[i], ends = busy[r.suit], k = -1;
-      if (ends[0] < r.low) k = 0;
-      else if (ends[1] < r.low) k = 1;
+      if (ends[0] < r.haut) k = 0;
+      else if (ends[1] < r.haut) k = 1;
       if (k >= 0) {
-        ends[k] = r.high + pad;
-        place(zRuns, r.el, runColX(r.suit, k, m), GRID_TOP + (r.low - 1) * step);
+        ends[k] = r.bas;
+        place(zRuns, r.el, runColX(r.suit, k, m), GRID_TOP + r.haut * step);
       } else {
         var e = 0;
-        while (e < extra.length && extra[e] >= r.low) e++;
+        while (e < extra.length && extra[e] >= r.haut) e++;
         if (e === extra.length) extra.push(-99);
-        extra[e] = r.high + pad;
-        place(zRuns, r.el, extraColX(e, m), GRID_TOP + (r.low - 1) * step);
+        extra[e] = r.bas;
+        place(zRuns, r.el, extraColX(e, m), GRID_TOP + r.haut * step);
       }
     }
     addSuitMarks(zRuns, m);
@@ -569,12 +590,12 @@
     for (var v = 1; v <= 14; v++) {
       var line = document.createElement('div');
       line.className = 'gridline';
-      line.style.top = (GRID_TOP + (v - 1) * step) + 'px';
+      line.style.top = (GRID_TOP + rowOfValue(v) * step) + 'px';
       r.appendChild(line);
       var lab = document.createElement('i');
       lab.textContent = v === 14 ? 'A' : E.RANK_LABEL[v];
       if (v === 14) lab.className = 'acehigh';
-      lab.style.top = (GRID_TOP + (v - 1) * step) + 'px';
+      lab.style.top = (GRID_TOP + rowOfValue(v) * step) + 'px';
       r.appendChild(lab);
     }
     zone.appendChild(r);
@@ -1615,6 +1636,11 @@
         'une carte qui ne rentre nulle part ouvre une nouvelle combinaison') +
       optionRow('autoArrange', '1', prefs.autoArrange, 'R\u00e9organiser la table pour moi',
         'la table se refait toute seule pour accueillir la carte') +
+      '<h3>Sens des suites</h3>' +
+      optionRow('sensSuites', 'asc', prefs.sensSuites === 'asc', 'Petites valeurs en haut',
+        'A, 2, 3 \u2026 D, R du haut vers le bas') +
+      optionRow('sensSuites', 'desc', prefs.sensSuites === 'desc', 'Grandes valeurs en haut',
+        'A, R, D, V \u2026 2 du haut vers le bas') +
       '<h3>Combinaisons sur la table</h3>' +
       optionRow('keepPlaces', '1', prefs.keepPlaces, 'Table rang\u00e9e',
         'suites \u00e0 gauche, groupes \u00e0 droite, chaque carte \u00e0 la hauteur de sa valeur') +
@@ -1631,6 +1657,8 @@
           prefs.tri = value;
           E.options.sort = value;
           if (game) { game.sortHand(game.human(), value); render(); }
+        } else if (name === 'sensSuites') {
+          prefs.sensSuites = value;
         } else if (name === 'manches') {
           prefs.manches = +value;
         } else if (name === 'niveau') {

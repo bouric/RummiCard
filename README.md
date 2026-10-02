@@ -191,6 +191,9 @@ Accessibles par l'engrenage (ou ⌘, / menu **Partie ▸ Options**), conservées
 d'une partie à l'autre — l'hôte natif les range dans les préférences de l'app,
 le navigateur dans son `localStorage`.
 
+- **Sens des suites** : *petites valeurs en haut* (par défaut) — `A, 2, 3 … D, R`
+  du haut vers le bas — ou *grandes valeurs en haut* — `A, R, D, V … 2`. Toute
+  la graduation suit, l'empilement des cartes dans une suite aussi.
 - **Durée de la partie** : *une manche* (la partie s'arrête dès qu'un joueur
   vide sa main), *trois manches* (par défaut) ou *cinq manches*. En plusieurs
   manches, chacun perd la valeur des cartes restées dans sa main et le gagnant
