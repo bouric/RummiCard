@@ -77,6 +77,7 @@ C'est le cœur de l'interface :
 | **💡 Indices** | Met en avant les cartes du **meilleur coup** du tour — celui que « Jouer au mieux » jouerait — sans dire où les poser. Aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes forment un coup cohérent : elles se posent toutes ensemble, et l'indication se met à jour au fur et à mesure. |
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
 | **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
+| **↺ Même donne** | Redistribue exactement les mêmes cartes — à vous comme aux joueurs virtuels, y compris l'ordre de la pioche — pour rejouer la partie autrement. Depuis l'écran de fin ou l'écran d'accueil, où la dernière donne reste mémorisée d'une session à l'autre. |
 | Suites qui se suivent | Deux suites de même couleur contiguës (…5♠ et 6♠…) sont **réunies automatiquement** : le solveur en produit souvent deux là où une seule suffit. |
 | Suite amputée | Retirer une carte au milieu d'une suite la **scinde en deux** : `A♣…9♣` moins le `6♣` devient `A♣2♣3♣4♣5♣` et `7♣8♣9♣`, deux suites valides, au lieu d'une seule combinaison trouée dont le manque serait invisible. |
 | Couper une suite | Déposez une carte **au milieu d'une colonne** : la suite est coupée à cet endroit et occupe les deux colonnes de sa couleur. Les deux morceaux doivent garder trois cartes. |

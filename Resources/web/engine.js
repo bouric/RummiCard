@@ -247,8 +247,20 @@
     return out;
   }
 
-  function Game(nVirtual) {
-    this.deck = shuffle(makeDeck());
+  /* Reconstitue une carte à partir de son identifiant « couleur-valeur-ex ». */
+  function cardFromId(id) {
+    var p = id.split('-');
+    return { id: id, suit: +p[0], rank: +p[1], copy: +p[2] };
+  }
+
+  /**
+   * @param {number} nVirtual nombre de joueurs virtuels
+   * @param {Object} [deal] donne à rejouer : { order: [identifiants], names: [...] }
+   */
+  function Game(nVirtual, deal) {
+    this.deck = deal && deal.order && deal.order.length === 104
+      ? deal.order.map(cardFromId)
+      : shuffle(makeDeck());
     this.board = [];
     this.players = [];
     this.current = 0;
@@ -257,7 +269,12 @@
     this.passStreak = 0;
     this.turnCount = 0;
 
-    var aiNames = shuffle(AI_NAMES.slice()).slice(0, nVirtual);
+    // La donne, mémorisée avant distribution : de quoi la rejouer à l'identique.
+    this.deal = { n: nVirtual, order: this.deck.map(function (c) { return c.id; }), names: null };
+    var aiNames = deal && deal.names && deal.names.length === nVirtual
+      ? deal.names.slice()
+      : shuffle(AI_NAMES.slice()).slice(0, nVirtual);
+    this.deal.names = aiNames.slice();
     this.players.push({ index: 0, name: 'Vous', human: true, hand: [], melded: false });
     for (var i = 0; i < nVirtual; i++) {
       this.players.push({ index: i + 1, name: aiNames[i], human: false, hand: [], melded: false });

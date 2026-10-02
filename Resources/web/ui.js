@@ -16,7 +16,8 @@
        tri        : 'suit' = par couleur puis valeur
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
-  var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0 };
+  var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
+                lastDeal: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
   var FELTS = [
@@ -53,6 +54,9 @@
       if (typeof p.hints === 'boolean') prefs.hints = p.hints;
       if (typeof p.autoArrange === 'boolean') prefs.autoArrange = p.autoArrange;
       if (typeof p.felt === 'number' && p.felt >= 0) prefs.felt = p.felt % FELTS.length;
+      if (p.lastDeal && p.lastDeal.order && p.lastDeal.order.length === 104) {
+        prefs.lastDeal = p.lastDeal;
+      }
     }
     E.options.keepPlaces = prefs.keepPlaces;
   }
@@ -70,7 +74,20 @@
 
   /* ================= Accueil ====================================== */
 
+  function replayDeal() {
+    if (prefs.lastDeal) newGame(prefs.lastDeal);
+  }
+
   function buildMenu() {
+    var replay = $('#replay');
+    if (replay) {
+      var d = prefs.lastDeal;
+      replay.classList.toggle('hidden', !d);
+      if (d) {
+        replay.innerHTML = '\u21ba Rejouer la donne pr\u00e9c\u00e9dente (' + d.n +
+          ' adversaire' + (d.n > 1 ? 's' : '') + ')';
+      }
+    }
     var box = $('#choices');
     box.innerHTML = '';
     for (var i = 1; i <= 5; i++) {
@@ -86,8 +103,11 @@
 
   /* ================= Cycle de partie ============================== */
 
-  function newGame() {
-    game = new E.Game(nVirtual);
+  function newGame(deal) {
+    game = new E.Game(deal ? deal.n : nVirtual, deal);
+    if (deal) nVirtual = deal.n;
+    prefs.lastDeal = game.deal;
+    savePrefs();
     history = [game.captureState()];
     turnStack = [];
     $('#menu').classList.add('hidden');
@@ -1404,11 +1424,14 @@
         rows[i].score + ' pts</td></tr>';
     }
     html += '</table><div class="row"><button class="cta" id="again" style="flex:1">Nouvelle partie</button>' +
+      '<button class="btn" id="redeal">\u21ba M\u00eame donne</button>' +
       '<button class="btn" id="tomenu">Menu</button></div></div>';
     var ov = $('#overlay');
     ov.innerHTML = html;
     ov.classList.remove('hidden');
-    $('#again').onclick = newGame;
+    var donne = game.deal;
+    $('#again').onclick = function () { newGame(); };
+    $('#redeal').onclick = function () { newGame(donne); };
     $('#tomenu').onclick = function () {
       ov.classList.add('hidden');
       $('#game').classList.add('hidden');
@@ -1507,6 +1530,9 @@
       'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
       '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
       '<li><b>Annuler</b> d\u00e9fait vos mouvements un par un, dans l\u2019ordre inverse.</li>' +
+      '<li><b>\u21ba M\u00eame donne</b>, en fin de partie ou depuis l\u2019\u00e9cran ' +
+      'd\u2019accueil, redistribue exactement les m\u00eames cartes \u2014 \u00e0 vous et aux ' +
+      'joueurs virtuels \u2014 pour rejouer la partie autrement.</li>' +
       '<li>La palette de l\u2019en-t\u00eate change la <b>couleur du tapis</b> ' +
       '(six teintes, conserv\u00e9es d\u2019une partie \u00e0 l\u2019autre).</li>' +
       '<li><b>Revenir avant l\u2019IA</b> annule le dernier coup des joueurs ' +
@@ -1525,7 +1551,8 @@
 
   /* ================= Branchements ================================= */
 
-  $('#start').onclick = newGame;
+  $('#start').onclick = function () { newGame(); };
+  $('#replay').onclick = replayDeal;
   $('#rules-link').onclick = showRules;
   $('#help').onclick = showRules;
   $('#commit').onclick = doCommit;
