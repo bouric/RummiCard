@@ -104,6 +104,12 @@ header .brand span { color: var(--gold); }
   background: var(--panel); border: 1px solid var(--stroke); font-size: 12.5px; color: var(--dim);
 }
 .pill b { color: var(--ink); font-weight: 650; }
+/* Largeur figée pour les pastilles dont le texte change en cours de partie :
+   sans cela l'en-tête passait d'une rangée à deux selon le tour, et tout le
+   plateau — donc toutes les cartes — se décalait. */
+#turnpill { width: 118px; }
+#meldpill { width: 152px; }
+#turnpill, #meldpill { overflow: hidden; white-space: nowrap; }
 .spacer { flex: 1; }
 .iconbtn {
   width: 32px; height: 32px; border-radius: 9px; background: var(--panel);
@@ -233,6 +239,9 @@ header .brand span { color: var(--gold); }
   color: rgba(255, 255, 255, .4); font-size: 11.5px; text-align: center; line-height: 1.3;
 }
 .newzone.target { border-color: rgba(255, 255, 255, .72); color: #fff; background: rgba(255, 255, 255, .09); }
+/* Hors de votre tour : la zone garde sa place — sinon toute la table
+   bougerait à chaque tour — mais s'efface. */
+.newzone.off { opacity: .42; }
 
 /* ---------- Carte -------------------------------------------------- */
 .card {
@@ -342,6 +351,10 @@ header .brand span { color: var(--gold); }
 #msg {
   font-size: 12.5px; color: var(--dim); flex: 1; min-width: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* Hauteur figée : un message avec émoji fait une ligne plus haute qu'un
+     message sans, et la barre entière — donc le plateau, donc les cartes —
+     se décalait d'un tour à l'autre. */
+  line-height: 1.4; height: 1.4em;
 }
 #msg b { color: var(--gold); font-weight: 650; }
 #msg.warn { color: #ffcf6b; }
@@ -434,7 +447,7 @@ header .brand span { color: var(--gold); }
 /* Le message cesse d'être tronqué : il prend sa propre ligne. */
 @media (max-width: 1040px) {
   #bar { flex-wrap: wrap; }
-  #msg { flex: 1 0 100%; order: 2; white-space: normal; }
+  #msg { flex: 1 0 100%; order: 2; white-space: normal; height: 2.8em; }
 }
 
 /* Tablette en portrait. */
@@ -455,9 +468,10 @@ header .brand span { color: var(--gold); }
   header .brand, #meldpill { display: none; }
   .pill { padding: 4px 9px; font-size: 11.5px; }
   .iconbtn { width: 28px; height: 28px; font-size: 13px; }
-  #hints .lbl, #auto .lbl, #sort .lbl, #rewind .lbl { display: none; }
+  #auto .lbl, #sort .lbl, #rewind .lbl { display: none; }
   .btn { padding: 8px 11px; font-size: 14px; }
   #bar { gap: 6px; }
+  #msg { height: 4.2em; }
   /* Des pastilles plus étroites : quatre joueurs tiennent sur une rangée,
      et au-delà le retour à la ligne reste possible. */
   #opponents { gap: 5px; }

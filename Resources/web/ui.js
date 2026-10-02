@@ -78,7 +78,11 @@
   var soundOn = true;
   var busy = false;
   var drag = null;
-  /* Sur telephone, une seule moitie de table est depliee a la fois. */
+  /* Affichage telephone : une seule moitie de table depliee a la fois.
+     EN PAUSE — le code reste en place, il suffit de repasser ce drapeau a
+     true pour le reactiver. Sans lui, un ecran etroit garde les deux
+     moities empilees, avec une colonne par couleur. */
+  var MODE_TELEPHONE = false;
   var soloZone = 'runs';
   var history = [];          // état au début de chacun de vos tours
   var aiJustPlayed = {};     // cartes ajoutées par les joueurs virtuels depuis votre tour
@@ -414,7 +418,8 @@
      mais nécessaires pour ne jamais superposer deux suites. */
   function extraColX(e, m, nc) {
     var g = ecarts(nc);
-    return runColX(3, nc - 1, m, nc) + m.cw + g.sg + e * (m.cw + g.rg);
+    // Au-dela de la zone « Nouvelle suite », qui garde une place fixe.
+    return runsWidth(m, nc) + m.cw + 10 + e * (m.cw + g.rg);
   }
   function runsWidth(m, nc) {
     return runColX(3, nc - 1, m, nc) + m.cw + 10;
@@ -476,6 +481,7 @@
     // 12 px de respiration en bas : ce qui reste est pour la grille.
     var hDispo = solo ? avail - FOLD_H : (empile ? Math.floor(avail / 2) - 1 : avail);
     var hauteur = Math.max(60, hDispo - GRID_TOP - 38);
+    board.dataset.avail = avail;      // pour detecter un plateau redimensionne
     var step = Math.max(minRunStep(m.ch), Math.min(m.ch, Math.floor((hauteur - m.ch) / 13)));
     var gstep = groupStep(m.cw);
     board.style.setProperty('--step', step + 'px');
@@ -556,17 +562,24 @@
       }
     }
     addSuitMarks(zRuns, m, nc);
-    var newRunsX = extra.length ? extraColX(extra.length, m, nc) : runsWidth(m, nc);
+    // La zone « Nouvelle suite » suit les colonnes fixes et n'en bouge plus,
+    // quel que soit le remplissage de la table.
+    var newRunsX = runsWidth(m, nc);
+    var apresSuites = extra.length ? extraColX(extra.length, m, nc) : newRunsX + m.cw + 10;
 
     // Groupes : une case fixe par valeur, As à Roi — 7 lignes puis la colonne
     // suivante. Une valeur est donc toujours au même endroit, qu'elle soit
     // posée ou non. Un éventuel second groupe de même valeur se range dans une
     // colonne d'appoint, sur la ligne de sa valeur.
     var groupW = largeurGroupe(m);
-    // Largeur dont dispose reellement la zone des groupes : tout le plateau
+    // La zone « Nouveau groupe » occupe le bord gauche : elle se retrouve
+    // ainsi juste a cote de « Nouvelle suite », qui borde la zone de gauche.
+    var NEUVE_W = m.cw + 10;
+    var GX = GROUP_X + NEUVE_W;
+    // Largeur dont dispose reellement la grille des valeurs : tout le plateau
     // si les deux parties sont empilees, ce que les suites laissent sinon.
-    var largeurG = empile ? (board.clientWidth || 1200) - 26
-      : Math.max(160, (board.clientWidth || 1200) - (newRunsX + m.cw + 34));
+    var largeurG = (empile ? (board.clientWidth || 1200) - 26
+      : Math.max(160, (board.clientWidth || 1200) - (apresSuites + 24))) - NEUVE_W;
     var lignesMax = Math.max(1, Math.floor(hauteur / (m.ch + 6)));
     var colsVoulues = Math.min(14, Math.ceil(14 / lignesMax));
     // Une colonne de plus, c'est deux lignes de moins : quand il s'en faut
@@ -581,25 +594,26 @@
                                     colsVoulues, 14));
     var rows = Math.ceil(14 / cols);
     var rowH = Math.max(m.ch + 6, Math.floor(hauteur / rows));
-    addValueCells(zGroups, rowH, groupW, m, rows);
-    var occ = {}, maxX = GROUP_X + cols * groupW;
+    addValueCells(zGroups, rowH, groupW, m, rows, GX);
+    var occ = {}, maxX = GX + cols * groupW;
     for (i = 0; i < groups.length; i++) {
       var v = groups[i].low;
       var n = occ[v] || 0;
       occ[v] = n + 1;
-      var gx = GROUP_X + (n ? cols + n - 1 : valueCol(v, rows)) * groupW;
+      var gx = GX + (n ? cols + n - 1 : valueCol(v, rows)) * groupW;
       place(zGroups, groups[i].el, gx, GRID_TOP + valueRow(v, rows) * rowH);
       if (gx + groupW > maxX) maxX = gx + groupW;
     }
     var groupsH = rows * rowH;
 
-    var needRuns = newRunsX, needGroups = maxX;
-    if (isHumanTurn() && !view.newSlot) {
-      placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, gridH, 'runs', 'Nouvelle suite');
-      placeNewZone(zGroups, maxX, GRID_TOP, m.cw, groupsH - 10, 'groups', 'Nouveau groupe');
-      needRuns += m.cw + 10;
-      needGroups += m.cw + 10;
-    }
+    // Les deux zones « nouvelle combinaison » sont toujours posees, meme
+    // pendant le tour des joueurs virtuels : les faire disparaitre changeait
+    // la largeur des zones, et toute la table sautait d'un tour a l'autre.
+    // Hors de votre tour elles sont seulement estompees.
+    var needRuns = apresSuites, needGroups = maxX;
+    // Memes dimensions des deux cotes : elles se font face.
+    placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, hauteur, 'runs', 'Nouvelle suite');
+    placeNewZone(zGroups, GROUP_X, GRID_TOP, m.cw, hauteur, 'groups', 'Nouveau groupe');
     // Les espaceurs donnent sa hauteur de defilement a chaque grille ; ils
     // doivent etre poses avant qu'une moitie ne soit repliee.
     spacer(zRuns, gridH + GRID_TOP + 12);
@@ -647,6 +661,7 @@
   function placeNewZone(zone, x, y, w, h, kind, label) {
     var d = newZone(kind, label);
     d.classList.add('tall');
+    if (!isHumanTurn()) d.classList.add('off');
     d.style.left = x + 'px';
     d.style.top = y + 'px';
     d.style.width = w + 'px';
@@ -662,11 +677,11 @@
 
   /* Trame des valeurs côté groupes : chaque valeur garde sa case, occupée ou
      non, pour qu'on sache toujours où regarder. */
-  function addValueCells(zone, rowH, groupW, m, rows) {
+  function addValueCells(zone, rowH, groupW, m, rows, gx) {
     for (var v = 1; v <= 13; v++) {
       var cell = document.createElement('div');
       cell.className = 'valuecell';
-      cell.style.left = (GROUP_X + valueCol(v, rows) * groupW) + 'px';
+      cell.style.left = (gx + valueCol(v, rows) * groupW) + 'px';
       cell.style.top = (GRID_TOP + valueRow(v, rows) * rowH) + 'px';
       cell.style.width = (groupW - 10) + 'px';
       cell.style.height = m.ch + 'px';
@@ -747,7 +762,14 @@
   /* Hauteurs minimales : les deux grilles se compriment, l'une en resserrant
      sa graduation, l'autre en repartissant ses valeurs sur plus de colonnes. */
   function hautSuites(m) { return GRID_TOP + 13 * minRunStep(m.ch) + m.ch + 38; }
-  function hautGroupes(m) { return GRID_TOP + 2 * (m.ch + 6) + 38; }
+  /* Hauteur de la grille des valeurs : elle depend de la largeur, puisque
+     c'est le nombre de colonnes qui fixe le nombre de lignes. Sans ce
+     calcul, on choisissait des cartes trop grandes et la grille debordait. */
+  function hautGroupes(m, largeur) {
+    var w = Math.max(60, largeur - (m.cw + 10));      // moins « Nouveau groupe »
+    var colsFit = Math.max(1, Math.min(14, Math.floor((w - GROUP_X) / largeurGroupe(m))));
+    return GRID_TOP + Math.ceil(14 / colsFit) * (m.ch + 6) + 38;
+  }
 
   /* Combien de groupes d'une meme valeur cohabitent : une colonne d'appoint
      est alors necessaire cote groupes. */
@@ -783,7 +805,7 @@
     for (d = 0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
       if (besoinSuites(m, 2) + besoinGroupes(m, nCols) <= width &&
-          Math.max(hautSuites(m), hautGroupes(m)) <= height) {
+          Math.max(hautSuites(m), hautGroupes(m, width - besoinSuites(m, 2))) <= height) {
         return { dens: DENSITIES[d], stack: false, nc: 2 };
       }
     }
@@ -802,16 +824,18 @@
     for (d = 0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
       if (Math.max(minSuites(m, 2), minGroupes(m)) <= width &&
-          2 * Math.max(hautSuites(m), hautGroupes(m)) <= height) {
+          2 * Math.max(hautSuites(m), hautGroupes(m, width)) <= height) {
         return { dens: DENSITIES[d], stack: true, nc: 2 };
       }
     }
     // 4) ecran de telephone : meme empilees, les deux grilles sont a
-    //    l'etroit. On n'en montre qu'une a la fois, en pleine hauteur, et
-    //    on se contente d'une colonne par couleur.
+    //    l'etroit. Une seule colonne par couleur, et — quand l'affichage
+    //    telephone est actif — une seule moitie de table depliee.
     m = METRICS['denser'];
     if (minSuites(m, 2) > width || minGroupes(m) > width) {
-      return { dens: 'denser', stack: true, solo: true, nc: minSuites(m, 2) <= width ? 2 : 1 };
+      var etroit = { dens: 'denser', stack: true, nc: minSuites(m, 2) <= width ? 2 : 1 };
+      if (MODE_TELEPHONE) etroit.solo = true;
+      return etroit;
     }
     return { dens: 'denser', stack: true, nc: 2 };
   }
@@ -927,6 +951,13 @@
     paintBoard();
     paintRack();
     paintOpponents(opts.thinking);
+    // La main et la barre peuvent changer de hauteur en se redessinant, donc
+    // changer celle du plateau : la grille aurait alors ete calculee pour une
+    // hauteur perimee. On la refait une fois, sans animation.
+    var bd = $('#board');
+    if (bd.dataset.avail && Math.abs(bd.clientHeight - (+bd.dataset.avail)) > 2) {
+      paintBoard();
+    }
     $('#deckcount').textContent = game.deck.length;
     var rp = $('#roundpill');
     if (rp) {
@@ -995,10 +1026,10 @@
            trouvent rien, aucune n'est possible et il faut piocher. */
         playableIds();
         msg.innerHTML = hintCache.total
-          ? tete + ' \ud83d\udca1 ' + hintCache.total + ' carte' +
+          ? tete + ' — ' + hintCache.total + ' carte' +
             (hintCache.total > 1 ? 's' : '') + ' mise' +
             (hintCache.total > 1 ? 's' : '') + ' en avant.'
-          : tete + ' \ud83d\udca1 Aucune suite possible — piochez.';
+          : tete + ' — Aucune suite possible — piochez.';
       } else {
         msg.innerHTML = tete;
       }
@@ -1007,9 +1038,9 @@
       var n = hintCache.total;
       msg.className = n ? 'good' : 'warn';
       msg.innerHTML = n
-        ? '\ud83d\udca1 Meilleur coup : ' + n + ' carte' + (n > 1 ? 's' : '') +
+        ? 'Meilleur coup : ' + n + ' carte' + (n > 1 ? 's' : '') +
           ' de votre main, mise' + (n > 1 ? 's' : '') + ' en avant.'
-        : '\ud83d\udca1 Aucune carte posable pour l\u2019instant — piochez.';
+        : 'Aucune carte posable pour l\u2019instant — piochez.';
     } else {
       msg.innerHTML = 'Glissez une carte sur la table — elle trouvera sa place toute seule.';
     }
@@ -1073,7 +1104,7 @@
     render();
     updateBar();
     toast(prefs.hints
-      ? '\ud83d\udca1 Les cartes posables sont mises en avant'
+      ? 'Les cartes posables sont mises en avant'
       : 'Aide d\u00e9sactiv\u00e9e');
   }
 
@@ -1956,7 +1987,7 @@
       '<li>Deux suites de m\u00eame couleur qui se suivent (\u20265\u2660 et 6\u2660\u2026) ' +
       'sont <b>r\u00e9unies automatiquement</b>. Pour les s\u00e9parer de nouveau, d\u00e9posez ' +
       'une carte au milieu de la colonne : la suite est <b>coup\u00e9e \u00e0 cet endroit</b>.</li>' +
-      '<li><b>\ud83d\udca1 Indices</b> met en avant les cartes du <b>meilleur coup</b> ' +
+      '<li><b>Indices</b> met en avant les cartes du <b>meilleur coup</b> ' +
       'du tour, sans vous dire o\u00f9 les poser : une aide interm\u00e9diaire entre ' +
       'chercher seul et laisser jouer la machine. Ces cartes se posent toutes ' +
       'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
