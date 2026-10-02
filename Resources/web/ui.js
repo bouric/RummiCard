@@ -2031,7 +2031,7 @@
       'joueurs virtuels \u2014 pour rejouer la partie autrement.</li>' +
       '<li>La palette de l\u2019en-t\u00eate change la <b>couleur du tapis</b> ' +
       '(six teintes, conserv\u00e9es d\u2019une partie \u00e0 l\u2019autre).</li>' +
-      '<li><b>Refaire mon tour</b> ramène la partie au <b>début de votre tour ' +
+      '<li><b>Refaire</b> ramène la partie au <b>début de votre tour ' +
       'précédent</b> : votre coup est défait, et avec lui les réponses des ' +
       'joueurs virtuels. Appuyez plusieurs fois pour remonter de tour en tour.</li>' +
       '<li>Glissez une carte posée ce tour-ci vers votre main pour la récupérer.</li>' +
@@ -2039,7 +2039,7 @@
       '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : au suivant · ⌫ : annuler · P : piocher · ' +
-      'M : magique · T : trier · I : indices · R : refaire mon tour</p>' +
+      'M : magique · T : trier · I : indices · R : refaire</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
