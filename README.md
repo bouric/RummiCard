@@ -89,7 +89,7 @@ C'est le cœur de l'interface :
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Refaire mon tour** | Ramène la partie au **début de votre tour précédent**, dans l'état exact (mains, table, pioche) : votre coup est défait, et avec lui les réponses des joueurs virtuels. Plusieurs appuis remontent de tour en tour. |
 
-Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `A` magique ·
+Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `M` magique ·
 `T` trier · `I` indices · `R` refaire mon tour. Les mêmes commandes sont dans le menu
 **Partie** (⇧⌘Z pour refaire votre tour).
 

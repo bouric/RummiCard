@@ -468,7 +468,7 @@ header .brand span { color: var(--gold); }
   header .brand, #meldpill { display: none; }
   .pill { padding: 4px 9px; font-size: 11.5px; }
   .iconbtn { width: 28px; height: 28px; font-size: 13px; }
-  #auto .lbl, #sort .lbl, #rewind .lbl { display: none; }
+  #hints .lbl, #auto .lbl, #sort .lbl, #rewind .lbl { display: none; }
   .btn { padding: 8px 11px; font-size: 14px; }
   #bar { gap: 6px; }
   #msg { height: 4.2em; }

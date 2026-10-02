@@ -1987,7 +1987,7 @@
       '<li>Deux suites de m\u00eame couleur qui se suivent (\u20265\u2660 et 6\u2660\u2026) ' +
       'sont <b>r\u00e9unies automatiquement</b>. Pour les s\u00e9parer de nouveau, d\u00e9posez ' +
       'une carte au milieu de la colonne : la suite est <b>coup\u00e9e \u00e0 cet endroit</b>.</li>' +
-      '<li><b>Indices</b> met en avant les cartes du <b>meilleur coup</b> ' +
+      '<li><b>\ud83d\udca1 Indices</b> met en avant les cartes du <b>meilleur coup</b> ' +
       'du tour, sans vous dire o\u00f9 les poser : une aide interm\u00e9diaire entre ' +
       'chercher seul et laisser jouer la machine. Ces cartes se posent toutes ' +
       'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
@@ -2010,7 +2010,7 @@
       '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : au suivant · ⌫ : annuler · P : piocher · ' +
-      'A : magique · T : trier · I : indices · R : refaire mon tour</p>' +
+      'M : magique · T : trier · I : indices · R : refaire mon tour</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
@@ -2061,7 +2061,7 @@
     if (e.key === 'Enter') { doCommit(); }
     else if (e.key === 'Backspace') { e.preventDefault(); doUndo(); }
     else if (e.key === 'p' || e.key === 'P') { doDraw(); }
-    else if (e.key === 'a' || e.key === 'A') { doAuto(); }
+    else if (e.key === 'm' || e.key === 'M') { doAuto(); }
     else if (e.key === 't' || e.key === 'T') { doSort(); }
     else if (e.key === 'r' || e.key === 'R') { doRewind(); }
     else if (e.key === 'i' || e.key === 'I') { toggleHints(); }
