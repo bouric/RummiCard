@@ -17,7 +17,7 @@
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
   var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
-                lastDeal: null };
+                lastDeal: null, saved: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
   var FELTS = [
@@ -57,6 +57,7 @@
       if (p.lastDeal && p.lastDeal.order && p.lastDeal.order.length === 104) {
         prefs.lastDeal = p.lastDeal;
       }
+      if (p.saved && p.saved.hands && p.saved.deck) prefs.saved = p.saved;
     }
     E.options.keepPlaces = prefs.keepPlaces;
   }
@@ -70,6 +71,7 @@
   var busy = false;
   var drag = null;
   var history = [];          // état au début de chacun de vos tours
+  var aiJustPlayed = {};     // cartes ajoutées par les joueurs virtuels depuis votre tour
   var turnStack = [];        // états successifs pendant le tour en cours
 
   /* ================= Accueil ====================================== */
@@ -79,6 +81,15 @@
   }
 
   function buildMenu() {
+    var reprise = $('#resume');
+    if (reprise) {
+      var sv = prefs.saved;
+      reprise.classList.toggle('hidden', !sv);
+      if (sv) {
+        reprise.innerHTML = '\u25b6 Reprendre la partie (' + sv.n + ' adversaire' +
+          (sv.n > 1 ? 's' : '') + ', ' + sv.hands[0].length + ' cartes en main)';
+      }
+    }
     var replay = $('#replay');
     if (replay) {
       var d = prefs.lastDeal;
@@ -150,6 +161,7 @@
     var d = document.createElement('div');
     d.className = 'card s' + card.suit +
       (opts.staged ? ' staged' : '') +
+      (opts.fromAI ? ' fromai' : '') +
       (opts.pickable ? ' pickable' : '');
     d.dataset.id = card.id;
     d.innerHTML =
@@ -363,6 +375,7 @@
       if (k < s.cards.length) {
         el.appendChild(cardEl(s.cards[k], {
           staged: isStaged(s.cards[k]),
+          fromAI: !!aiJustPlayed[s.cards[k].id],
           pickable: isHumanTurn()
         }));
       }
@@ -1279,6 +1292,32 @@
     if (!game || game.finished || !game.player().human) return;
     history.push(game.captureState());
     if (history.length > 50) history.shift();
+    saveGame();
+  }
+
+  /* La partie en cours est enregistrée au début de chacun de vos tours : de
+     quoi la retrouver si l'app est fermée ou déchargée par le système. */
+  function saveGame() {
+    prefs.saved = (game && !game.finished) ? game.serialize() : null;
+    savePrefs();
+  }
+
+  function resumeGame() {
+    var d = prefs.saved;
+    if (!d) return;
+    nVirtual = d.n;
+    game = new E.Game(d.n, d.deal);
+    game.loadSerialized(d);
+    history = [game.captureState()];
+    turnStack = [];
+    aiJustPlayed = {};
+    $('#menu').classList.add('hidden');
+    $('#game').classList.remove('hidden');
+    $('#overlay').classList.add('hidden');
+    render();
+    updateBar();
+    toast('Partie reprise');
+    if (!game.player().human) aiPhase();
   }
 
   function canRewind() {
@@ -1312,6 +1351,7 @@
 
   /* Mémorise l'état avant chaque mouvement, pour les défaire un par un. */
   function pushTurnState() {
+    aiJustPlayed = {};         // votre premier geste efface le surlignage
     turnStack.push(cloneState());
     if (turnStack.length > 200) turnStack.shift();
   }
@@ -1372,12 +1412,16 @@
 
   async function aiPhase() {
     busy = true;
+    aiJustPlayed = {};         // on repart d'une table sans surlignage
     updateBar();
     while (!game.finished && !game.player().human) {
       var p = game.player();
       render({ thinking: true });
       await sleep(480 + Math.random() * 320);
       var r = AI.playAITurn(game);
+      if (r.cards) {
+        for (var ci = 0; ci < r.cards.length; ci++) aiJustPlayed[r.cards[ci].id] = true;
+      }
       if (r.kind === 'play') {
         toast('<span class="who">' + p.name + '</span> pose ' + r.played +
           ' carte' + (r.played > 1 ? 's' : ''));
@@ -1406,6 +1450,8 @@
 
   function gameOver() {
     sndWin();
+    prefs.saved = null;
+    savePrefs();
     var w = game.winner;
     var rows = game.players.map(function (p) {
       return { p: p, score: game.handScore(p) };
@@ -1492,9 +1538,9 @@
   function showRules() {
     var ov = $('#overlay');
     ov.innerHTML = '<div class="panel">' +
-      '<h2>Règles</h2><p>Le Rummikub avec 2 jeux de 52 cartes (104 cartes). ' +
+      '<h2>Règles</h2><p>Un rami de combinaisons avec 2 jeux de 52 cartes (104 cartes). ' +
       'As = 1, Valet = 11, Dame = 12, Roi = 13. Les 4 couleurs ♠ ♥ ♦ ♣ ' +
-      'remplacent les couleurs des tuiles.</p>' +
+      'tiennent lieu de couleurs de jeu.</p>' +
       '<h3>Combinaisons</h3><ul>' +
       '<li><b>Groupe</b> : 3 ou 4 cartes de même valeur, toutes de couleurs différentes.</li>' +
       '<li><b>Suite</b> : 3 cartes ou plus de même couleur, valeurs consécutives. ' +
@@ -1507,6 +1553,8 @@
       'Pas de minimum de points à la première pose.</li>' +
       '<li>À tout moment vous pouvez compléter et <b>réorganiser librement</b> la table, ' +
       'à condition que toutes les combinaisons soient valides à la fin du tour.</li>' +
+      '<li>Sur une <b>table vide</b>, la partie doit s\u2019ouvrir par une <b>suite</b> : ' +
+      'ni brelan ni carré en première pose.</li>' +
       '<li>Rien à poser ? Vous piochez et le tour passe.</li>' +
       '<li>Le premier à vider sa main gagne. Si la pioche s’épuise, ' +
       'c’est le joueur avec le moins de points en main.</li></ul>' +
@@ -1553,6 +1601,7 @@
 
   $('#start').onclick = function () { newGame(); };
   $('#replay').onclick = replayDeal;
+  $('#resume').onclick = resumeGame;
   $('#rules-link').onclick = showRules;
   $('#help').onclick = showRules;
   $('#commit').onclick = doCommit;

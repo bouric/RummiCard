@@ -1,7 +1,7 @@
 {
   "name": "RummiCard",
   "short_name": "RummiCard",
-  "description": "Le Rummikub joué avec 2 jeux de 52 cartes.",
+  "description": "Un rami de combinaisons joué avec 2 jeux de 52 cartes.",
   "lang": "fr",
   "start_url": "./index.html",
   "scope": "./",

@@ -1,6 +1,6 @@
 # RummiCard
 
-Les règles du **Rummikub** jouées avec **2 jeux de 52 cartes** (104 cartes),
+Un **rami de combinaisons** joué avec **2 jeux de 52 cartes** (104 cartes),
 en application macOS native. Un joueur réel, de 1 à 5 joueurs virtuels.
 
 <img src="docs/icon.png" width="128" alt="Icône RummiCard : deux cartes sur tapis vert">
@@ -36,9 +36,11 @@ Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installé
   suites valides. La boucle reste interdite : `R-A-2` n'en est pas une. Les deux
   usages peuvent coexister dans une même couleur, avec les deux exemplaires.
 - 14 cartes distribuées à chacun.
+- **Sur une table vide, la partie s'ouvre par une suite** : ni brelan ni carré
+  en première pose. La règle vaut pour tout le monde, joueurs virtuels compris.
 - À chaque tour, il faut poser **au moins une carte** de sa main — n'importe où,
   y compris sur les combinaisons déjà sur la table. **Pas de minimum de points
-  à la première pose** (variante retenue ici ; le Rummikub officiel en impose 30).
+  à la première pose** (variante retenue ici ; beaucoup de versions en imposent 30).
 - La table entière peut être réorganisée librement, à condition que toutes les
   combinaisons soient valides à la fin du tour : on peut prendre une carte d'une
   combinaison posée (le 4ᵉ d'un carré, par exemple) pour la glisser sur une autre.
@@ -77,6 +79,8 @@ C'est le cœur de l'interface :
 | **💡 Indices** | Met en avant les cartes du **meilleur coup** du tour — celui que « Jouer au mieux » jouerait — sans dire où les poser. Aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes forment un coup cohérent : elles se posent toutes ensemble, et l'indication se met à jour au fur et à mesure. |
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
 | **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
+| Coups des adversaires | Les cartes que les joueurs virtuels viennent d'ajouter sont **cerclées de bleu** jusqu'à votre premier geste : la table se réorganisant au fil des coups, c'est le seul moyen de voir ce qui a changé. |
+| **▶ Reprendre la partie** | La partie en cours est enregistrée au début de chacun de vos tours. Si l'app est fermée — ou déchargée de la mémoire par iOS — l'écran d'accueil propose de la reprendre là où elle en était. |
 | **↺ Même donne** | Redistribue exactement les mêmes cartes — à vous comme aux joueurs virtuels, y compris l'ordre de la pioche — pour rejouer la partie autrement. Depuis l'écran de fin ou l'écran d'accueil, où la dernière donne reste mémorisée d'une session à l'autre. |
 | Suites qui se suivent | Deux suites de même couleur contiguës (…5♠ et 6♠…) sont **réunies automatiquement** : le solveur en produit souvent deux là où une seule suffit. |
 | Suite amputée | Retirer une carte au milieu d'une suite la **scinde en deux** : `A♣…9♣` moins le `6♣` devient `A♣2♣3♣4♣5♣` et `7♣8♣9♣`, deux suites valides, au lieu d'une seule combinaison trouée dont le manque serait invisible. |
@@ -84,7 +88,7 @@ C'est le cœur de l'interface :
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Revenir avant l'IA** | Annule le dernier coup des joueurs virtuels : la partie repart du début de votre tour précédent, dans l'état exact (mains, table, pioche). Plusieurs appuis remontent plus loin. |
 
-Raccourcis : `Entrée` valider · `⌫` annuler · `P` piocher · `A` jouer au mieux ·
+Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `A` jouer au mieux ·
 `T` trier · `I` indices · `R` revenir avant l'IA. Les mêmes commandes sont dans le menu
 **Partie** (⇧⌘Z pour annuler le coup de l'IA).
 
@@ -94,7 +98,7 @@ Raccourcis : `Entrée` valider · `⌫` annuler · `P` piocher · `A` jouer au m
 Sources/main.swift        hôte natif AppKit + WKWebView (fenêtre, menus macOS)
 Tools/makeicon.swift      dessin vectoriel de l'icône (toutes les tailles)
 Resources/web/
-  solver.js               solveur Rummikub exact (programmation dynamique)
+  solver.js               solveur de combinaisons exact (programmation dynamique)
   engine.js               cartes, combinaisons, règles, déroulement de partie
   ai.js                   joueurs virtuels + assistance au placement
   ui.js                   rendu, glisser-déposer, animations FLIP
@@ -109,7 +113,7 @@ netlify.toml              déploiement en page statique
 
 ### Le solveur
 
-`solver.js` résout le vrai problème du Rummikub : *partitionner l'ensemble des
+`solver.js` résout le vrai problème de ce jeu : *partitionner l'ensemble des
 cartes de la table plus un sous-ensemble d'une main en combinaisons valides, en
 maximisant le nombre (ou la somme) des cartes posées.*
 

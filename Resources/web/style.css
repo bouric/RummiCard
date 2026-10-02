@@ -266,6 +266,14 @@ header .brand span { color: var(--gold); }
   content: ''; position: absolute; inset: 0; border-radius: var(--radius);
   box-shadow: inset 0 0 0 2px var(--gold);
 }
+/* Cartes que les joueurs virtuels viennent de poser, le temps d'un tour. */
+.card.fromai::after {
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
+  box-shadow: inset 0 0 0 2px #5bc8ff;
+}
+.zone.grid .card.fromai { box-shadow: 0 0 10px rgba(91, 200, 255, .55), 0 2px 5px rgba(0, 0, 0, .34); }
+.card.staged.fromai::after { box-shadow: inset 0 0 0 2px var(--gold); }
+
 .card.lifted { opacity: .25; }
 .card.ghost {
   position: fixed; z-index: 90; pointer-events: none; margin: 0;

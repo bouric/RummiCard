@@ -190,7 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         Version \(Self.version)
         Compilée le \(Self.buildDate)
 
-        Les règles du Rummikub, jouées avec 2 jeux de 52 cartes.
+        Les règles du rami, jouées avec 2 jeux de 52 cartes.
         Glissez une carte vers la table : elle se place toute seule \
         au bon endroit, et la table se réorganise si nécessaire.
 

@@ -1,9 +1,9 @@
 /* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
-   engine.js — Moteur de jeu : cartes, combinaisons, règles Rummikub
+   engine.js — Moteur de jeu : cartes, combinaisons et règles
    ---------------------------------------------------------------------
    104 cartes = 2 jeux de 52 (4 couleurs x 13 valeurs, 2 exemplaires).
-   Les couleurs remplacent les couleurs des tuiles Rummikub :
+   Les couleurs des cartes tiennent lieu de couleurs de jeu :
      0 pique, 1 coeur, 2 carreau, 3 trefle
    Combinaisons valides :
      - GROUPE : 3 ou 4 cartes de meme valeur, toutes de couleurs differentes
@@ -374,6 +374,16 @@
         };
       }
     }
+    // Table vide : la partie s'ouvre forcément sur une suite.
+    var vide = true, id;
+    for (id in this.snapshot.boardIds) { vide = false; break; }
+    if (vide) {
+      var suite = false;
+      for (i = 0; i < this.board.length; i++) if (isRun(this.board[i].cards)) suite = true;
+      if (!suite) {
+        return { ok: false, reason: 'Table vide : il faut l\u2019ouvrir par une suite, pas par un brelan ni un carré.' };
+      }
+    }
     return { ok: true, reason: '' };
   };
 
@@ -411,6 +421,48 @@
     }
     this.current = (this.current + 1) % this.players.length;
     this.turnCount++;
+    this.beginTurn();
+  };
+
+  /* ---- Enregistrement d'une partie en cours ----------------------- */
+
+  /** Photographie transmissible : les cartes deviennent des identifiants. */
+  Game.prototype.serialize = function () {
+    function ids(cards) { return cards.map(function (c) { return c.id; }); }
+    return {
+      n: this.players.length - 1,
+      names: this.players.slice(1).map(function (p) { return p.name; }),
+      board: this.board.map(function (s) {
+        return { id: s.id, zone: s.zone || null, cards: ids(s.cards) };
+      }),
+      hands: this.players.map(function (p) { return ids(p.hand); }),
+      melded: this.players.map(function (p) { return p.melded; }),
+      deck: ids(this.deck),
+      current: this.current,
+      passStreak: this.passStreak,
+      turnCount: this.turnCount,
+      deal: this.deal
+    };
+  };
+
+  /** Relit une photographie dans une partie fraîchement créée. */
+  Game.prototype.loadSerialized = function (d) {
+    this.board = d.board.map(function (s) {
+      var o = { id: s.id, cards: s.cards.map(cardFromId) };
+      if (s.zone) o.zone = s.zone;
+      return o;
+    });
+    for (var i = 0; i < this.players.length; i++) {
+      this.players[i].hand = (d.hands[i] || []).map(cardFromId);
+      this.players[i].melded = !!d.melded[i];
+      if (i > 0 && d.names[i - 1]) this.players[i].name = d.names[i - 1];
+    }
+    this.deck = d.deck.map(cardFromId);
+    this.current = d.current || 0;
+    this.passStreak = d.passStreak || 0;
+    this.turnCount = d.turnCount || 0;
+    this.finished = false;
+    this.winner = null;
     this.beginTurn();
   };
 

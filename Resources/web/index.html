@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>RummiCard</title>
-<meta name="description" content="Le Rummikub joué avec 2 jeux de 52 cartes.">
+<meta name="description" content="Un rami de combinaisons joué avec 2 jeux de 52 cartes.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0f1726">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -28,10 +28,11 @@
     </div>
     Rummi<span style="color:#f0b429">Card</span>
   </div>
-  <p class="tag">Les règles du Rummikub, jouées avec 2 jeux de 52 cartes.
+  <p class="tag">Les règles du rami, jouées avec 2 jeux de 52 cartes.
      Faites glisser une carte vers la table : elle se place toute seule au bon endroit.</p>
   <h2>Joueurs virtuels</h2>
   <div class="choices" id="choices"></div>
+  <button class="btn hidden" id="resume">&#9654; Reprendre la partie</button>
   <button class="cta" id="start">Commencer la partie</button>
   <button class="btn hidden" id="replay">&#8634; Rejouer la donne précédente</button>
   <div style="display:flex;gap:18px">
@@ -62,7 +63,7 @@
   <div id="boardwrap"><div id="board"></div></div>
 
   <div id="bar">
-    <button class="btn go" id="commit">&#10003; Valider</button>
+    <button class="btn go" id="commit">&#10003; Au suivant&#8239;!</button>
     <button class="btn" id="undo" title="Annuler le dernier mouvement (⌫)">&#8617; Annuler</button>
     <button class="btn" id="draw">&#127183; Piocher</button>
     <button class="btn hint" id="hints"

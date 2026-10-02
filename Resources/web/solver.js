@@ -1,6 +1,6 @@
 /* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
-   solver.js — Solveur Rummikub exact (programmation dynamique)
+   solver.js — Solveur de combinaisons exact (programmation dynamique)
    ---------------------------------------------------------------------
    Problème résolu : étant donné
      - tableCards : les cartes posées sur la table (TOUTES doivent être
