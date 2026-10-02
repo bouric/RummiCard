@@ -156,6 +156,14 @@ barre d'adresse, avec son icône.
 
 Le script affiche l'adresse à ouvrir sur l'iPad. Le Mac doit rester allumé.
 
+**Installer l'icône sur l'iPad** — ouvrir l'adresse dans **Safari** (les autres
+navigateurs ne savent pas le faire), toucher le bouton Partager, puis
+**« Sur l'écran d'accueil »**. L'option se cache dans la liste du bas de la
+feuille de partage : il faut faire défiler, et au besoin toucher **« En savoir
+plus »** / « Modifier les actions… » pour la faire apparaître. Elle n'est jamais
+proposée en navigation privée. Le jeu s'ouvre alors en plein écran, sans barre
+d'adresse, et fonctionne sans réseau.
+
 **Adresse permanente** — n'importe quel hébergeur de fichiers statiques
 convient ; `netlify.toml` est déjà configuré (dossier publié :
 `Resources/web`, rien à compiler). Sur Cloudflare Pages : commande de build
