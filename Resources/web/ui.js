@@ -1572,9 +1572,14 @@
   function stampFooter() {
     var v = $('#version');
     if (!v) return;
-    v.textContent = window.APP_BUILD
-      ? 'Version du ' + window.APP_BUILD
-      : 'Version de développement';
+    if (window.APP_BUILD) { v.textContent = 'Version du ' + window.APP_BUILD; return; }
+    // Hors de l'app macOS, la date de publication de la page fait l'affaire.
+    var d = new Date(document.lastModified);
+    v.textContent = isNaN(d.getTime())
+      ? 'Version de développement'
+      : 'Version du ' + ('0' + d.getDate()).slice(-2) + '/' +
+        ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() +
+        ' à ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
   }
 
   /* Hors ligne : une fois la page ouverte, le jeu se relance sans réseau.
