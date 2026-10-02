@@ -529,9 +529,18 @@
       needRuns += m.cw + 10;
       needGroups += m.cw + 10;
     }
-    // La zone des suites garde une largeur fixe : ses colonnes ne bougent pas.
-    zRuns.style.flex = '0 0 ' + (needRuns + 12) + 'px';
-    zGroups.style.flex = '1 1 ' + Math.max(160, needGroups + 16) + 'px';
+    if (board.classList.contains('stack')) {
+      // L'une au-dessus de l'autre : on partage la hauteur au prorata de ce
+      // que chaque grille reclame, chacune defilant pour son compte.
+      zRuns.style.flex = '1 1 ' + (gridH + GRID_TOP + 12) + 'px';
+      zGroups.style.flex = '1 1 ' + (groupsH + GRID_TOP + 12) + 'px';
+    } else {
+      // Cote a cote : les colonnes des suites ne bougent pas, mais la zone
+      // reste compressible — sinon elle se sert la premiere et ne laisse
+      // rien aux groupes.
+      zRuns.style.flex = '0 1 ' + (needRuns + 12) + 'px';
+      zGroups.style.flex = '1 1 ' + Math.max(160, needGroups + 16) + 'px';
+    }
     spacer(zRuns, gridH + GRID_TOP + 12);
     spacer(zGroups, groupsH + GRID_TOP + 12);
   }
@@ -634,26 +643,69 @@
   var DENSITIES = ['', 'dense', 'denser'];
 
   /* Taille des cartes : assez petite pour que toutes les colonnes tiennent. */
-  function pickDensity(view, width, height) {
-    var ranks = {}, nCols = 1, nRows = 0, i;
+  /* Place demandee par chaque zone, separement : c'est ce qui permet de
+     decider entre les deux cote a cote et l'une au-dessus de l'autre. */
+  function besoinSuites(m) { return runsWidth(m) + 2 * (m.cw + RUN_GAP) + 12; }
+  function besoinGroupes(m, nCols) {
+    return GROUP_X + (2 + (nCols > 1 ? 1 : 0)) * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24;
+  }
+  function hautSuites(m) { return GRID_TOP + 13 * runStep(m.ch) + m.ch + 12; }
+  function hautGroupes(m) { return GRID_TOP + VALUE_ROWS * (m.ch + 6) + 12; }
+
+  /* Combien de groupes d'une meme valeur cohabitent : une colonne d'appoint
+     est alors necessaire cote groupes. */
+  function largeurGroupes(view) {
+    var ranks = {}, nCols = 1, i;
     for (i = 0; i < view.sets.length; i++) {
       var s = view.sets[i];
       var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
       if (zoneOf(s, cards) === 'runs') continue;
       var r = cards.length ? cards[0].rank : 0;
-      if (!ranks[r]) nRows++;
       ranks[r] = (ranks[r] || 0) + 1;
       if (ranks[r] > nCols) nCols = ranks[r];
     }
-    for (var d = 0; d < DENSITIES.length; d++) {
-      var m = METRICS[DENSITIES[d]];
-      var need = runsWidth(m) + 2 * (m.cw + RUN_GAP) + GROUP_X +
-                 (2 + (nCols > 1 ? 1 : 0)) * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24;
-      var high = GRID_TOP + Math.max(13 * runStep(m.ch) + m.ch,
-                                     VALUE_ROWS * (m.ch + 6));
-      if (need <= width && high <= height) return DENSITIES[d];
+    return nCols;
+  }
+
+  /* Largeur en-dessous de laquelle une grille cesse d'etre lisible : ses
+     colonnes fixes, sans les colonnes d'appoint qui, elles, peuvent
+     defiler. C'est ce minimum qui decide de l'empilement, pas la place
+     ideale — sinon on empilerait des que la table est chargee. */
+  function minSuites(m) { return runsWidth(m) + 12; }
+  function minGroupes(m) { return GROUP_X + 2 * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24; }
+
+  /* Choisit la taille des cartes ET la disposition des deux zones.
+     Un debordement vertical se rattrape en faisant defiler, et ne justifie
+     pas d'empiler ; un etranglement horizontal, lui, rend la table
+     illisible. La hauteur ne tranche donc qu'entre deux dispositions deja
+     acceptables en largeur. */
+  function pickLayout(view, width, height) {
+    var nCols = largeurGroupes(view), d, m;
+
+    // 1) tout tient cote a cote, hauteur comprise : le cas confortable.
+    for (d = 0; d < DENSITIES.length; d++) {
+      m = METRICS[DENSITIES[d]];
+      if (besoinSuites(m) + besoinGroupes(m, nCols) <= width &&
+          Math.max(hautSuites(m), hautGroupes(m)) <= height) {
+        return { dens: DENSITIES[d], stack: false };
+      }
     }
-    return 'denser';
+    // 2) cote a cote reste lisible : chaque grille garde ses colonnes
+    //    fixes, quitte a defiler verticalement.
+    for (d = 0; d < DENSITIES.length; d++) {
+      m = METRICS[DENSITIES[d]];
+      if (minSuites(m) + minGroupes(m) <= width) return { dens: DENSITIES[d], stack: false };
+    }
+    // 3) la largeur ne suffit plus pour deux grilles : on les empile,
+    //    chacune disposant alors de toute la largeur.
+    for (d = 0; d < DENSITIES.length; d++) {
+      m = METRICS[DENSITIES[d]];
+      if (Math.max(minSuites(m), minGroupes(m)) <= width &&
+          hautSuites(m) + hautGroupes(m) <= height) {
+        return { dens: DENSITIES[d], stack: true };
+      }
+    }
+    return { dens: 'denser', stack: true };
   }
 
   function paintBoard() {
@@ -663,11 +715,13 @@
     var total = game.boardCards().length;
     var split = !!E.options.keepPlaces;
     var dens = total > 70 ? 'denser' : (total > 42 ? 'dense' : '');
+    var stack = false;
     if (split) {
-      var fit = pickDensity(view, board.clientWidth || 1200, board.clientHeight || 520);
-      if (DENSITIES.indexOf(fit) > DENSITIES.indexOf(dens)) dens = fit;
+      var fit = pickLayout(view, board.clientWidth || 1200, board.clientHeight || 520);
+      if (DENSITIES.indexOf(fit.dens) > DENSITIES.indexOf(dens)) dens = fit.dens;
+      stack = fit.stack;
     }
-    board.className = dens + (split ? ' split' : '');
+    board.className = dens + (split ? ' split' : '') + (stack ? ' stack' : '');
     board.style.setProperty('--step',
       runStep((METRICS[dens] || METRICS['']).ch) + 'px');
     board.innerHTML = '';
