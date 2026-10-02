@@ -468,3 +468,33 @@ header .brand span { color: var(--gold); }
   #rack .card { --cw: 44px; --ch: 62px; }
   #rackwrap { padding: 8px; }
 }
+
+/* ---------- Téléphone : une moitié de table à la fois ---------------
+   Trop étroit pour deux grilles, même l'une au-dessus de l'autre : la
+   moitié qu'on ne regarde pas se réduit à une bande. On la touche pour
+   l'afficher, et on peut y lâcher une carte pour commencer une
+   combinaison de l'autre côté. */
+#board.solo .zone.folded {
+  padding: 0; overflow: hidden; display: flex; align-items: stretch;
+}
+#board.solo .zone.folded .zonehead { display: none; }
+.foldhead {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  gap: 1px; padding: 0 14px; text-align: left; border-radius: 0;
+  background: rgba(0, 0, 0, .18);
+}
+.foldhead b {
+  font-size: 11px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
+  color: rgba(255, 255, 255, .62);
+}
+.foldhead em { font-style: normal; font-size: 11px; color: rgba(255, 255, 255, .38); }
+.foldhead::after {
+  content: '⌃'; position: absolute; right: 16px; font-size: 15px;
+  color: rgba(255, 255, 255, .42);
+}
+#board.solo .zone.folded { position: relative; }
+#board.solo .zone.folded.target {
+  background: rgba(255, 255, 255, .12);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .6);
+}
+#board.solo .zone.folded.target .foldhead b { color: #fff; }
