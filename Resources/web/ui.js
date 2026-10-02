@@ -509,33 +509,50 @@
       (view.newZone === 'runs' ? runs : groups).push(ghost);
     }
 
-    // Suites : deux colonnes fixes par couleur. Une suite prend la première
-    // colonne libre à sa hauteur ; si les deux sont occupées, elle part dans
-    // une colonne d'appoint plutôt que de recouvrir une autre suite.
-    // Tout se raisonne en lignes d'écran, pour valoir dans les deux sens.
-    var pad = Math.ceil(m.ch / step) - 1;      // lignes couvertes par la dernière carte
+    // Suites : colonnes fixes par couleur. Une suite prend la première
+    // colonne libre à sa hauteur. Quand elle commence juste là où la
+    // précédente finit — la dernière carte d'une suite descend plus bas que
+    // sa valeur, puisqu'elle est entière — on la glisse de quelques pixels
+    // sous elle plutôt que de l'exiler dans une colonne d'appoint : mieux
+    // vaut un léger décalage qu'une suite reléguée à l'autre bout.
+    // Tout se raisonne en pixels, pour valoir dans les deux sens de lecture.
+    var COLLE = 3;                              // jointure entre deux suites
+    // De quoi dégager la dernière carte de la suite du dessus, qui descend
+    // plus bas que sa valeur, et rien de plus : deux suites qui se disputent
+    // vraiment la même ligne continuent de se séparer en colonnes.
+    var DECALE_MAX = m.ch - step + COLLE;
     for (i = 0; i < runs.length; i++) {
       var a = rowOfValue(runs[i].low), b = rowOfValue(runs[i].high);
       runs[i].haut = Math.min(a, b);
-      runs[i].bas = Math.max(a, b) + pad;
+      runs[i].basV = Math.max(a, b);
     }
     runs.sort(function (x, y) { return (x.suit - y.suit) || (x.haut - y.haut); });
 
     var busy = [], bi, bk;
-    for (bi = 0; bi < 4; bi++) { busy.push([]); for (bk = 0; bk < nc; bk++) busy[bi].push(-99); }
+    for (bi = 0; bi < 4; bi++) { busy.push([]); for (bk = 0; bk < nc; bk++) busy[bi].push(-1e9); }
     var extra = [];
     for (i = 0; i < runs.length; i++) {
       var r = runs[i], ends = busy[r.suit], k = -1, kk;
-      for (kk = 0; kk < nc; kk++) { if (ends[kk] < r.haut) { k = kk; break; } }
+      var ideal = GRID_TOP + r.haut * step;
+      var haut = (r.basV - r.haut) * step + m.ch;
+      var y = ideal;
+      // 1) une colonne où la suite tient exactement à la hauteur de ses valeurs
+      for (kk = 0; kk < nc; kk++) { if (ends[kk] <= ideal) { k = kk; break; } }
+      // 2) sinon, une colonne où il suffit de la glisser un peu plus bas
+      if (k < 0) {
+        for (kk = 0; kk < nc; kk++) {
+          if (ends[kk] + COLLE - ideal <= DECALE_MAX) { k = kk; y = ends[kk] + COLLE; break; }
+        }
+      }
       if (k >= 0) {
-        ends[k] = r.bas;
-        place(zRuns, r.el, runColX(r.suit, k, m, nc), GRID_TOP + r.haut * step);
+        ends[k] = y + haut;
+        place(zRuns, r.el, runColX(r.suit, k, m, nc), y);
       } else {
         var e = 0;
-        while (e < extra.length && extra[e] >= r.haut) e++;
-        if (e === extra.length) extra.push(-99);
-        extra[e] = r.bas;
-        place(zRuns, r.el, extraColX(e, m, nc), GRID_TOP + r.haut * step);
+        while (e < extra.length && extra[e] > ideal) e++;
+        if (e === extra.length) extra.push(-1e9);
+        extra[e] = ideal + haut;
+        place(zRuns, r.el, extraColX(e, m, nc), ideal);
       }
     }
     addSuitMarks(zRuns, m, nc);
