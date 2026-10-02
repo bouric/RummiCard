@@ -782,9 +782,15 @@
   }
 
   /* Vrai tant que la table, vierge en début de tour, n'a pas reçu de suite. */
-  function ouvertureAttendue() {
+  /* Le tour a-t-il commencé sur une table vierge ? */
+  function tourDOuverture() {
     if (!game || !game.snapshot) return false;
-    for (var id in game.snapshot.boardIds) return false;   // la table n'était pas vierge
+    for (var id in game.snapshot.boardIds) return false;
+    return true;
+  }
+
+  function ouvertureAttendue() {
+    if (!tourDOuverture()) return false;
     for (var i = 0; i < game.board.length; i++) {
       if (E.isRun(game.board[i].cards)) return false;
     }
@@ -1483,7 +1489,11 @@
       restoreState(before);
       turnStack.pop();
       render();
-      toast('Aucun coup possible avec cette main — piochez.');
+      /* Sur une table vierge, « aucun coup » veut dire « aucune suite » :
+         le dire, sinon le joueur qui tient un beau brelan ne comprend pas. */
+      toast(tourDOuverture()
+        ? 'Aucune suite possible pour ouvrir la table — piochez.'
+        : 'Aucun coup possible avec cette main — piochez.');
       return;
     }
     AI.applyPlay(game, p, play);
