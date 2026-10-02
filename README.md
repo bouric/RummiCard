@@ -86,11 +86,11 @@ C'est le cœur de l'interface :
 | Suite amputée | Retirer une carte au milieu d'une suite la **scinde en deux** : `A♣…9♣` moins le `6♣` devient `A♣2♣3♣4♣5♣` et `7♣8♣9♣`, deux suites valides, au lieu d'une seule combinaison trouée dont le manque serait invisible. |
 | Couper une suite | Déposez une carte **au milieu d'une colonne** : la suite est coupée à cet endroit et occupe les deux colonnes de sa couleur. Les deux morceaux doivent garder trois cartes. |
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
-| **⟲ Revenir avant l'IA** | Annule le dernier coup des joueurs virtuels : la partie repart du début de votre tour précédent, dans l'état exact (mains, table, pioche). Plusieurs appuis remontent plus loin. |
+| **⟲ Refaire mon tour** | Ramène la partie au **début de votre tour précédent**, dans l'état exact (mains, table, pioche) : votre coup est défait, et avec lui les réponses des joueurs virtuels. Plusieurs appuis remontent de tour en tour. |
 
 Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `A` jouer au mieux ·
-`T` trier · `I` indices · `R` revenir avant l'IA. Les mêmes commandes sont dans le menu
-**Partie** (⇧⌘Z pour annuler le coup de l'IA).
+`T` trier · `I` indices · `R` refaire mon tour. Les mêmes commandes sont dans le menu
+**Partie** (⇧⌘Z pour refaire votre tour).
 
 ## Architecture
 

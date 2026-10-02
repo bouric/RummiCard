@@ -132,7 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         gameMenu.addItem(.separator())
         gameMenu.addItem(withTitle: "Valider le tour", action: #selector(commitTurn), keyEquivalent: "\r").target = self
         gameMenu.addItem(withTitle: "Annuler le tour", action: #selector(undoTurn), keyEquivalent: "z").target = self
-        let rewind = gameMenu.addItem(withTitle: "Annuler le coup de l’IA",
+        let rewind = gameMenu.addItem(withTitle: "Refaire mon tour",
                                       action: #selector(rewindAI), keyEquivalent: "z")
         rewind.keyEquivalentModifierMask = [.command, .shift]
         rewind.target = self

@@ -1351,7 +1351,7 @@
     render();
     updateBar();
     sndLift();
-    toast('\u27f2 Retour avant le coup des joueurs virtuels');
+    toast('\u27f2 Vous voilà au début de votre tour précédent');
   }
 
   function doCommit() {
@@ -1614,15 +1614,15 @@
       'joueurs virtuels \u2014 pour rejouer la partie autrement.</li>' +
       '<li>La palette de l\u2019en-t\u00eate change la <b>couleur du tapis</b> ' +
       '(six teintes, conserv\u00e9es d\u2019une partie \u00e0 l\u2019autre).</li>' +
-      '<li><b>Revenir avant l\u2019IA</b> annule le dernier coup des joueurs ' +
-      'virtuels : la partie repart du début de votre tour précédent. ' +
-      'Appuyez plusieurs fois pour remonter plus loin.</li>' +
+      '<li><b>Refaire mon tour</b> ramène la partie au <b>début de votre tour ' +
+      'précédent</b> : votre coup est défait, et avec lui les réponses des ' +
+      'joueurs virtuels. Appuyez plusieurs fois pour remonter de tour en tour.</li>' +
       '<li>Glissez une carte posée ce tour-ci vers votre main pour la récupérer.</li>' +
       '<li>Vous pouvez prendre une carte d\u2019une combinaison de la table ' +
       '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : valider · ⌫ : annuler · P : piocher · ' +
-      'A : jouer au mieux · T : trier · I : indices · R : revenir avant l\u2019IA</p>' +
+      'A : jouer au mieux · T : trier · I : indices · R : refaire mon tour</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
