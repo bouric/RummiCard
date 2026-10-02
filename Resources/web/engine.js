@@ -109,6 +109,44 @@
 
   function isValidSet(cards) { return isGroup(cards) || isRun(cards); }
 
+  /* Pourquoi une combinaison n'est-elle pas valide ? Formulé pour le joueur. */
+  function whyInvalid(cards) {
+    if (cards.length < 3) {
+      return 'il manque ' + (3 - cards.length) + ' carte' +
+        (3 - cards.length > 1 ? 's' : '') + ' (3 minimum)';
+    }
+    if (sameRank(cards)) {
+      var seen = 0, i;
+      for (i = 0; i < cards.length; i++) {
+        if (seen & (1 << cards[i].suit)) {
+          return 'un groupe ne peut pas contenir deux ' + SUIT_GLYPH[cards[i].suit];
+        }
+        seen |= 1 << cards[i].suit;
+      }
+      return 'un groupe compte au plus 4 cartes';
+    }
+    if (sameSuit(cards)) {
+      var high = false, hasAce = false, hasHigh = false, k;
+      for (k = 0; k < cards.length; k++) {
+        if (cards[k].rank === 1) hasAce = true;
+        if (cards[k].rank >= 11) hasHigh = true;
+      }
+      high = hasAce && hasHigh;
+      var r = sortedEff(cards, high), manque = [];
+      for (k = 1; k < r.length; k++) {
+        if (r[k] === r[k - 1]) return 'deux fois la même carte dans une suite';
+        for (var v = r[k - 1] + 1; v < r[k]; v++) {
+          manque.push(RANK_LABEL[v === ACE_HIGH ? 1 : v] + SUIT_GLYPH[cards[0].suit]);
+        }
+      }
+      if (manque.length > 2) return 'ses valeurs ne se suivent pas';
+      if (manque.length) {
+        return 'il manque ' + manque.join(' et ') + ' pour que la suite se tienne';
+      }
+    }
+    return 'ni une suite ni un groupe';
+  }
+
   /* Peut-on ajouter `card` a la combinaison `cards` ?
      Renvoie l'index d'insertion, ou -1. Accepte les combinaisons
      incompletes (1 ou 2 cartes) en cours de construction.          */
@@ -312,7 +350,11 @@
     // toutes les combinaisons doivent etre valides
     for (i = 0; i < this.board.length; i++) {
       if (!isValidSet(this.board[i].cards)) {
-        return { ok: false, reason: 'Une combinaison est incomplète ou invalide.' };
+        var bad = this.board[i].cards;
+        return {
+          ok: false,
+          reason: bad.map(label).join(' ') + ' : ' + whyInvalid(bad) + '.'
+        };
       }
     }
     return { ok: true, reason: '' };
@@ -417,6 +459,7 @@
     effRank: effRank,
     ACE_HIGH: ACE_HIGH,
     isValidSet: isValidSet,
+    whyInvalid: whyInvalid,
     acceptIndex: acceptIndex,
     orderSet: orderSet,
     sameRank: sameRank,

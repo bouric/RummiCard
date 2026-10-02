@@ -43,6 +43,9 @@ Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installé
   combinaisons soient valides à la fin du tour : on peut prendre une carte d'une
   combinaison posée (le 4ᵉ d'un carré, par exemple) pour la glisser sur une autre.
 - Rien à poser → on pioche et le tour passe.
+- Une combinaison invalide est **cerclée de rouge** (à ne pas confondre avec
+  l'anneau doré des cartes posées pendant le tour) et le bandeau la nomme en
+  expliquant ce qui cloche : *« 5♠ 6♠ : il manque 1 carte (3 minimum). »*
 - Le premier à vider sa main gagne ; pioche épuisée, c'est le moins de points.
 
 ## Disposition de la table
@@ -72,6 +75,7 @@ C'est le cœur de l'interface :
 | **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
 | **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
 | Suites qui se suivent | Deux suites de même couleur contiguës (…5♠ et 6♠…) sont **réunies automatiquement** : le solveur en produit souvent deux là où une seule suffit. |
+| Suite amputée | Retirer une carte au milieu d'une suite la **scinde en deux** : `A♣…9♣` moins le `6♣` devient `A♣2♣3♣4♣5♣` et `7♣8♣9♣`, deux suites valides, au lieu d'une seule combinaison trouée dont le manque serait invisible. |
 | Couper une suite | Déposez une carte **au milieu d'une colonne** : la suite est coupée à cet endroit et occupe les deux colonnes de sa couleur. Les deux morceaux doivent garder trois cartes. |
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Revenir avant l'IA** | Annule le dernier coup des joueurs virtuels : la partie repart du début de votre tour précédent, dans l'état exact (mains, table, pioche). Plusieurs appuis remontent plus loin. |

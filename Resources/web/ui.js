@@ -215,6 +215,41 @@
     }
   }
 
+  /* Pendant du regroupement : une combinaison d'une même couleur dont les
+     valeurs ne se suivent plus — parce qu'on en a retiré une carte — n'est pas
+     une suite trouée, ce sont deux suites. On les sépare, sinon le trou reste
+     invisible et le tour semble bloqué sans raison. */
+  function splitGaps() {
+    var out = [], i, k;
+    for (i = 0; i < game.board.length; i++) {
+      var set = game.board[i], cards = set.cards;
+      if (cards.length < 2 || !E.sameSuit(cards) || E.sameRank(cards)) { out.push(set); continue; }
+      var hasAce = false, hasHigh = false;
+      for (k = 0; k < cards.length; k++) {
+        if (cards[k].rank === 1) hasAce = true;
+        if (cards[k].rank >= 11) hasHigh = true;
+      }
+      var high = hasAce && hasHigh;
+      var sorted = E.orderSet(cards), segs = [[sorted[0]]];
+      for (k = 1; k < sorted.length; k++) {
+        if (E.effRank(sorted[k], high) === E.effRank(sorted[k - 1], high) + 1) {
+          segs[segs.length - 1].push(sorted[k]);
+        } else {
+          segs.push([sorted[k]]);
+        }
+      }
+      if (segs.length === 1) { out.push(set); continue; }
+      set.cards = segs[0];
+      out.push(set);
+      for (k = 1; k < segs.length; k++) {
+        var piece = game.newSet(segs[k]);
+        piece.zone = set.zone;
+        out.push(piece);
+      }
+    }
+    game.board = out;
+  }
+
   /* Range la table (uniquement si le joueur a choisi de la garder ordonnée).
      Jamais pendant un glissement : les repères mesurés resteraient faux. */
   function tidyBoard() {
@@ -302,8 +337,12 @@
     board.style.setProperty('--step', step + 'px');
     var gridH = 13 * step + m.ch;
 
-    var zRuns = makeZone('runs grid', 'Suites');
-    var zGroups = makeZone('groups grid', 'Brelans et carrés');
+    // Le type de zone sert aussi de repère au glisser-déposer : il doit rester
+    // « runs » / « groups », la classe d'affichage s'ajoute à part.
+    var zRuns = makeZone('runs', 'Suites');
+    var zGroups = makeZone('groups', 'Brelans et carrés');
+    zRuns.classList.add('grid');
+    zGroups.classList.add('grid');
     board.appendChild(zRuns);
     board.appendChild(zGroups);
     addRuler(zRuns, step, gridH);
@@ -494,7 +533,7 @@
   }
 
   function paintBoard() {
-    if (!drag) { mergeRuns(); tidyBoard(); }
+    if (!drag) { splitGaps(); mergeRuns(); tidyBoard(); }
     var view = currentView();
     var board = $('#board');
     var total = game.boardCards().length;

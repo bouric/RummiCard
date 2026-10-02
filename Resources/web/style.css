@@ -154,7 +154,9 @@ header .brand span { color: var(--gold); }
 .zone.grid .set {
   position: absolute; padding: 0; background: none; border: 0; border-radius: 0;
 }
-.zone.grid .set.bad > .card { box-shadow: 0 0 0 1.5px rgba(240, 180, 41, .8), 0 2px 5px rgba(0, 0, 0, .34); }
+.zone.grid .set.bad > .card {
+  box-shadow: 0 0 0 2px #e24a4a, 0 0 10px rgba(226, 74, 74, .45), 0 2px 5px rgba(0, 0, 0, .34);
+}
 .zone.grid .set.target > .card, .zone.grid .set.target > .slot { z-index: 2; }
 .zone.grid .newzone.tall {
   position: absolute; writing-mode: vertical-rl; text-orientation: mixed;
@@ -205,7 +207,7 @@ header .brand span { color: var(--gold); }
   background: rgba(0, 0, 0, .17); border: 1px solid rgba(255, 255, 255, .07);
   transition: box-shadow .18s, border-color .18s, background .18s;
 }
-.set.bad { border-color: rgba(240, 180, 41, .55); background: rgba(240, 180, 41, .1); }
+.set.bad { border-color: rgba(226, 74, 74, .6); background: rgba(226, 74, 74, .12); }
 .set.target { border-color: rgba(255, 255, 255, .6); box-shadow: 0 0 0 2px rgba(255, 255, 255, .22), 0 6px 20px rgba(0, 0, 0, .3); }
 .set.fresh { animation: pop .34s cubic-bezier(.2, .9, .3, 1.2); }
 @keyframes pop { from { transform: scale(.9); opacity: .4; } }
