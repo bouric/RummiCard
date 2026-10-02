@@ -12,9 +12,20 @@
 (function (root) {
   'use strict';
 
+  /* Traduction : i18n.js est chargé avant ce fichier dans la page ; en test
+     headless il peut manquer, on retombe alors sur la clé. */
+  function tr(cle, p) {
+    return (root.I18N && root.I18N.t) ? root.I18N.t(cle, p) : cle;
+  }
+
   var SUIT_GLYPH = ['♠', '♥', '♦', '♣'];
   var SUIT_NAME = ['pique', 'coeur', 'carreau', 'trèfle'];
   var RANK_LABEL = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'V', 'D', 'R'];
+  /* Les figures changent d'initiale selon la langue : V D R, J Q K, B D K… */
+  function rankLabel(r) {
+    var f = (root.I18N && root.I18N.figures) ? root.I18N.figures() : null;
+    return (f && f[r]) ? f[r] : RANK_LABEL[r];
+  }
   var HAND_SIZE = 14;
 
   /* Réglages partagés avec l'interface. */
@@ -47,7 +58,7 @@
     return a;
   }
 
-  function label(card) { return RANK_LABEL[card.rank] + SUIT_GLYPH[card.suit]; }
+  function label(card) { return rankLabel(card.rank) + SUIT_GLYPH[card.suit]; }
 
   /* ---- Validation d'une combinaison ------------------------------- */
 
@@ -112,18 +123,18 @@
   /* Pourquoi une combinaison n'est-elle pas valide ? Formulé pour le joueur. */
   function whyInvalid(cards) {
     if (cards.length < 3) {
-      return 'il manque ' + (3 - cards.length) + ' carte' +
-        (3 - cards.length > 1 ? 's' : '') + ' (3 minimum)';
+      var k = 3 - cards.length;
+      return tr('err.manque', { n: k, cartes: root.I18N ? root.I18N.cartes(k) : 'cartes' });
     }
     if (sameRank(cards)) {
       var seen = 0, i;
       for (i = 0; i < cards.length; i++) {
         if (seen & (1 << cards[i].suit)) {
-          return 'un groupe ne peut pas contenir deux ' + SUIT_GLYPH[cards[i].suit];
+          return tr('err.deuxCouleurs', { x: SUIT_GLYPH[cards[i].suit] });
         }
         seen |= 1 << cards[i].suit;
       }
-      return 'un groupe compte au plus 4 cartes';
+      return tr('err.quatreMax');
     }
     if (sameSuit(cards)) {
       var high = false, hasAce = false, hasHigh = false, k;
@@ -134,17 +145,17 @@
       high = hasAce && hasHigh;
       var r = sortedEff(cards, high), manque = [];
       for (k = 1; k < r.length; k++) {
-        if (r[k] === r[k - 1]) return 'deux fois la même carte dans une suite';
+        if (r[k] === r[k - 1]) return tr('err.deuxFois');
         for (var v = r[k - 1] + 1; v < r[k]; v++) {
-          manque.push(RANK_LABEL[v === ACE_HIGH ? 1 : v] + SUIT_GLYPH[cards[0].suit]);
+          manque.push(rankLabel(v === ACE_HIGH ? 1 : v) + SUIT_GLYPH[cards[0].suit]);
         }
       }
-      if (manque.length > 2) return 'ses valeurs ne se suivent pas';
+      if (manque.length > 2) return tr('err.pasSuite');
       if (manque.length) {
-        return 'il manque ' + manque.join(' et ') + ' pour que la suite se tienne';
+        return tr('err.manqueValeurs', { x: manque.join(' + ') });
       }
     }
-    return 'ni une suite ni un groupe';
+    return tr('err.niNi');
   }
 
   /* Peut-on ajouter `card` a la combinaison `cards` ?
@@ -275,7 +286,7 @@
       ? deal.names.slice()
       : shuffle(AI_NAMES.slice()).slice(0, nVirtual);
     this.deal.names = aiNames.slice();
-    this.players.push({ index: 0, name: 'Vous', human: true, hand: [], melded: false });
+    this.players.push({ index: 0, name: tr('joueur.vous'), human: true, hand: [], melded: false });
     for (var i = 0; i < nVirtual; i++) {
       this.players.push({ index: i + 1, name: aiNames[i], human: false, hand: [], melded: false });
     }
@@ -356,13 +367,13 @@
    */
   Game.prototype.checkCommit = function () {
     var staged = this.stagedCards();
-    if (!staged.length) return { ok: false, reason: 'Posez au moins une carte, ou piochez.' };
+    if (!staged.length) return { ok: false, reason: tr('err.posezCarte') };
 
     // toutes les cartes initialement sur la table doivent y rester
     var present = {}, bc = this.boardCards(), i;
     for (i = 0; i < bc.length; i++) present[bc[i].id] = true;
     for (var id in this.snapshot.boardIds) {
-      if (!present[id]) return { ok: false, reason: 'Les cartes de la table ne peuvent pas rejoindre votre main.' };
+      if (!present[id]) return { ok: false, reason: tr('err.cartesTable') };
     }
     // toutes les combinaisons doivent etre valides
     for (i = 0; i < this.board.length; i++) {
@@ -381,7 +392,7 @@
       var suite = false;
       for (i = 0; i < this.board.length; i++) if (isRun(this.board[i].cards)) suite = true;
       if (!suite) {
-        return { ok: false, reason: 'Table vide : il faut l\u2019ouvrir par une suite, pas par un brelan ni un carré.' };
+        return { ok: false, reason: tr('err.tableVide') };
       }
     }
     return { ok: true, reason: '' };
@@ -515,6 +526,7 @@
     SUIT_GLYPH: SUIT_GLYPH,
     SUIT_NAME: SUIT_NAME,
     RANK_LABEL: RANK_LABEL,
+    rankLabel: rankLabel,
     HAND_SIZE: HAND_SIZE,
     options: options,
     alignBoard: alignBoard,

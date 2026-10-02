@@ -28,16 +28,15 @@
     </div>
     Rummi<span style="color:#f0b429">Card</span>
   </div>
-  <p class="tag">Les règles du rami, jouées avec 2 jeux de 52 cartes.
-     Faites glisser une carte vers la table : elle se place toute seule au bon endroit.</p>
-  <h2>Joueurs virtuels</h2>
+  <p class="tag" data-i18n="accueil.desc"></p>
+  <h2 data-i18n="accueil.joueurs"></h2>
   <div class="choices" id="choices"></div>
-  <button class="btn hidden" id="resume">&#9654; Reprendre la partie</button>
-  <button class="cta" id="start">Commencer la partie</button>
-  <button class="btn hidden" id="replay">&#8634; Rejouer la donne précédente</button>
+  <button class="btn hidden" id="resume"></button>
+  <button class="cta" id="start" data-i18n="accueil.commencer"></button>
+  <button class="btn hidden" id="replay"></button>
   <div style="display:flex;gap:18px">
-    <button class="linkbtn" id="rules-link">Voir les règles</button>
-    <button class="linkbtn" id="menu-options">Options</button>
+    <button class="linkbtn" id="rules-link" data-i18n="accueil.voirRegles"></button>
+    <button class="linkbtn" id="menu-options" data-i18n="accueil.options"></button>
   </div>
   <div class="foot"><span id="version">Version de développement</span>
     &nbsp;·&nbsp; © 2026 Richard Boulais &amp; Claude</div>
@@ -47,16 +46,16 @@
 <div id="game" class="hidden">
   <header>
     <div class="brand">Rummi<span>Card</span></div>
-    <div class="pill">Pioche&nbsp;<b id="deckcount">0</b></div>
+    <div class="pill"><span data-i18n="hud.pioche"></span>&nbsp;<b id="deckcount">0</b></div>
     <div class="pill" id="turnpill">Tour&nbsp;<b>—</b></div>
     <div class="pill hidden" id="roundpill">Manche&nbsp;<b>1/3</b></div>
     <div class="pill" id="meldpill">Première pose&nbsp;<b>30 pts</b></div>
     <div class="spacer"></div>
-    <button class="iconbtn" id="felt" title="Couleur du tapis">&#127912;</button>
-    <button class="iconbtn" id="options" title="Options">&#9881;</button>
-    <button class="iconbtn" id="sound" title="Son">&#128266;</button>
-    <button class="iconbtn" id="help" title="Règles">?</button>
-    <button class="iconbtn" id="restart" title="Quitter la partie">&#10005;</button>
+    <button class="iconbtn" id="felt" data-i18n-title="tip.tapis">&#127912;</button>
+    <button class="iconbtn" id="options" data-i18n-title="tip.options">&#9881;</button>
+    <button class="iconbtn" id="sound" data-i18n-title="tip.son">&#128266;</button>
+    <button class="iconbtn" id="help" data-i18n-title="tip.regles">?</button>
+    <button class="iconbtn" id="restart" data-i18n-title="tip.quitter">&#10005;</button>
   </header>
 
   <div id="opponents"></div>
@@ -64,21 +63,21 @@
   <div id="boardwrap"><div id="board"></div></div>
 
   <div id="rackwrap">
-    <div class="racklabel">Votre main — <span id="handcount">0</span> cartes</div>
+    <div class="racklabel" id="racklabel"></div>
     <div id="rack"></div>
   </div>
 
   <div id="bar">
-    <button class="btn go" id="commit">&#10003;<span class="lbl"> Au suivant&#8239;!</span></button>
-    <button class="btn" id="undo" title="Annuler le dernier mouvement (⌫)">&#8617;<span class="lbl"> Annuler</span></button>
-    <button class="btn" id="draw">&#127183;<span class="lbl"> Piocher</span></button>
+    <button class="btn go" id="commit">&#10003;<span class="lbl" data-i18n="btn.suivant"></span></button>
+    <button class="btn" id="undo" data-i18n-title="tip.annuler">&#8617;<span class="lbl" data-i18n="btn.annuler"></span></button>
+    <button class="btn" id="draw">&#127183;<span class="lbl" data-i18n="btn.piocher"></span></button>
     <button class="btn hint" id="hints"
-            title="Mettre en avant les cartes de votre main qui peuvent être posées (I)">&#128161;<span class="lbl"> Indices</span></button>
-    <button class="btn magic" id="auto">&#10024;<span class="lbl"> Magique</span></button>
+            data-i18n-title="tip.indices">&#128161;<span class="lbl" data-i18n="btn.indices"></span></button>
+    <button class="btn magic" id="auto">&#10024;<span class="lbl" data-i18n="btn.magique"></span></button>
     <button class="btn" id="sort"
-            title="Changer le rangement de votre main : par valeur dans les couleurs, ou par valeur puis couleur (T)">&#8645;<span class="lbl"> Trier</span></button>
+            data-i18n-title="tip.trier">&#8645;<span class="lbl" data-i18n="btn.trier"></span></button>
     <button class="btn" id="rewind"
-            title="Revenir au début de votre tour précédent : votre coup et les réponses des joueurs virtuels sont défaits (R)">&#10226;<span class="lbl"> Refaire</span></button>
+            data-i18n-title="tip.refaire">&#10226;<span class="lbl" data-i18n="btn.refaire"></span></button>
     <div id="msg"></div>
   </div>
 </div>
@@ -86,6 +85,7 @@
 <div id="toast"></div>
 <div id="overlay" class="hidden"></div>
 
+<script src="i18n.js"></script>
 <script src="solver.js"></script>
 <script src="engine.js"></script>
 <script src="ai.js"></script>

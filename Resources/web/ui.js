@@ -7,6 +7,9 @@
   'use strict';
 
   var E = window.Engine, AI = window.AI, Solver = window.Solver;
+  var I18N = window.I18N;
+  function TR(cle, p) { return I18N.t(cle, p); }
+  function NC(n) { return I18N.cartes(n); }
   function $(s) { return document.querySelector(s); }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
@@ -16,18 +19,19 @@
        tri        : 'suit' = par couleur puis valeur
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
-  var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
+  var prefs = { langue: null,
+                tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
                 niveau: 'normal', manches: 3, sensSuites: 'asc',
                 lastDeal: null, saved: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
   var FELTS = [
-    { nom: 'vert', a: '#186354', b: '#0e3e34' },
-    { nom: 'bleu nuit', a: '#1b4a6e', b: '#0c2a42' },
-    { nom: 'bordeaux', a: '#6b2b39', b: '#3b1520' },
-    { nom: 'ardoise', a: '#3b4450', b: '#1f252e' },
-    { nom: 'prune', a: '#4b3568', b: '#281a3c' },
-    { nom: 'tabac', a: '#6a4a26', b: '#3a2714' }
+    { cle: 'felt.vert', a: '#186354', b: '#0e3e34' },
+    { cle: 'felt.bleu', a: '#1b4a6e', b: '#0c2a42' },
+    { cle: 'felt.bordeaux', a: '#6b2b39', b: '#3b1520' },
+    { cle: 'felt.ardoise', a: '#3b4450', b: '#1f252e' },
+    { cle: 'felt.prune', a: '#4b3568', b: '#281a3c' },
+    { cle: 'felt.tabac', a: '#6a4a26', b: '#3a2714' }
   ];
 
   function applyFelt() {
@@ -40,7 +44,7 @@
     prefs.felt = (prefs.felt + 1) % FELTS.length;
     applyFelt();
     savePrefs();
-    toast('Tapis ' + FELTS[prefs.felt].nom);
+    toast(TR('toast.tapis', { x: TR(FELTS[prefs.felt].cle) }));
   }
 
   function loadPrefs() {
@@ -64,6 +68,7 @@
       }
       if (p.manches === 1 || p.manches === 3 || p.manches === 5) prefs.manches = p.manches;
       if (p.sensSuites === 'asc' || p.sensSuites === 'desc') prefs.sensSuites = p.sensSuites;
+      if (typeof p.langue === 'string') prefs.langue = p.langue;
     }
     E.options.keepPlaces = prefs.keepPlaces;
     E.options.difficulty = prefs.niveau;
@@ -104,8 +109,9 @@
       var sv = prefs.saved;
       reprise.classList.toggle('hidden', !sv);
       if (sv) {
-        reprise.innerHTML = '\u25b6 Reprendre la partie (' + sv.n + ' adversaire' +
-          (sv.n > 1 ? 's' : '') + ', ' + sv.hands[0].length + ' cartes en main)';
+        reprise.innerHTML = '\u25b6 ' + TR('accueil.reprendre') + ' ' +
+          TR('accueil.reprendreDetail', { n: sv.n, c: sv.hands[0].length,
+            adv: TR(sv.n > 1 ? 'accueil.adversaires' : 'accueil.adversaire') });
       }
     }
     var replay = $('#replay');
@@ -113,8 +119,9 @@
       var d = prefs.lastDeal;
       replay.classList.toggle('hidden', !d);
       if (d) {
-        replay.innerHTML = '\u21ba Rejouer la donne pr\u00e9c\u00e9dente (' + d.n +
-          ' adversaire' + (d.n > 1 ? 's' : '') + ')';
+        replay.innerHTML = '\u21ba ' + TR('accueil.redonne') + ' ' +
+          TR('accueil.redonneDetail', { n: d.n,
+            adv: TR(d.n > 1 ? 'accueil.adversaires' : 'accueil.adversaire') });
       }
     }
     var box = $('#choices');
@@ -123,7 +130,7 @@
       (function (n) {
         var b = document.createElement('button');
         b.className = 'choice' + (n === nVirtual ? ' on' : '');
-        b.innerHTML = n + '<small>' + (n > 1 ? 'adversaires' : 'adversaire') + '</small>';
+        b.innerHTML = n + '<small>' + TR(n > 1 ? 'accueil.adversaires' : 'accueil.adversaire') + '</small>';
         b.onclick = function () { nVirtual = n; buildMenu(); };
         box.appendChild(b);
       })(i);
@@ -152,7 +159,7 @@
     $('#overlay').classList.add('hidden');
     render();
     updateBar();
-    toast('À vous de jouer');
+    toast(TR('toast.aVous'));
   }
 
   function isHumanTurn() { return game && !game.finished && game.player().human && !busy; }
@@ -496,8 +503,8 @@
 
     // Le type de zone sert aussi de repère au glisser-déposer : il doit rester
     // « runs » / « groups », la classe d'affichage s'ajoute à part.
-    var zRuns = makeZone('runs', 'Suites');
-    var zGroups = makeZone('groups', 'Brelans et carrés');
+    var zRuns = makeZone('runs', TR('zone.suites'));
+    var zGroups = makeZone('groups', TR('zone.groupes'));
     zRuns.classList.add('grid');
     zGroups.classList.add('grid');
     board.appendChild(zRuns);
@@ -630,9 +637,9 @@
     // la largeur des zones, et toute la table sautait d'un tour a l'autre.
     // Hors de votre tour elles sont seulement estompees.
     // Memes dimensions des deux cotes : elles se font face.
-    placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, hauteur, 'runs', 'Nouvelle suite');
+    placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, hauteur, 'runs', TR('zone.nouvelleSuite'));
     placeNewZone(zGroups, empile ? newRunsX : ecartBord, GRID_TOP, m.cw, hauteur,
-                 'groups', 'Nouveau groupe');
+                 'groups', TR('zone.nouveauGroupe'));
     // Les espaceurs donnent sa hauteur de defilement a chaque grille ; ils
     // doivent etre poses avant qu'une moitie ne soit repliee.
     spacer(zRuns, gridH + GRID_TOP + 12);
@@ -652,9 +659,10 @@
       var tete = document.createElement('button');
       tete.className = 'foldhead';
       tete.dataset.goto = zPlie.dataset.zonekind;
-      tete.innerHTML = '<b>' + (zPlie.dataset.zonekind === 'runs' ? 'Suites' : 'Brelans et carrés') +
-        '</b><em>' + (nPlie ? nPlie + (nPlie > 1 ? ' combinaisons' : ' combinaison') : 'vide') +
-        ' &middot; toucher pour afficher</em>';
+      tete.innerHTML = '<b>' + TR(zPlie.dataset.zonekind === 'runs' ? 'zone.suites' : 'zone.groupes') +
+        '</b><em>' + (nPlie ? nPlie + ' ' + TR(nPlie > 1 ? 'fold.combinaisons' : 'fold.combinaison')
+                            : TR('fold.vide')) +
+        ' &middot; ' + TR('fold.toucher') + '</em>';
       zPlie.appendChild(tete);
       zActif.style.flex = '1 1 0';
       zPlie.style.flex = '0 0 ' + FOLD_H + 'px';
@@ -751,7 +759,7 @@
     if (!view.sets.length && !view.newSlot) {
       var empty = document.createElement('div');
       empty.className = 'empty';
-      empty.innerHTML = '<b>La table est vide</b>Glissez vos cartes ici : elles se placeront toutes seules';
+      empty.innerHTML = TR('board.vide');
       zone.appendChild(empty);
       if (isHumanTurn()) zone.appendChild(newZone('any', 'Nouvelle<br>combinaison'));
       return;
@@ -933,7 +941,8 @@
       if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
       rack.appendChild(el);
     }
-    $('#handcount').textContent = game.human().hand.length;
+    var nmain = game.human().hand.length;
+    $('#racklabel').textContent = TR('zone.votreMain', { n: nmain, cartes: NC(nmain) });
   }
 
   function paintOpponents(thinking) {
@@ -950,7 +959,8 @@
       d.innerHTML =
         '<div class="av">' + (p.human ? '★' : p.name.charAt(0)) + '</div>' +
         '<div class="who"><div class="nm">' + p.name + '</div><div class="sub">' +
-        p.hand.length + ' cartes · ' + (p.melded ? 'en jeu' : 'à poser') +
+        p.hand.length + ' ' + NC(p.hand.length) + ' · ' +
+        TR(p.melded ? 'hud.enJeu' : 'hud.aPoser') +
         '</div></div><div class="fan">' + fan + '</div>';
       box.appendChild(d);
     }
@@ -1006,18 +1016,19 @@
       var plusieursManches = match && match.total > 1;
       rp.classList.toggle('hidden', !plusieursManches);
       if (plusieursManches) {
-        rp.innerHTML = 'Manche&nbsp;<b>' + match.manche + '/' + match.total + '</b>' +
-          (match.scores[0] ? ' &middot; vous&nbsp;<b>' + (match.scores[0] > 0 ? '+' : '') +
-            match.scores[0] + '</b>' : '');
+        rp.innerHTML = TR('hud.manche') + '&nbsp;<b>' + match.manche + '/' + match.total + '</b>' +
+          (match.scores[0] ? ' &middot; ' + TR('hud.vous') + '&nbsp;<b>' +
+            (match.scores[0] > 0 ? '+' : '') + match.scores[0] + '</b>' : '');
       }
     }
     var p = game.player();
-    $('#turnpill').innerHTML = 'Tour&nbsp;<b>' + (game.finished ? 'terminé' : p.name) + '</b>';
+    $('#turnpill').innerHTML = TR('hud.tour') + '&nbsp;<b>' +
+      (game.finished ? TR('hud.termine') : p.name) + '</b>';
     var hm = game.human();
     var pts = game.stagedPoints();
     $('#meldpill').innerHTML = pts
-      ? 'Pos\u00e9 ce tour&nbsp;<b>' + pts + ' pts</b>'
-      : 'Votre main&nbsp;<b>' + game.handScore(hm) + ' pts</b>';
+      ? TR('hud.pose') + '&nbsp;<b>' + pts + ' ' + TR('hud.pts') + '</b>'
+      : TR('hud.main') + '&nbsp;<b>' + game.handScore(hm) + ' ' + TR('hud.pts') + '</b>';
     flip(prev, opts);
   }
 
@@ -1051,27 +1062,25 @@
 
     var msg = $('#msg');
     msg.className = '';
-    if (!human) { msg.textContent = game.finished ? '' : 'Les autres joueurs réfléchissent…'; return; }
+    if (!human) { msg.textContent = game.finished ? '' : TR('hud.reflechissent'); return; }
     if (check.ok) {
       msg.className = 'good';
-      msg.innerHTML = '✓ ' + staged + ' carte' + (staged > 1 ? 's' : '') + ' posée' +
-        (staged > 1 ? 's' : '') + ' (' + game.stagedPoints() + ' pts) — au suivant !';
+      msg.innerHTML = TR('bar.ok', { n: staged, cartes: NC(staged), p: game.stagedPoints(),
+        posees: TR(staged > 1 ? 'bar.posees' : 'bar.posee') });
     } else if (staged) {
       msg.className = 'warn';
       msg.textContent = check.reason;
     } else if (ouvertureAttendue()) {
       msg.className = 'warn';
-      var tete = 'Table vierge : ouvrez la partie par une <b>suite</b> — ' +
-        'ni brelan ni carré.';
+      var tete = TR('bar.ouverture');
       if (prefs.hints) {
         /* Les indices ne proposent qu'une ouverture en suite : s'ils ne
            trouvent rien, aucune n'est possible et il faut piocher. */
         playableIds();
         msg.innerHTML = hintCache.total
-          ? tete + ' — ' + hintCache.total + ' carte' +
-            (hintCache.total > 1 ? 's' : '') + ' mise' +
-            (hintCache.total > 1 ? 's' : '') + ' en avant.'
-          : tete + ' — Aucune suite possible — piochez.';
+          ? tete + ' — ' + TR('bar.ouvertureN', { n: hintCache.total, cartes: NC(hintCache.total),
+              mises: TR(hintCache.total > 1 ? 'bar.mises' : 'bar.mise') })
+          : tete + ' — ' + TR('bar.ouvertureRien');
       } else {
         msg.innerHTML = tete;
       }
@@ -1080,11 +1089,10 @@
       var n = hintCache.total;
       msg.className = n ? 'good' : 'warn';
       msg.innerHTML = n
-        ? 'Meilleur coup : ' + n + ' carte' + (n > 1 ? 's' : '') +
-          ' de votre main, mise' + (n > 1 ? 's' : '') + ' en avant.'
-        : 'Aucune carte posable pour l\u2019instant — piochez.';
+        ? TR('bar.indices', { n: n, cartes: NC(n), mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') })
+        : TR('bar.indicesRien');
     } else {
-      msg.innerHTML = 'Glissez une carte sur la table — elle trouvera sa place toute seule.';
+      msg.innerHTML = TR('bar.glisser');
     }
   }
 
@@ -1145,9 +1153,7 @@
     hintCache = { key: '', ids: null };
     render();
     updateBar();
-    toast(prefs.hints
-      ? 'Les cartes posables sont mises en avant'
-      : 'Aide d\u00e9sactiv\u00e9e');
+    toast(TR(prefs.hints ? 'toast.indicesOn' : 'toast.indicesOff'));
   }
 
   /* ================= Sons ========================================= */
@@ -1511,14 +1517,12 @@
       var s = null, sets = baseSets();
       for (var i = 0; i < sets.length; i++) if (sets[i].id === t.setId) s = sets[i];
       var full = s ? s.cards.concat([drag.card]) : [];
-      txt = E.isValidSet(full)
-        ? '✓ s’insère ici'
-        : 'en construction…';
-    } else if (t.kind === 'split') txt = '<b>✂\ufe0f coupe la suite ici</b>';
-    else if (t.kind === 'rearrange') txt = '<b>✨ la table se réorganise</b>';
-    else if (t.kind === 'new') txt = 'nouvelle combinaison';
-    else if (t.kind === 'hand') txt = 'reprendre en main';
-    else txt = 'relâchez sur la table';
+      txt = TR(E.isValidSet(full) ? 'drag.insere' : 'drag.construction');
+    } else if (t.kind === 'split') txt = TR('drag.coupe');
+    else if (t.kind === 'rearrange') txt = TR('drag.reorg');
+    else if (t.kind === 'new') txt = TR('drag.nouvelle');
+    else if (t.kind === 'hand') txt = TR('drag.main');
+    else txt = TR('drag.table');
     h.innerHTML = txt;
     h.style.left = (x + 16) + 'px';
     h.style.top = (y + 18) + 'px';
@@ -1565,7 +1569,7 @@
 
     if (t.kind === 'hand') {
       if (d.origin.type === 'hand') { render(); return; }
-      if (!isStaged(card)) { toast('Cette carte appartient déjà à la table.'); render(); return; }
+      if (!isStaged(card)) { toast(TR('toast.dejaTable')); render(); return; }
       pushTurnState();
       removeFromBoard(card);
       game.human().hand.push(card);
@@ -1601,7 +1605,7 @@
         piece.zone = 'runs';
         game.board.push(piece);
         sndSnap();
-        toast('\u2702\ufe0f Suite coup\u00e9e en deux');
+        toast(TR('toast.coupee'));
       } else {
         game.board.push(game.newSet([card]));
         sndSnap();
@@ -1610,7 +1614,7 @@
       var src = t.sets || (d.cache && d.cache.re);
       game.board = E.alignBoard(game.board, src);
       sndMagic();
-      toast('✨ La table s’est réorganisée pour accueillir ' + E.label(card));
+      toast(TR('toast.reorganisee', { x: E.label(card) }));
     } else {
       var fresh = game.newSet([card]);
       fresh.zone = t.zone;
@@ -1626,8 +1630,7 @@
     render({ land: card.id });
     updateBar();
     if (ouvertureAttendue() && game.boardCards().length >= 3) {
-      toast('Pour ouvrir une table vierge, il faut une <b>suite</b> — ' +
-            'un brelan ne suffit pas.');
+      toast(TR('toast.ouvertureBrelan'));
     }
   }
 
@@ -1684,7 +1687,7 @@
     $('#overlay').classList.add('hidden');
     render();
     updateBar();
-    toast('Partie reprise');
+    toast(TR('toast.partieReprise'));
     if (!game.player().human) aiPhase();
   }
 
@@ -1702,7 +1705,7 @@
     render();
     updateBar();
     sndLift();
-    toast('\u27f2 Vous voilà au début de votre tour précédent');
+    toast(TR('toast.rembobine'));
   }
 
   function doCommit() {
@@ -1728,9 +1731,7 @@
     if (!isHumanTurn() || !turnStack.length) return;
     restoreState(turnStack.pop());
     render(); updateBar(); sndLift();
-    toast(turnStack.length
-      ? 'Mouvement annulé'
-      : 'Mouvement annulé — vous êtes revenu au début du tour');
+    toast(TR(turnStack.length ? 'toast.annule' : 'toast.annuleDebut'));
   }
 
   function doDraw() {
@@ -1739,8 +1740,8 @@
     var card = game.draw();
     render(); updateBar();
     sndHmm(!card);
-    if (card) toast('Vous piochez ' + E.label(card) + (had ? ' — vos cartes sont revenues en main' : ''));
-    else toast('La pioche est vide — vous passez');
+    if (card) toast(TR(had ? 'toast.piochezRetour' : 'toast.piochez', { x: E.label(card) }));
+    else toast(TR('toast.piocheVide'));
     if (game.finished) { gameOver(); return; }
     game.nextPlayer();
     render(); updateBar();
@@ -1760,15 +1761,13 @@
       render();
       /* Sur une table vierge, « aucun coup » veut dire « aucune suite » :
          le dire, sinon le joueur qui tient un beau brelan ne comprend pas. */
-      toast(tourDOuverture()
-        ? 'Aucune suite possible pour ouvrir la table — piochez.'
-        : 'Aucun coup possible avec cette main — piochez.');
+      toast(TR(tourDOuverture() ? 'toast.rienOuvrir' : 'toast.rienAJouer'));
       return;
     }
     AI.applyPlay(game, p, play);
     render(); sndMagic(); updateBar();
-    toast('✨ ' + play.played.length + ' carte' + (play.played.length > 1 ? 's' : '') +
-      ' posée' + (play.played.length > 1 ? 's' : '') + ' (' + play.points + ' pts)');
+    toast(TR('toast.pose', { n: play.played.length, cartes: NC(play.played.length),
+      p: play.points, posees: TR(play.played.length > 1 ? 'bar.posees' : 'bar.posee') }));
   }
 
   /* Le bouton bascule entre les deux rangements. Trier tout court n'aurait
@@ -1781,9 +1780,7 @@
     savePrefs();
     game.sortHand(game.human(), prefs.tri);
     render();
-    toast(prefs.tri === 'suit'
-      ? 'Main rangée par valeur <b>dans les couleurs</b>'
-      : 'Main rangée par valeur, <b>puis</b> par couleur');
+    toast(TR(prefs.tri === 'suit' ? 'toast.triCouleur' : 'toast.triValeur'));
   }
 
   /* ================= Tours des joueurs virtuels =================== */
@@ -1801,14 +1798,13 @@
         for (var ci = 0; ci < r.cards.length; ci++) aiJustPlayed[r.cards[ci].id] = true;
       }
       if (r.kind === 'play') {
-        toast('<span class="who">' + p.name + '</span> pose ' + r.played +
-          ' carte' + (r.played > 1 ? 's' : ''));
+        toast(TR('toast.iaPose', { nom: p.name, n: r.played, cartes: NC(r.played) }));
         sndSnap();
       } else if (r.kind === 'draw') {
-        toast('<span class="who">' + p.name + '</span> pioche');
+        toast(TR('toast.iaPioche', { nom: p.name }));
         sndHmm(false);
       } else {
-        toast('<span class="who">' + p.name + '</span> passe');
+        toast(TR('toast.iaPasse', { nom: p.name }));
         sndHmm(true);
       }
       render();
@@ -1821,7 +1817,7 @@
     render();
     updateBar();
     if (game.finished) gameOver();
-    else if (game.player().human) toast('À vous !');
+    else if (game.player().human) toast(TR('toast.aVousCourt'));
   }
 
   /* ================= Fin de partie ================================ */
@@ -1867,16 +1863,16 @@
 
     var titre, sous;
     if (plusieurs && !derniere) {
-      titre = 'Manche ' + m.manche + ' sur ' + m.total;
-      sous = w ? (w.human ? 'Vous remportez la manche.' : w.name + ' remporte la manche.')
-               : 'Pioche épuisée : la plus petite main l’emporte.';
+      titre = TR('fin.mancheSur', { n: m.manche, t: m.total });
+      sous = w ? (w.human ? TR('fin.vousManche') : TR('fin.ilManche', { nom: w.name }))
+               : TR('fin.piocheVide1');
     } else if (plusieurs) {
-      titre = rows[0].p.human ? 'Vous gagnez la partie !' : rows[0].p.name + ' gagne la partie';
-      sous = 'Classement après ' + m.total + ' manches.';
+      titre = rows[0].p.human ? TR('fin.vousPartie') : TR('fin.ilPartie', { nom: rows[0].p.name });
+      sous = TR('fin.classement', { n: m.total });
     } else {
-      titre = w ? (w.human ? 'Vous gagnez !' : w.name + ' gagne') : 'Partie terminée';
-      sous = w && !w.hand.length ? 'Main vidée la première.'
-                                 : 'Pioche épuisée : le moins de points gagne.';
+      titre = w ? (w.human ? TR('fin.vousGagnez') : TR('fin.ilGagne', { nom: w.name }))
+                : TR('fin.terminee');
+      sous = w && !w.hand.length ? TR('fin.videePremiere') : TR('fin.piocheVide2');
     }
 
     var html = '<div class="panel"><div class="trophy">' +
@@ -1884,26 +1880,26 @@
       '<h2 style="text-align:center">' + titre + '</h2>' +
       '<p style="text-align:center">' + sous + '</p><table class="scores">';
     if (plusieurs) {
-      html += '<tr><td></td><td class="n">cartes</td><td class="n">manche</td>' +
-'<td class="n">total</td>' +
-              '</tr>';
+      html += '<tr><td></td><td class="n">' + TR('fin.colCartes') + '</td>' +
+              '<td class="n">' + TR('fin.colManche') + '</td>' +
+              '<td class="n">' + TR('fin.colTotal') + '</td></tr>';
     }
     for (var i = 0; i < rows.length; i++) {
       var signe = rows[i].manche > 0 ? '+' : '';
       html += '<tr class="' + (i === 0 ? 'win' : '') + '"><td>' +
         (i + 1) + '. ' + rows[i].p.name + '</td>' +
-        '<td class="n">' + rows[i].cartes + ' cartes</td>' +
+        '<td class="n">' + rows[i].cartes + ' ' + NC(rows[i].cartes) + '</td>' +
         (plusieurs ? '<td class="n">' + signe + rows[i].manche + '</td>' +
-                     '<td class="n">' + rows[i].total + ' pts</td>'
-                   : '<td class="n">' + rows[i].enMain + ' pts</td>') +
+                     '<td class="n">' + rows[i].total + ' ' + TR('hud.pts') + '</td>'
+                   : '<td class="n">' + rows[i].enMain + ' ' + TR('hud.pts') + '</td>') +
         '</tr>';
     }
     html += '</table><div class="row">';
     html += (plusieurs && !derniere)
-      ? '<button class="cta" id="next" style="flex:1">Manche suivante</button>'
-      : '<button class="cta" id="again" style="flex:1">Nouvelle partie</button>' +
-        '<button class="btn" id="redeal">\u21ba M\u00eame donne</button>';
-    html += '<button class="btn" id="tomenu">Menu</button></div></div>';
+      ? '<button class="cta" id="next" style="flex:1">' + TR('btn.mancheSuivante') + '</button>'
+      : '<button class="cta" id="again" style="flex:1">' + TR('btn.nouvellePartie') + '</button>' +
+        '<button class="btn" id="redeal">\u21ba ' + TR('btn.memeDonne') + '</button>';
+    html += '<button class="btn" id="tomenu">' + TR('btn.menu') + '</button></div></div>';
 
     var ov = $('#overlay');
     ov.innerHTML = html;
@@ -1929,49 +1925,47 @@
 
   function showOptions() {
     var ov = $('#overlay');
-    ov.innerHTML = '<div class="panel"><h2>Options</h2>' +
-      '<h3>Tri de votre main</h3>' +
-      optionRow('tri', 'rank', prefs.tri === 'rank', 'Par valeur, puis couleur',
-        'A A 2 2 3 3\u2026 les cartes de m\u00eame valeur voisines') +
-      optionRow('tri', 'suit', prefs.tri === 'suit', 'Par valeur dans les couleurs',
-        'toute une couleur dans l\u2019ordre, puis la suivante') +
-      '<h3>Durée de la partie</h3>' +
-      optionRow('manches', '1', prefs.manches === 1, 'Une manche',
-        'la partie s’arrête dès qu’un joueur vide sa main') +
-      optionRow('manches', '3', prefs.manches === 3, 'Trois manches',
-        'score cumulé : le gagnant encaisse les cartes restées en main') +
-      optionRow('manches', '5', prefs.manches === 5, 'Cinq manches',
-        'même décompte, partie plus longue') +
-      '<h3>Niveau des joueurs virtuels</h3>' +
-      optionRow('niveau', 'facile', prefs.niveau === 'facile', 'Facile',
-        'ils ne r\u00e9organisent jamais la table') +
-      optionRow('niveau', 'normal', prefs.niveau === 'normal', 'Normal',
-        'ils r\u00e9organisent la table, mais laissent passer des coups') +
-      optionRow('niveau', 'difficile', prefs.niveau === 'difficile', 'Impitoyable',
-        'ils jouent \u00e0 chaque tour le coup maximal') +
-      '<h3>Aide au placement</h3>' +
-      optionRow('autoArrange', '0', !prefs.autoArrange, 'Me laisser chercher',
-        'une carte qui ne rentre nulle part ouvre une nouvelle combinaison') +
-      optionRow('autoArrange', '1', prefs.autoArrange, 'R\u00e9organiser la table pour moi',
-        'la table se refait toute seule pour accueillir la carte') +
-      '<h3>Sens des suites</h3>' +
-      optionRow('sensSuites', 'asc', prefs.sensSuites === 'asc', 'Petites valeurs en haut',
-        'A, 2, 3 \u2026 D, R du haut vers le bas') +
-      optionRow('sensSuites', 'desc', prefs.sensSuites === 'desc', 'Grandes valeurs en haut',
-        'A, R, D, V \u2026 2 du haut vers le bas') +
-      '<h3>Combinaisons sur la table</h3>' +
-      optionRow('keepPlaces', '1', prefs.keepPlaces, 'Table rang\u00e9e',
-        'suites \u00e0 gauche, groupes \u00e0 droite, chaque carte \u00e0 la hauteur de sa valeur') +
-      optionRow('keepPlaces', '0', !prefs.keepPlaces, 'Table libre',
-        'les combinaisons se placent au fil des coups, sans zones') +
-      '<div class="row"><button class="cta" id="closeopts" style="flex:1">Fermer</button></div></div>';
+    var langs = '';
+    for (var L = 0; L < I18N.langues.length; L++) {
+      var lg = I18N.langues[L];
+      langs += optionRow('langue', lg.code, I18N.get() === lg.code, lg.nom, '');
+    }
+    ov.innerHTML = '<div class="panel"><h2>' + TR('opt.titre') + '</h2>' +
+      '<h3>' + TR('opt.langue') + '</h3>' + langs +
+      '<h3>' + TR('opt.tri') + '</h3>' +
+      optionRow('tri', 'rank', prefs.tri === 'rank', TR('opt.tri.rank'), TR('opt.tri.rank.d')) +
+      optionRow('tri', 'suit', prefs.tri === 'suit', TR('opt.tri.suit'), TR('opt.tri.suit.d')) +
+      '<h3>' + TR('opt.duree') + '</h3>' +
+      optionRow('manches', '1', prefs.manches === 1, TR('opt.m1'), TR('opt.m1.d')) +
+      optionRow('manches', '3', prefs.manches === 3, TR('opt.m3'), TR('opt.m3.d')) +
+      optionRow('manches', '5', prefs.manches === 5, TR('opt.m5'), TR('opt.m5.d')) +
+      '<h3>' + TR('opt.niveau') + '</h3>' +
+      optionRow('niveau', 'facile', prefs.niveau === 'facile', TR('opt.facile'), TR('opt.facile.d')) +
+      optionRow('niveau', 'normal', prefs.niveau === 'normal', TR('opt.normal'), TR('opt.normal.d')) +
+      optionRow('niveau', 'difficile', prefs.niveau === 'difficile', TR('opt.difficile'), TR('opt.difficile.d')) +
+      '<h3>' + TR('opt.aide') + '</h3>' +
+      optionRow('autoArrange', '0', !prefs.autoArrange, TR('opt.chercher'), TR('opt.chercher.d')) +
+      optionRow('autoArrange', '1', prefs.autoArrange, TR('opt.reorganiser'), TR('opt.reorganiser.d')) +
+      '<h3>' + TR('opt.sens') + '</h3>' +
+      optionRow('sensSuites', 'asc', prefs.sensSuites === 'asc', TR('opt.asc'), TR('opt.asc.d')) +
+      optionRow('sensSuites', 'desc', prefs.sensSuites === 'desc', TR('opt.desc'), TR('opt.desc.d')) +
+      '<h3>' + TR('opt.table') + '</h3>' +
+      optionRow('keepPlaces', '1', prefs.keepPlaces, TR('opt.rangee'), TR('opt.rangee.d')) +
+      optionRow('keepPlaces', '0', !prefs.keepPlaces, TR('opt.libre'), TR('opt.libre.d')) +
+      '<div class="row"><button class="cta" id="closeopts" style="flex:1">' +
+      TR('btn.fermer') + '</button></div></div>';
     ov.classList.remove('hidden');
     $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
     var rows = ov.querySelectorAll('.optrow');
     for (var i = 0; i < rows.length; i++) {
       rows[i].onclick = function () {
         var name = this.dataset.pref, value = this.dataset.value;
-        if (name === 'tri') {
+        if (name === 'langue') {
+          prefs.langue = value;
+          I18N.set(value);
+          traduirePage();
+          if (game) { render(); updateBar(); } else { buildMenu(); }
+        } else if (name === 'tri') {
           prefs.tri = value;
           E.options.sort = value;
           if (game) { game.sortHand(game.human(), value); render(); }
@@ -1997,71 +1991,35 @@
 
   function showRules() {
     var ov = $('#overlay');
+    function li(cle) { return '<li>' + TR(cle) + '</li>'; }
     ov.innerHTML = '<div class="panel">' +
-      '<h2>Règles</h2><p>Un rami de combinaisons avec 2 jeux de 52 cartes (104 cartes). ' +
-      'As = 1, Valet = 11, Dame = 12, Roi = 13. Les 4 couleurs ♠ ♥ ♦ ♣ ' +
-      'tiennent lieu de couleurs de jeu.</p>' +
-      '<h3>Combinaisons</h3><ul>' +
-      '<li><b>Groupe</b> : 3 ou 4 cartes de même valeur, toutes de couleurs différentes.</li>' +
-      '<li><b>Suite</b> : 3 cartes ou plus de même couleur, valeurs consécutives. ' +
-      'L\u2019As se place <b>avant le 2 ou après le Roi</b> : A-2-3 et D-R-A sont ' +
-      'deux suites valides. En revanche la boucle est interdite : R-A-2 n\u2019en ' +
-      'est pas une.</li></ul>' +
-      '<h3>Déroulement</h3><ul>' +
-      '<li>14 cartes chacun. À chaque tour, posez au moins une carte de votre ' +
-      'main — où vous voulez, y compris sur les combinaisons déjà sur la table. ' +
-      'Pas de minimum de points à la première pose.</li>' +
-      '<li>À tout moment vous pouvez compléter et <b>réorganiser librement</b> la table, ' +
-      'à condition que toutes les combinaisons soient valides à la fin du tour.</li>' +
-      '<li>Sur une <b>table vide</b>, la partie doit s\u2019ouvrir par une <b>suite</b> : ' +
-      'ni brelan ni carré en première pose.</li>' +
-      '<li>Rien à poser ? Vous piochez et le tour passe.</li>' +
-      '<li>Le premier à vider sa main gagne la manche. Si la pioche s’épuise, ' +
-      'c’est le joueur avec le moins de points en main.</li>' +
-      '<li>En <b>plusieurs manches</b> (option), chacun perd la valeur des cartes ' +
-      'restées dans sa main et le gagnant encaisse la somme de ces cartes. ' +
-      'Le classement final se fait au cumul.</li></ul>' +
-      '<h3>Placement automatique</h3><ul>' +
-      '<li><b>Glissez</b> une carte vers la table : l’emplacement exact apparaît ' +
-      'et la carte s’y pose toute seule.</li>' +
-      '<li>Si la carte ne rentre nulle part, elle ouvre une <b>nouvelle ' +
-      'combinaison</b> : à vous de réarranger la table. Les options permettent ' +
-      'de confier cette réorganisation au jeu (✨), mais il décide alors à votre ' +
-      'place quelles combinaisons casser.</li>' +
-      '<li>Table rangée (option par défaut) : les <b>suites à gauche</b>, par couleur, ' +
-      'les <b>brelans et carrés à droite</b>, et chaque carte à la <b>hauteur de sa ' +
-      'valeur</b> — un 7 est toujours sur la ligne des 7. Vous savez d’avance où regarder.</li>' +
-      '<li>Un simple <b>clic</b> sur une carte la place au meilleur endroit.</li>' +
-      '<li>Deux suites de m\u00eame couleur qui se suivent (\u20265\u2660 et 6\u2660\u2026) ' +
-      'sont <b>r\u00e9unies automatiquement</b>. Pour les s\u00e9parer de nouveau, d\u00e9posez ' +
-      'une carte au milieu de la colonne : la suite est <b>coup\u00e9e \u00e0 cet endroit</b>.</li>' +
-      '<li><b>\ud83d\udca1 Indices</b> met en avant les cartes du <b>meilleur coup</b> ' +
-      'du tour, sans vous dire o\u00f9 les poser : une aide interm\u00e9diaire entre ' +
-      'chercher seul et laisser jouer la machine. Ces cartes se posent toutes ' +
-      'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
-      '<li><b>Magique</b> calcule et joue le coup maximal du tour.</li>' +
-      '<li><b>Annuler</b> d\u00e9fait vos mouvements un par un, dans l\u2019ordre inverse.</li>' +
-      '<li>Les options r\u00e8glent le <b>niveau des joueurs virtuels</b> : ' +
-      '<i>facile</i> (ils ne r\u00e9organisent jamais la table), <i>normal</i> ' +
-      '(ils r\u00e9organisent mais laissent passer des coups) ou <i>impitoyable</i> ' +
-      '(le coup maximal \u00e0 chaque tour).</li>' +
-      '<li><b>\u21ba M\u00eame donne</b>, en fin de partie ou depuis l\u2019\u00e9cran ' +
-      'd\u2019accueil, redistribue exactement les m\u00eames cartes \u2014 \u00e0 vous et aux ' +
-      'joueurs virtuels \u2014 pour rejouer la partie autrement.</li>' +
-      '<li>La palette de l\u2019en-t\u00eate change la <b>couleur du tapis</b> ' +
-      '(six teintes, conserv\u00e9es d\u2019une partie \u00e0 l\u2019autre).</li>' +
-      '<li><b>Refaire</b> ramène la partie au <b>début de votre tour ' +
-      'précédent</b> : votre coup est défait, et avec lui les réponses des ' +
-      'joueurs virtuels. Appuyez plusieurs fois pour remonter de tour en tour.</li>' +
-      '<li>Glissez une carte posée ce tour-ci vers votre main pour la récupérer.</li>' +
-      '<li>Vous pouvez prendre une carte d\u2019une combinaison de la table ' +
-      '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
-      '</ul>' +
-      '<h3>Raccourcis</h3><p>Entrée : au suivant · ⌫ : annuler · P : piocher · ' +
-      'M : magique · T : changer le tri · I : indices · R : refaire</p>' +
-      '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
+      '<h2>' + TR('reg.titre') + '</h2><p>' + TR('reg.intro') + '</p>' +
+      '<h3>' + TR('reg.h.comb') + '</h3><ul>' +
+      li('reg.but') + li('reg.as') + '</ul>' +
+      '<h3>' + TR('reg.h.deroul') + '</h3><ul>' +
+      li('reg.distribution') + li('reg.remanier') + li('reg.ouverture') +
+      li('reg.rienAPoser') + li('reg.gagne') + li('reg.manches') + '</ul>' +
+      '<h3>' + TR('reg.h.place') + '</h3><ul>' +
+      li('reg.glisser') + li('reg.nouvelle') + li('reg.rangee') + li('reg.clic') +
+      li('reg.fusion') + '</ul>' +
+      '<h3>' + TR('reg.h.cmd') + '</h3><ul>' +
+      li('reg.indices') + li('reg.magique') + li('reg.annuler') + li('reg.refaire') +
+      li('reg.memeDonne') + '</ul>' +
+      '<h3>' + TR('reg.h.racc') + '</h3><p>' + TR('reg.raccourcis') + '</p>' +
+      '<div class="row"><button class="cta" id="closerules" style="flex:1">' +
+      TR('btn.fermer') + '</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
+  }
+
+  /* Applique la langue aux textes figés de la page. */
+  function traduirePage() {
+    var i, els = document.querySelectorAll('[data-i18n]');
+    for (i = 0; i < els.length; i++) els[i].textContent = TR(els[i].dataset.i18n);
+    els = document.querySelectorAll('[data-i18n-title]');
+    for (i = 0; i < els.length; i++) els[i].title = TR(els[i].dataset.i18nTitle);
+    document.documentElement.lang = I18N.get();
+    stampFooter();
   }
 
   /* ================= Branchements ================================= */
@@ -2085,7 +2043,7 @@
   });
   $('#hints').onclick = toggleHints;
   function confirmQuit() {
-    return window.confirm('Abandonner la partie en cours ?');
+    return window.confirm(TR('toast.abandon'));
   }
 
   $('#restart').onclick = function () {
@@ -2125,14 +2083,14 @@
   function stampFooter() {
     var v = $('#version');
     if (!v) return;
-    if (window.APP_BUILD) { v.textContent = 'Version du ' + window.APP_BUILD; return; }
+    if (window.APP_BUILD) { v.textContent = TR('accueil.versionDu', { d: window.APP_BUILD }); return; }
     // Hors de l'app macOS, la date de publication de la page fait l'affaire.
     var d = new Date(document.lastModified);
     v.textContent = isNaN(d.getTime())
-      ? 'Version de développement'
-      : 'Version du ' + ('0' + d.getDate()).slice(-2) + '/' +
-        ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() +
-        ' à ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+      ? TR('accueil.versionDev')
+      : TR('accueil.versionDu', { d: ('0' + d.getDate()).slice(-2) + '/' +
+          ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() + ' ' +
+          ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) });
   }
 
   /* Hors ligne : une fois la page ouverte, le jeu se relance sans réseau.
@@ -2155,8 +2113,10 @@
   }
 
   loadPrefs();
+  I18N.set(prefs.langue || I18N.detecter());
   E.options.sort = prefs.tri;
   applyFelt();
+  traduirePage();
   stampFooter();
   buildMenu();
 

@@ -89,6 +89,13 @@ C'est le cœur de l'interface :
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Refaire** | Ramène la partie au **début de votre tour précédent**, dans l'état exact (mains, table, pioche) : votre coup est défait, et avec lui les réponses des joueurs virtuels. Plusieurs appuis remontent de tour en tour. |
 
+## Langues
+
+Le jeu parle **français, anglais, allemand, italien, néerlandais et espagnol**.
+La langue suit celle du système au premier lancement ; elle se change dans les
+Options et vaut aussi pour les menus de l'app macOS. Les figures prennent les
+initiales de chaque langue : V D R, J Q K, B D K, V H en néerlandais.
+
 Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `M` magique ·
 `T` changer le tri · `I` indices · `R` refaire. Les mêmes commandes sont dans le menu
 **Partie** (⇧⌘Z pour refaire votre tour).

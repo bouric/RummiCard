@@ -7,11 +7,11 @@
    premier : la partie se lançait instantanément, mais avec la version
    d'avant, et il fallait recharger deux fois pour voir une nouveauté.
    ===================================================================== */
-var CACHE = 'rummicard-2';
+var CACHE = 'rummicard-3';
 var ATTENTE = 3000;          // au-delà, on n'attend plus le serveur
 var SHELL = [
   './', 'index.html', 'style.css',
-  'solver.js', 'engine.js', 'ai.js', 'ui.js',
+  'i18n.js', 'solver.js', 'engine.js', 'ai.js', 'ui.js',
   'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
