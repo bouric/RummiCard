@@ -17,7 +17,7 @@
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
   var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
-                lastDeal: null, saved: null };
+                niveau: 'normal', lastDeal: null, saved: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
   var FELTS = [
@@ -58,12 +58,17 @@
         prefs.lastDeal = p.lastDeal;
       }
       if (p.saved && p.saved.hands && p.saved.deck) prefs.saved = p.saved;
+      if (p.niveau === 'facile' || p.niveau === 'normal' || p.niveau === 'difficile') {
+        prefs.niveau = p.niveau;
+      }
     }
     E.options.keepPlaces = prefs.keepPlaces;
+    E.options.difficulty = prefs.niveau;
   }
 
   function savePrefs() {
     E.options.keepPlaces = prefs.keepPlaces;
+    E.options.difficulty = prefs.niveau;
     try { window.localStorage.setItem('rummicard.prefs', JSON.stringify(prefs)); } catch (e) { /* file:// */ }
     try { window.webkit.messageHandlers.prefs.postMessage(prefs); } catch (e) { /* hors app */ }
   }
@@ -275,24 +280,36 @@
      valeurs ne se suivent plus — parce qu'on en a retiré une carte — n'est pas
      une suite trouée, ce sont deux suites. On les sépare, sinon le trou reste
      invisible et le tour semble bloqué sans raison. */
+  /* Découpe une combinaison d'une même couleur en morceaux de valeurs qui
+     se suivent, l'As compté 1 ou 14 selon la lecture demandée. */
+  function segmenter(cards, high) {
+    var tri = cards.slice().sort(function (a, b) {
+      return E.effRank(a, high) - E.effRank(b, high);
+    });
+    var segs = [[tri[0]]];
+    for (var k = 1; k < tri.length; k++) {
+      if (E.effRank(tri[k], high) === E.effRank(tri[k - 1], high) + 1) {
+        segs[segs.length - 1].push(tri[k]);
+      } else {
+        segs.push([tri[k]]);
+      }
+    }
+    return segs;
+  }
+
   function splitGaps() {
     var out = [], i, k;
     for (i = 0; i < game.board.length; i++) {
       var set = game.board[i], cards = set.cards;
       if (cards.length < 2 || !E.sameSuit(cards) || E.sameRank(cards)) { out.push(set); continue; }
-      var hasAce = false, hasHigh = false;
-      for (k = 0; k < cards.length; k++) {
-        if (cards[k].rank === 1) hasAce = true;
-        if (cards[k].rank >= 11) hasHigh = true;
-      }
-      var high = hasAce && hasHigh;
-      var sorted = E.orderSet(cards), segs = [[sorted[0]]];
-      for (k = 1; k < sorted.length; k++) {
-        if (E.effRank(sorted[k], high) === E.effRank(sorted[k - 1], high) + 1) {
-          segs[segs.length - 1].push(sorted[k]);
-        } else {
-          segs.push([sorted[k]]);
-        }
+      // L'As peut se lire 1 ou 14 : on retient la lecture qui laisse le moins
+      // de morceaux, sans quoi une longue suite A-2-…-V passerait pour trouée.
+      var hasAce = false;
+      for (k = 0; k < cards.length; k++) if (cards[k].rank === 1) hasAce = true;
+      var segs = segmenter(cards, false);
+      if (hasAce) {
+        var hauts = segmenter(cards, true);
+        if (hauts.length < segs.length) segs = hauts;
       }
       if (segs.length === 1) { out.push(set); continue; }
       set.cards = segs[0];
@@ -1385,7 +1402,7 @@
     pushTurnState();
     game.restoreTurn();
     var p = game.human();
-    var play = AI.findBestPlay(game, p, null);
+    var play = AI.findBestPlay(game, p, null, 'difficile');
     if (!play) {
       restoreState(before);
       turnStack.pop();
@@ -1501,6 +1518,13 @@
         'A A 2 2 3 3\u2026 les cartes de m\u00eame valeur voisines') +
       optionRow('tri', 'suit', prefs.tri === 'suit', 'Par valeur dans les couleurs',
         'toute une couleur dans l\u2019ordre, puis la suivante') +
+      '<h3>Niveau des joueurs virtuels</h3>' +
+      optionRow('niveau', 'facile', prefs.niveau === 'facile', 'Facile',
+        'ils ne r\u00e9organisent jamais la table') +
+      optionRow('niveau', 'normal', prefs.niveau === 'normal', 'Normal',
+        'ils r\u00e9organisent la table, mais laissent passer des coups') +
+      optionRow('niveau', 'difficile', prefs.niveau === 'difficile', 'Impitoyable',
+        'ils jouent \u00e0 chaque tour le coup maximal') +
       '<h3>Aide au placement</h3>' +
       optionRow('autoArrange', '0', !prefs.autoArrange, 'Me laisser chercher',
         'une carte qui ne rentre nulle part ouvre une nouvelle combinaison') +
@@ -1522,6 +1546,9 @@
           prefs.tri = value;
           E.options.sort = value;
           if (game) { game.sortHand(game.human(), value); render(); }
+        } else if (name === 'niveau') {
+          prefs.niveau = value;
+          E.options.difficulty = value;
         } else if (name === 'autoArrange') {
           prefs.autoArrange = (value === '1');
         } else {
@@ -1578,6 +1605,10 @@
       'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
       '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
       '<li><b>Annuler</b> d\u00e9fait vos mouvements un par un, dans l\u2019ordre inverse.</li>' +
+      '<li>Les options r\u00e8glent le <b>niveau des joueurs virtuels</b> : ' +
+      '<i>facile</i> (ils ne r\u00e9organisent jamais la table), <i>normal</i> ' +
+      '(ils r\u00e9organisent mais laissent passer des coups) ou <i>impitoyable</i> ' +
+      '(le coup maximal \u00e0 chaque tour).</li>' +
       '<li><b>\u21ba M\u00eame donne</b>, en fin de partie ou depuis l\u2019\u00e9cran ' +
       'd\u2019accueil, redistribue exactement les m\u00eames cartes \u2014 \u00e0 vous et aux ' +
       'joueurs virtuels \u2014 pour rejouer la partie autrement.</li>' +

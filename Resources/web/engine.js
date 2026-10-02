@@ -18,7 +18,7 @@
   var HAND_SIZE = 14;
 
   /* Réglages partagés avec l'interface. */
-  var options = { keepPlaces: true, sort: 'suit' };
+  var options = { keepPlaces: true, sort: 'suit', difficulty: 'normal' };
 
   var AI_NAMES = ['Camille', 'Hugo', 'Léa', 'Marin', 'Noa', 'Sacha'];
 

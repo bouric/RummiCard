@@ -190,6 +190,13 @@ Accessibles par l'engrenage (ou ⌘, / menu **Partie ▸ Options**), conservées
 d'une partie à l'autre — l'hôte natif les range dans les préférences de l'app,
 le navigateur dans son `localStorage`.
 
+- **Niveau des joueurs virtuels** : *facile* — ils ne réorganisent jamais la
+  table et se contentent des ajouts évidents et de leurs propres
+  combinaisons ; *normal* (par défaut) — ils jouent au plus simple et ne
+  réorganisent que lorsqu'ils ne trouvent rien autrement ; *impitoyable* — le
+  coup maximal à chaque tour. Mesuré sur 120 parties contre un joueur jouant à
+  pleine puissance : **3 %**, **36 %** et **45 %** de victoires. Les trois sont
+  déterministes, donc « même donne » reste tenable.
 - **Aide au placement** : *me laisser chercher* (par défaut) — une carte qui ne
   rentre nulle part ouvre une nouvelle combinaison — ou *réorganiser la table
   pour moi*, qui refait la table toute seule pour accueillir la carte.

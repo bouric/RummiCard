@@ -373,14 +373,14 @@ header .brand span { color: var(--gold); }
   box-shadow: 0 26px 70px rgba(0, 0, 0, .6);
 }
 .panel h2 { font-size: 22px; margin-bottom: 4px; letter-spacing: -.4px; }
-.panel h3 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 18px 0 7px; }
+.panel h3 { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin: 14px 0 6px; }
 .panel p, .panel li { font-size: 13.5px; line-height: 1.65; color: #c3cde0; }
 .panel ul { padding-left: 18px; }
-.panel .row { display: flex; gap: 10px; margin-top: 22px; }
+.panel .row { display: flex; gap: 10px; margin-top: 18px; }
 .optrow {
   display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align: left;
-  padding: 11px 13px; border-radius: 12px; border: 1px solid var(--stroke);
-  background: var(--panel); margin-bottom: 8px; transition: .15s;
+  padding: 9px 12px; border-radius: 11px; border: 1px solid var(--stroke);
+  background: var(--panel); margin-bottom: 6px; transition: .15s;
 }
 .optrow:hover { background: rgba(255, 255, 255, .11); }
 .optrow .dot {

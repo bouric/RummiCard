@@ -38,10 +38,11 @@
    * respectant la règle d'ouverture — sur une table vide, la partie doit
    * commencer par une suite.
    */
-  function bestPartition(board, pool, mustUse) {
+  function bestPartition(board, pool, mustUse, opening) {
     var forced = mustUse || [];
+    if (opening === undefined) opening = board.length === 0;
     var r = Solver.solve(board, pool, { objective: 'count', mustUse: forced });
-    if (board.length || !r || !r.count || hasRun(r.sets)) return r;
+    if (!opening || !r || !r.count || hasRun(r.sets)) return r;
 
     // Le meilleur coup n'ouvre que des groupes : on impose une suite.
     var cands = candidateRuns(pool), best = null;
@@ -59,14 +60,62 @@
    * @param {Array} [mustUse] cartes de la main a placer obligatoirement
    * @returns {?{sets: Array, played: Array, points: number, rebuild: boolean}}
    */
-  function findBestPlay(game, player, mustUse) {
+  function findBestPlay(game, player, mustUse, level) {
     var hand = player.hand;
     if (!hand.length) return null;
+    if (level === 'facile') return simplePlay(game, player);
+    if (level === 'normal') {
+      var simple = simplePlay(game, player);
+      if (simple) return simple;          // sinon seulement, il réfléchit
+    }
 
     var board = game.boardCards();
     var r = bestPartition(board, hand, mustUse);
     if (!r || !r.count) return null;
     return { sets: r.sets, played: r.played, points: r.points, rebuild: true };
+  }
+
+  /* ---- Niveaux des joueurs virtuels -------------------------------
+     facile    : ne touche jamais à l'agencement de la table ; se contente
+                 des ajouts directs et de ses propres combinaisons.
+     normal    : joue au plus simple et ne réorganise la table que lorsqu'il
+                 ne trouve rien autrement — comme un joueur qui ne se creuse
+                 la tête qu'en cas de blocage.
+     difficile : le solveur complet, sans concession.
+     Les trois sont déterministes : une même donne rejouée se déroule à
+     l'identique. */
+
+  /* Coup du niveau facile : on complète ce qui se complète, puis on pose ce
+     qu'on peut former seul. La table garde son agencement. */
+  function simplePlay(game, player) {
+    var vide = game.boardCards().length === 0;
+    var board = game.board.map(function (s) { return s.cards.slice(); });
+    var hand = player.hand.slice(), played = [], i, k, encore = true;
+
+    while (encore && !vide) {
+      encore = false;
+      for (i = 0; i < hand.length && !encore; i++) {
+        for (k = 0; k < board.length; k++) {
+          if (Engine.acceptIndex(board[k], hand[i]) < 0) continue;
+          if (!Engine.isValidSet(board[k].concat([hand[i]]))) continue;
+          board[k] = Engine.orderSet(board[k].concat([hand[i]]));
+          played.push(hand[i]);
+          hand.splice(i, 1);
+          encore = true;
+          break;
+        }
+      }
+    }
+
+    var neuf = bestPartition([], hand, null, vide);
+    if (neuf && neuf.count) {
+      for (i = 0; i < neuf.sets.length; i++) board.push(neuf.sets[i]);
+      played = played.concat(neuf.played);
+    }
+    if (!played.length) return null;
+    var pts = 0;
+    for (i = 0; i < played.length; i++) pts += played[i].rank;
+    return { sets: board, played: played, points: pts, rebuild: true };
   }
 
   /**
@@ -93,7 +142,7 @@
    */
   function playAITurn(game) {
     var player = game.player();
-    var play = findBestPlay(game, player, null);
+    var play = findBestPlay(game, player, null, Engine.options.difficulty);
     if (play) {
       applyPlay(game, player, play);
       player.melded = true;
