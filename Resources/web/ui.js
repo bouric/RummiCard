@@ -781,6 +781,16 @@
     flip(prev, opts);
   }
 
+  /* Vrai tant que la table, vierge en début de tour, n'a pas reçu de suite. */
+  function ouvertureAttendue() {
+    if (!game || !game.snapshot) return false;
+    for (var id in game.snapshot.boardIds) return false;   // la table n'était pas vierge
+    for (var i = 0; i < game.board.length; i++) {
+      if (E.isRun(game.board[i].cards)) return false;
+    }
+    return true;
+  }
+
   function updateBar() {
     var human = isHumanTurn();
     var staged = game.stagedCards().length;
@@ -799,10 +809,14 @@
     if (check.ok) {
       msg.className = 'good';
       msg.innerHTML = '✓ ' + staged + ' carte' + (staged > 1 ? 's' : '') + ' posée' +
-        (staged > 1 ? 's' : '') + ' (' + game.stagedPoints() + ' pts) — validez votre tour.';
+        (staged > 1 ? 's' : '') + ' (' + game.stagedPoints() + ' pts) — au suivant !';
     } else if (staged) {
       msg.className = 'warn';
       msg.textContent = check.reason;
+    } else if (ouvertureAttendue()) {
+      msg.className = 'warn';
+      msg.innerHTML = 'Table vierge : ouvrez la partie par une <b>suite</b> — ' +
+        'ni brelan ni carré.';
     } else if (prefs.hints) {
       playableIds();
       var n = hintCache.total;
@@ -1321,6 +1335,10 @@
     game.compact();
     render({ land: card.id });
     updateBar();
+    if (ouvertureAttendue() && game.boardCards().length >= 3) {
+      toast('Pour ouvrir une table vierge, il faut une <b>suite</b> — ' +
+            'un brelan ne suffit pas.');
+    }
   }
 
   function removeFromBoard(card) {
@@ -1739,7 +1757,7 @@
       '<li>Vous pouvez prendre une carte d\u2019une combinaison de la table ' +
       '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
-      '<h3>Raccourcis</h3><p>Entrée : valider · ⌫ : annuler · P : piocher · ' +
+      '<h3>Raccourcis</h3><p>Entrée : au suivant · ⌫ : annuler · P : piocher · ' +
       'A : jouer au mieux · T : trier · I : indices · R : refaire mon tour</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
