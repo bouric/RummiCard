@@ -1771,13 +1771,19 @@
       ' posée' + (play.played.length > 1 ? 's' : '') + ' (' + play.points + ' pts)');
   }
 
+  /* Le bouton bascule entre les deux rangements. Trier tout court n'aurait
+     servi a rien : la main est deja remise en ordre a la distribution, a
+     chaque pioche et des qu'une carte revient de la table. */
   function doSort() {
     if (!isHumanTurn()) return;
+    prefs.tri = prefs.tri === 'suit' ? 'rank' : 'suit';
+    E.options.sort = prefs.tri;
+    savePrefs();
     game.sortHand(game.human(), prefs.tri);
     render();
     toast(prefs.tri === 'suit'
-      ? 'Main triée par couleur, puis par valeur'
-      : 'Main triée par valeur, puis par couleur');
+      ? 'Main rangée par valeur <b>dans les couleurs</b>'
+      : 'Main rangée par valeur, <b>puis</b> par couleur');
   }
 
   /* ================= Tours des joueurs virtuels =================== */
@@ -2052,7 +2058,7 @@
       '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : au suivant · ⌫ : annuler · P : piocher · ' +
-      'M : magique · T : trier · I : indices · R : refaire</p>' +
+      'M : magique · T : changer le tri · I : indices · R : refaire</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };

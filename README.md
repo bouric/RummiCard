@@ -90,7 +90,7 @@ C'est le cœur de l'interface :
 | **⟲ Refaire** | Ramène la partie au **début de votre tour précédent**, dans l'état exact (mains, table, pioche) : votre coup est défait, et avec lui les réponses des joueurs virtuels. Plusieurs appuis remontent de tour en tour. |
 
 Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `M` magique ·
-`T` trier · `I` indices · `R` refaire. Les mêmes commandes sont dans le menu
+`T` changer le tri · `I` indices · `R` refaire. Les mêmes commandes sont dans le menu
 **Partie** (⇧⌘Z pour refaire votre tour).
 
 ## Architecture
