@@ -95,7 +95,12 @@ Resources/web/
   ai.js                   joueurs virtuels + assistance au placement
   ui.js                   rendu, glisser-déposer, animations FLIP
   index.html / style.css
+  sw.js                   cache hors ligne (ignoré par l'app macOS)
+  manifest.webmanifest    nom, icônes et plein écran pour l'écran d'accueil
+  icons/                  icônes 180 / 192 / 512 px
 build.sh                  compilation + assemblage du bundle .app
+serve.sh                  sert le jeu sur le réseau local (iPad, téléphone)
+netlify.toml              déploiement en page statique
 ```
 
 ### Le solveur
@@ -130,6 +135,32 @@ fanfare à la victoire, et un **« hmm » pensif quand un joueur pioche** —
 fredonnement grave bouche fermée (110 Hz), hauteur qui monte puis retombe, léger
 vibrato, identique pour tous les joueurs. La version « je passe », faute de
 pioche, est plus grave et plus traînante. Le haut-parleur de l'en-tête coupe l'ensemble.
+
+## Jouer sur iPad
+
+Le jeu est une page web sans dépendance : il tourne tel quel dans Safari, au
+doigt. Les cartes se glissent au toucher (`touch-action` neutralisé sur les
+cartes, geste interrompu par le système correctement rendu), le zoom par
+double-tap est désactivé et la mise en page tient en paysage sur un iPad 10,2"
+comme sur un 11". Ajouté à l'écran d'accueil, il s'ouvre en plein écran, sans
+barre d'adresse, avec son icône.
+
+**Essai immédiat, sans rien installer** — le Mac sert la page sur le Wi-Fi :
+
+```bash
+./serve.sh
+```
+
+Le script affiche l'adresse à ouvrir sur l'iPad. Le Mac doit rester allumé.
+
+**Adresse permanente** — n'importe quel hébergeur de fichiers statiques
+convient ; `netlify.toml` est déjà configuré (dossier publié :
+`Resources/web`, rien à compiler). Sur Cloudflare Pages : commande de build
+vide, dossier de sortie `Resources/web`. Un *service worker* met les onze
+fichiers en cache, donc une fois la page ouverte **le jeu fonctionne sans
+réseau** et se met à jour tout seul au prochain passage en ligne. Un
+`robots.txt` et une balise `noindex` tiennent la page à l'écart des moteurs de
+recherche.
 
 ## Couleur du tapis
 

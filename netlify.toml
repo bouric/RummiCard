@@ -1,0 +1,11 @@
+# Déploiement du jeu en page statique : rien à compiler, on publie le dossier
+# web tel quel. Même principe sur Cloudflare Pages : commande de build vide,
+# dossier de sortie « Resources/web ».
+[build]
+  publish = "Resources/web"
+  command = ""
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"

@@ -1,0 +1,3 @@
+# Partie privée : pas d'indexation par les moteurs de recherche.
+User-agent: *
+Disallow: /

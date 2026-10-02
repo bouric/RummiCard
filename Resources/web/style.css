@@ -21,11 +21,18 @@
   font-synthesis: none;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;          /* pas de menu au doigt long */
+  -webkit-tap-highlight-color: transparent;
+}
 
 html, body {
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;            /* pas de rebond élastique */
+  touch-action: manipulation;           /* pas de zoom au double-tap */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   color: var(--ink);
   background:
@@ -41,6 +48,7 @@ button:disabled { cursor: default; }
 /* ---------- Écran d'accueil ---------------------------------------- */
 #menu {
   position: absolute; inset: 0;
+  padding-bottom: env(safe-area-inset-bottom);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 26px; text-align: center; padding: 30px;
 }
@@ -82,7 +90,11 @@ button:disabled { cursor: default; }
 .linkbtn:hover { color: var(--ink); }
 
 /* ---------- Cadre de jeu ------------------------------------------- */
-#game { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 10px 14px 12px; gap: 9px; }
+#game {
+  position: absolute; inset: 0; display: flex; flex-direction: column; gap: 9px;
+  padding: calc(10px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right))
+           calc(12px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
+}
 
 header { display: flex; align-items: center; gap: 14px; flex: 0 0 auto; }
 header .brand { font-size: 17px; font-weight: 800; letter-spacing: -.4px; }
@@ -224,6 +236,9 @@ header .brand span { color: var(--gold); }
 
 /* ---------- Carte -------------------------------------------------- */
 .card {
+  /* Au doigt, le glissement d'une carte ne doit jamais faire défiler la
+     page : le navigateur laisse l'événement au jeu. */
+  touch-action: none;
   position: relative; width: var(--cw); height: var(--ch); flex: 0 0 auto;
   border-radius: var(--radius); background: linear-gradient(170deg, #fffdf7 0%, #f2ece0 100%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 2px 5px rgba(0, 0, 0, .34);

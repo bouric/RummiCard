@@ -929,6 +929,9 @@
 
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp, true);
+    // iOS interrompt le geste s'il croit reconnaître un geste système :
+    // sans cela la carte resterait collée au doigt.
+    window.addEventListener('pointercancel', onCancel, true);
   });
 
   /* Geometrie figee au debut du glissement : evite tout clignotement. */
@@ -1126,11 +1129,27 @@
     h.style.top = (y + 18) + 'px';
   }
 
-  function onUp(e) {
+  /* Geste avorté : la carte retourne d'où elle vient. */
+  function onCancel() {
     if (!drag) return;
+    detachDrag();
+    var d = drag;
+    drag = null;
+    if (d.ghost) d.ghost.remove();
+    $('#rackwrap').classList.remove('target');
+    render();
+  }
+
+  function detachDrag() {
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp, true);
+    window.removeEventListener('pointercancel', onCancel, true);
     clearHint();
+  }
+
+  function onUp(e) {
+    if (!drag) return;
+    detachDrag();
 
     // Simple clic sans deplacement : placement automatique.
     if (!drag.moved && drag.origin.type === 'hand') {
@@ -1549,6 +1568,14 @@
     v.textContent = window.APP_BUILD
       ? 'Version du ' + window.APP_BUILD
       : 'Version de développement';
+  }
+
+  /* Hors ligne : une fois la page ouverte, le jeu se relance sans réseau.
+     Sans objet dans l'app macOS, qui charge ses fichiers en local. */
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* tant pis */ });
+    });
   }
 
   loadPrefs();

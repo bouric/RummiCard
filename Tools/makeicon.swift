@@ -85,7 +85,7 @@ func render(_ S: CGFloat) -> NSBitmapImageRep {
 }
 
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "."
-for size in [16, 32, 64, 128, 256, 512, 1024] {
+for size in [16, 32, 64, 128, 180, 192, 256, 512, 1024] {
     let rep = render(CGFloat(size))
     guard let data = rep.representation(using: .png, properties: [:]) else { continue }
     try? data.write(to: URL(fileURLWithPath: "\(out)/icon_\(size).png"))
