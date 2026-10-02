@@ -1,12 +1,14 @@
 /* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
    sw.js — permet de rejouer sans réseau.
-   Stratégie : on sert tout de suite la version en cache (démarrage
-   instantané, même hors ligne) et on va chercher la version du serveur en
-   arrière-plan pour le prochain lancement. Aucun numéro de version à tenir
-   à jour : le cache se renouvelle de lui-même à chaque passage en ligne.
+   Stratégie : le réseau d'abord, le cache en secours. Connecté, on reçoit
+   toujours la version du jour ; hors ligne ou si le serveur tarde, on sert
+   la dernière version connue. L'ancienne stratégie servait le cache en
+   premier : la partie se lançait instantanément, mais avec la version
+   d'avant, et il fallait recharger deux fois pour voir une nouveauté.
    ===================================================================== */
-var CACHE = 'rummicard';
+var CACHE = 'rummicard-2';
+var ATTENTE = 3000;          // au-delà, on n'attend plus le serveur
 var SHELL = [
   './', 'index.html', 'style.css',
   'solver.js', 'engine.js', 'ai.js', 'ui.js',
@@ -37,11 +39,25 @@ self.addEventListener('fetch', function (e) {
   e.respondWith(
     caches.open(CACHE).then(function (cache) {
       return cache.match(req).then(function (cached) {
-        var frais = fetch(req).then(function (rep) {
+        var reseau = fetch(req).then(function (rep) {
           if (rep && rep.ok) cache.put(req, rep.clone());
           return rep;
-        }).catch(function () { return cached; });
-        return cached || frais;
+        });
+        if (!cached) return reseau;
+        /* Le réseau est servi s'il répond dans le délai ; sinon le cache
+           prend le relais, et la réponse du serveur alimentera tout de même
+           le cache pour la prochaine fois. */
+        return new Promise(function (resolve) {
+          var fini = false;
+          var minuteur = setTimeout(function () {
+            if (!fini) { fini = true; resolve(cached); }
+          }, ATTENTE);
+          reseau.then(function (rep) {
+            if (!fini) { fini = true; clearTimeout(minuteur); resolve(rep); }
+          }).catch(function () {
+            if (!fini) { fini = true; clearTimeout(minuteur); resolve(cached); }
+          });
+        });
       });
     })
   );

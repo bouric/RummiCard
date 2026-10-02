@@ -2124,8 +2124,19 @@
   }
 
   /* Hors ligne : une fois la page ouverte, le jeu se relance sans réseau.
-     Sans objet dans l'app macOS, qui charge ses fichiers en local. */
+     Sans objet dans l'app macOS, qui charge ses fichiers en local.
+     Quand un nouveau service worker prend la main, la page se recharge une
+     fois : sans cela il faudrait recharger deux fois pour voir une mise à
+     jour — la première pour installer le nouveau worker, la seconde pour
+     en profiter. */
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    var avaitUnControleur = !!navigator.serviceWorker.controller;
+    var dejaRecharge = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!avaitUnControleur || dejaRecharge) return;
+      dejaRecharge = true;
+      location.reload();
+    });
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('sw.js').catch(function () { /* tant pis */ });
     });
