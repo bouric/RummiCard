@@ -137,7 +137,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         rewind.keyEquivalentModifierMask = [.command, .shift]
         rewind.target = self
         gameMenu.addItem(withTitle: "Piocher", action: #selector(drawCard), keyEquivalent: "p").target = self
-        gameMenu.addItem(withTitle: "Jouer au mieux", action: #selector(autoPlay), keyEquivalent: "j").target = self
+        gameMenu.addItem(withTitle: "Magique", action: #selector(autoPlay), keyEquivalent: "j").target = self
         gameMenu.addItem(withTitle: "Trier la main", action: #selector(sortHand), keyEquivalent: "t").target = self
         gameMenu.addItem(.separator())
         gameMenu.addItem(withTitle: "Options…", action: #selector(showOptions), keyEquivalent: ",").target = self

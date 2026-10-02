@@ -77,8 +77,8 @@ C'est le cœur de l'interface :
 | Glisser une carte qui ne rentre nulle part | Elle ouvre une **nouvelle combinaison** : à vous de réarranger la table. Une option confie cette réorganisation au jeu (✨ : `4♠5♠6♠7♠8♠` + un second `6♠` devient `4♠5♠6♠` + `6♠7♠8♠`, aperçu avant de lâcher), mais il décide alors quelles combinaisons casser — c'est une aide forte, désactivée par défaut. |
 | Clic simple sur une carte de la main | Placement automatique au meilleur endroit. |
 | Glisser vers sa main une carte posée ce tour-ci | On la récupère. |
-| **💡 Indices** | Met en avant les cartes du **meilleur coup** du tour — celui que « Jouer au mieux » jouerait — sans dire où les poser. Aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes forment un coup cohérent : elles se posent toutes ensemble, et l'indication se met à jour au fur et à mesure. |
-| **✨ Jouer au mieux** | Calcule et joue le coup maximal du tour. |
+| **💡 Indices** | Met en avant les cartes du **meilleur coup** du tour — celui que « Magique » jouerait — sans dire où les poser. Aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes forment un coup cohérent : elles se posent toutes ensemble, et l'indication se met à jour au fur et à mesure. |
+| **✨ Magique** | Calcule et joue le coup maximal du tour. |
 | **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
 | Coups des adversaires | Les cartes que les joueurs virtuels viennent d'ajouter sont **cerclées de bleu** jusqu'à votre premier geste : la table se réorganisant au fil des coups, c'est le seul moyen de voir ce qui a changé. |
 | **▶ Reprendre la partie** | La partie en cours est enregistrée au début de chacun de vos tours. Si l'app est fermée — ou déchargée de la mémoire par iOS — l'écran d'accueil propose de la reprendre là où elle en était. |
@@ -89,7 +89,7 @@ C'est le cœur de l'interface :
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
 | **⟲ Refaire mon tour** | Ramène la partie au **début de votre tour précédent**, dans l'état exact (mains, table, pioche) : votre coup est défait, et avec lui les réponses des joueurs virtuels. Plusieurs appuis remontent de tour en tour. |
 
-Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `A` jouer au mieux ·
+Raccourcis : `Entrée` au suivant · `⌫` annuler · `P` piocher · `A` magique ·
 `T` trier · `I` indices · `R` refaire mon tour. Les mêmes commandes sont dans le menu
 **Partie** (⇧⌘Z pour refaire votre tour).
 
@@ -133,7 +133,7 @@ suites, nouvelles suites et groupes.
 Mesures : ~6 ms en moyenne sur un tour de fin de partie (70 cartes sur la table,
 14 en main), 18 ms au pire ; 385 ms sur le cas artificiel des 104 cartes
 étalées. C'est ce même solveur qui alimente les
-joueurs virtuels, le bouton « Jouer au mieux » et la réorganisation automatique
+joueurs virtuels, le bouton « Magique » et la réorganisation automatique
 pendant un glisser-déposer.
 
 ## Son

@@ -1051,7 +1051,7 @@
   var hintCache = { key: '', ids: null, total: 0 };
 
   /* Les cartes mises en avant sont celles du MEILLEUR coup du tour — celui
-     que « Jouer au mieux » jouerait. Signaler toutes les cartes jouables une
+     que « Magique » jouerait. Signaler toutes les cartes jouables une
      à une n'aurait pas de sens : leurs placements s'excluent souvent, et on
      ne pourrait pas les poser ensemble. */
   function playableIds() {
@@ -1991,7 +1991,7 @@
       'du tour, sans vous dire o\u00f9 les poser : une aide interm\u00e9diaire entre ' +
       'chercher seul et laisser jouer la machine. Ces cartes se posent toutes ' +
       'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
-      '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
+      '<li><b>Magique</b> calcule et joue le coup maximal du tour.</li>' +
       '<li><b>Annuler</b> d\u00e9fait vos mouvements un par un, dans l\u2019ordre inverse.</li>' +
       '<li>Les options r\u00e8glent le <b>niveau des joueurs virtuels</b> : ' +
       '<i>facile</i> (ils ne r\u00e9organisent jamais la table), <i>normal</i> ' +
@@ -2010,7 +2010,7 @@
       '(le 4<sup>e</sup> d\u2019un carré par exemple) et la glisser sur une autre.</li>' +
       '</ul>' +
       '<h3>Raccourcis</h3><p>Entrée : au suivant · ⌫ : annuler · P : piocher · ' +
-      'A : jouer au mieux · T : trier · I : indices · R : refaire mon tour</p>' +
+      'A : magique · T : trier · I : indices · R : refaire mon tour</p>' +
       '<div class="row"><button class="cta" id="closerules" style="flex:1">Fermer</button></div></div>';
     ov.classList.remove('hidden');
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
