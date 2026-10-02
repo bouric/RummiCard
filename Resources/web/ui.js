@@ -815,8 +815,20 @@
       msg.textContent = check.reason;
     } else if (ouvertureAttendue()) {
       msg.className = 'warn';
-      msg.innerHTML = 'Table vierge : ouvrez la partie par une <b>suite</b> — ' +
+      var tete = 'Table vierge : ouvrez la partie par une <b>suite</b> — ' +
         'ni brelan ni carré.';
+      if (prefs.hints) {
+        /* Les indices ne proposent qu'une ouverture en suite : s'ils ne
+           trouvent rien, aucune n'est possible et il faut piocher. */
+        playableIds();
+        msg.innerHTML = hintCache.total
+          ? tete + ' \ud83d\udca1 ' + hintCache.total + ' carte' +
+            (hintCache.total > 1 ? 's' : '') + ' mise' +
+            (hintCache.total > 1 ? 's' : '') + ' en avant.'
+          : tete + ' \ud83d\udca1 Aucune suite possible — piochez.';
+      } else {
+        msg.innerHTML = tete;
+      }
     } else if (prefs.hints) {
       playableIds();
       var n = hintCache.total;
@@ -852,7 +864,10 @@
     for (i = 0; i < sets.length; i++) board = board.concat(sets[i].cards);
     var pool = hand.concat(game.stagedCards());
 
-    var best = Solver.solve(board, pool, { objective: 'count' });
+    // bestPartition, et non le solveur brut : sur une table vierge la
+    // partie doit s'ouvrir par une suite, et un indice qui montrerait un
+    // brelan designerait un coup impossible a valider.
+    var best = AI.bestPartition(board, pool);
     var ids = {}, n = 0;
     if (best) {
       // Les deux exemplaires d'une carte sont interchangeables : le solveur
