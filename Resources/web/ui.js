@@ -1199,7 +1199,18 @@
     var res = cards.length
       ? Solver.solve(cards, [drag.card], { objective: 'count', mustUse: [drag.card] })
       : null;
-    drag.cache.re = (res && res.count) ? res.sets : null;
+    var out = (res && res.count) ? res.sets : null;
+    /* Tour d'ouverture : le solveur ne connaît pas la règle de la suite, et
+       il peut regrouper par valeur des cartes déjà posées en suites. Il
+       défairait alors l'ouverture du joueur et rendrait son tour
+       invalidable. Dans ce cas on renonce à réorganiser : la carte ira
+       dans une nouvelle combinaison, au joueur de décider. */
+    if (out && tourDOuverture()) {
+      var suite = false;
+      for (i = 0; i < out.length; i++) if (E.isRun(out[i])) suite = true;
+      if (!suite) out = null;
+    }
+    drag.cache.re = out;
     return drag.cache.re;
   }
 
