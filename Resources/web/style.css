@@ -170,7 +170,9 @@ header .brand span { color: var(--gold); }
 
 /* Table rangée : la hauteur d'une carte vaut sa valeur. */
 .zone.grid { display: block; position: relative; overflow-x: auto; }
-.zone.grid .zonehead { position: absolute; top: 0; left: 0; margin: 0; }
+/* Décalé de l'angle : le tapis a un rayon de 16 px qui mangeait le « S »
+   de « Suites ». */
+.zone.grid .zonehead { position: absolute; top: 3px; left: 15px; margin: 0; width: auto; }
 .zone.grid .set {
   position: absolute; padding: 0; background: none; border: 0; border-radius: 0;
 }
@@ -331,6 +333,13 @@ header .brand span { color: var(--gold); }
 }
 .btn:hover:not(:disabled) { background: rgba(255, 255, 255, .13); transform: translateY(-1px); }
 .btn:disabled { opacity: .34; }
+/* Quand la table ne tient plus et doit défiler, les boutons se réduisent à
+   leur pictogramme : une rangée de moins, autant de tapis gagné. */
+#game.compact .btn .lbl { display: none; }
+#game.compact .btn { padding: 9px 12px; }
+/* Les boutons devenus étroits, le message retrouve leur rangée : c'est de là
+   que vient la hauteur rendue au plateau. */
+#game.compact #msg { flex: 1 1 auto; order: 0; white-space: nowrap; height: 1.4em; }
 .btn.go { background: linear-gradient(180deg, #2f9c76, #1d7a5c); border-color: #3fb68c; color: #fff; }
 .btn.go:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(45, 150, 115, .4); }
 .btn.magic { background: linear-gradient(180deg, #4a3fb6, #352c8c); border-color: #6559d6; color: #fff; }
@@ -367,7 +376,10 @@ header .brand span { color: var(--gold); }
   border: 1px solid var(--stroke); position: relative;
 }
 #rackwrap.target { border-color: rgba(255, 255, 255, .55); background: rgba(255, 255, 255, .11); }
-#rack { display: flex; flex-wrap: wrap; gap: 4px; min-height: var(--ch); align-items: flex-end; }
+/* Hauteur réservée constante : si elle suivait la taille des cartes, le
+   plateau changerait de hauteur, donc de taille de cartes, donc la main —
+   et l'affichage oscillerait entre deux états. */
+#rack { display: flex; flex-wrap: wrap; gap: 4px; min-height: 88px; align-items: flex-end; }
 #rack .card { cursor: grab; }
 #rack .card:active { cursor: grabbing; }
 .racklabel {
@@ -479,7 +491,6 @@ header .brand span { color: var(--gold); }
   .opp .av { width: 26px; height: 26px; font-size: 12px; }
   .opp .nm { font-size: 11.5px; }
   .opp .sub, .opp .fan { display: none; }
-  #rack .card { --cw: 44px; --ch: 62px; }
   #rackwrap { padding: 8px; }
 }
 

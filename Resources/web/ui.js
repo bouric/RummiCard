@@ -84,6 +84,9 @@
      moities empilees, avec une colonne par couleur. */
   var MODE_TELEPHONE = false;
   var soloZone = 'runs';
+  /* Taille de carte retenue au dernier rendu : la main l'adopte aussi, pour
+     que toutes les cartes de l'ecran aient la meme taille. */
+  var densiteCourante = '';
   var history = [];          // état au début de chacun de vos tours
   var aiJustPlayed = {};     // cartes ajoutées par les joueurs virtuels depuis votre tour
   var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
@@ -142,6 +145,8 @@
     savePrefs();
     history = [game.captureState()];
     turnStack = [];
+    compactFige = false;
+    $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
     $('#game').classList.remove('hidden');
     $('#overlay').classList.add('hidden');
@@ -578,8 +583,10 @@
     var GX = GROUP_X + NEUVE_W;
     // Largeur dont dispose reellement la grille des valeurs : tout le plateau
     // si les deux parties sont empilees, ce que les suites laissent sinon.
+    // Les deux moities font exactement la meme largeur : la frontiere tombe
+    // au milieu du plateau.
     var largeurG = (empile ? (board.clientWidth || 1200) - 26
-      : Math.max(160, (board.clientWidth || 1200) - (apresSuites + 24))) - NEUVE_W;
+      : Math.max(160, Math.floor((board.clientWidth || 1200) / 2) - 26)) - NEUVE_W;
     var lignesMax = Math.max(1, Math.floor(hauteur / (m.ch + 6)));
     var colsVoulues = Math.min(14, Math.ceil(14 / lignesMax));
     // Une colonne de plus, c'est deux lignes de moins : quand il s'en faut
@@ -610,7 +617,6 @@
     // pendant le tour des joueurs virtuels : les faire disparaitre changeait
     // la largeur des zones, et toute la table sautait d'un tour a l'autre.
     // Hors de votre tour elles sont seulement estompees.
-    var needRuns = apresSuites, needGroups = maxX;
     // Memes dimensions des deux cotes : elles se font face.
     placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, hauteur, 'runs', 'Nouvelle suite');
     placeNewZone(zGroups, GROUP_X, GRID_TOP, m.cw, hauteur, 'groups', 'Nouveau groupe');
@@ -644,11 +650,9 @@
       zRuns.style.flex = '1 1 0';
       zGroups.style.flex = '1 1 0';
     } else {
-      // Cote a cote : les colonnes des suites ne bougent pas, mais la zone
-      // reste compressible — sinon elle se sert la premiere et ne laisse
-      // rien aux groupes.
-      zRuns.style.flex = '0 1 ' + (needRuns + 12) + 'px';
-      zGroups.style.flex = '1 1 ' + Math.max(160, needGroups + 16) + 'px';
+      // Cote a cote, a parts egales elles aussi.
+      zRuns.style.flex = '1 1 0';
+      zGroups.style.flex = '1 1 0';
     }
   }
 
@@ -804,8 +808,8 @@
     // 1) tout tient cote a cote, hauteur comprise : le cas confortable.
     for (d = 0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
-      if (besoinSuites(m, 2) + besoinGroupes(m, nCols) <= width &&
-          Math.max(hautSuites(m), hautGroupes(m, width - besoinSuites(m, 2))) <= height) {
+      if (2 * Math.max(besoinSuites(m, 2), besoinGroupes(m, nCols)) <= width &&
+          Math.max(hautSuites(m), hautGroupes(m, width / 2)) <= height) {
         return { dens: DENSITIES[d], stack: false, nc: 2 };
       }
     }
@@ -813,7 +817,7 @@
     //    fixes, quitte a defiler verticalement.
     for (d = 0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
-      if (minSuites(m, 2) + minGroupes(m) <= width) {
+      if (2 * Math.max(minSuites(m, 2), minGroupes(m)) <= width) {
         return { dens: DENSITIES[d], stack: false, nc: 2 };
       }
     }
@@ -853,6 +857,7 @@
       if (DENSITIES.indexOf(fit.dens) > DENSITIES.indexOf(dens)) dens = fit.dens;
       stack = fit.stack; solo = !!fit.solo; nc = fit.nc || 2;
     }
+    densiteCourante = dens;
     board.className = dens + (split ? ' split' : '') + (stack ? ' stack' : '') +
       (solo ? ' solo' : '');
     // Valeurs par defaut des deux chevauchements ; la table rangee affine
@@ -864,6 +869,26 @@
     board.innerHTML = '';
     if (split) paintGrid(view, board, dens, nc, solo);
     else paintFlow(view, board);
+    majBarreCompacte();
+  }
+
+  /* Si la table deborde et doit defiler, les boutons perdent leurs libelles :
+     le message rejoint leur rangee et le plateau gagne une quarantaine de
+     pixels. Une fois la barre resserree on l'y laisse jusqu'au prochain
+     changement de taille de fenetre : la rendre large ferait reapparaitre
+     l'ascenseur, qui la resserrerait de nouveau, sans fin. */
+  var compactFige = false;
+  function majBarreCompacte() {
+    var zones = document.querySelectorAll('#board .zone');
+    var deborde = false, i, z;
+    for (i = 0; i < zones.length; i++) {
+      z = zones[i];
+      if (z.classList.contains('folded')) continue;
+      if (z.scrollHeight > z.clientHeight + 1 || z.scrollWidth > z.clientWidth + 1) deborde = true;
+    }
+    var jeu = $('#game');
+    if (deborde) { jeu.classList.add('compact'); compactFige = true; }
+    else if (!compactFige) jeu.classList.remove('compact');
   }
 
   /* Suite (même couleur, valeurs qui se suivent) -> affichage vertical.
@@ -882,6 +907,9 @@
 
   function paintRack() {
     var rack = $('#rack');
+    var mr = METRICS[densiteCourante] || METRICS[''];
+    rack.style.setProperty('--cw', mr.cw + 'px');
+    rack.style.setProperty('--ch', mr.ch + 'px');
     rack.innerHTML = '';
     var hand = game.human().hand.filter(function (c) {
       return !(drag && drag.card.id === c.id);
@@ -957,6 +985,7 @@
     var bd = $('#board');
     if (bd.dataset.avail && Math.abs(bd.clientHeight - (+bd.dataset.avail)) > 2) {
       paintBoard();
+      paintRack();          // la taille des cartes a pu changer avec elle
     }
     $('#deckcount').textContent = game.deck.length;
     var rp = $('#roundpill');
@@ -2067,7 +2096,11 @@
     else if (e.key === 'i' || e.key === 'I') { toggleHints(); }
   });
 
-  window.addEventListener('resize', function () { if (game) render({ animate: false }); });
+  window.addEventListener('resize', function () {
+    compactFige = false;
+    $('#game').classList.remove('compact');
+    if (game) render({ animate: false });
+  });
 
   /* Version et copyright : fournis par l'hôte natif, sinon mode navigateur. */
   function stampFooter() {
