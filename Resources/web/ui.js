@@ -587,7 +587,12 @@
     // La zone « Nouveau groupe » occupe le bord gauche : elle se retrouve
     // ainsi juste a cote de « Nouvelle suite », qui borde la zone de gauche.
     var NEUVE_W = m.cw + 10;
-    var GX = ecartBord + NEUVE_W;
+    /* Cote a cote, « Nouveau groupe » borde la frontiere, donc le bord
+       gauche de sa moitie, pour faire face a « Nouvelle suite ». Empilees,
+       il n'y a plus de frontiere entre elles : la zone passe a droite, juste
+       sous « Nouvelle suite », et la grille des valeurs reprend le bord
+       gauche. */
+    var GX = empile ? ecartBord : ecartBord + NEUVE_W;
     // Largeur dont dispose reellement la grille des valeurs : tout le plateau
     // si les deux parties sont empilees, ce que les suites laissent sinon.
     // Les deux moities font exactement la meme largeur : la frontiere tombe
@@ -626,7 +631,8 @@
     // Hors de votre tour elles sont seulement estompees.
     // Memes dimensions des deux cotes : elles se font face.
     placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, hauteur, 'runs', 'Nouvelle suite');
-    placeNewZone(zGroups, ecartBord, GRID_TOP, m.cw, hauteur, 'groups', 'Nouveau groupe');
+    placeNewZone(zGroups, empile ? newRunsX : ecartBord, GRID_TOP, m.cw, hauteur,
+                 'groups', 'Nouveau groupe');
     // Les espaceurs donnent sa hauteur de defilement a chaque grille ; ils
     // doivent etre poses avant qu'une moitie ne soit repliee.
     spacer(zRuns, gridH + GRID_TOP + 12);
