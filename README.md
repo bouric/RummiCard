@@ -48,7 +48,8 @@ Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installé
 - Une combinaison invalide est **cerclée de rouge** (à ne pas confondre avec
   l'anneau doré des cartes posées pendant le tour) et le bandeau la nomme en
   expliquant ce qui cloche : *« 5♠ 6♠ : il manque 1 carte (3 minimum). »*
-- Le premier à vider sa main gagne ; pioche épuisée, c'est le moins de points.
+- Le premier à vider sa main gagne la manche ; pioche épuisée, c'est le moins
+  de points.
 
 ## Disposition de la table
 
@@ -190,6 +191,12 @@ Accessibles par l'engrenage (ou ⌘, / menu **Partie ▸ Options**), conservées
 d'une partie à l'autre — l'hôte natif les range dans les préférences de l'app,
 le navigateur dans son `localStorage`.
 
+- **Durée de la partie** : *une manche* (la partie s'arrête dès qu'un joueur
+  vide sa main), *trois manches* (par défaut) ou *cinq manches*. En plusieurs
+  manches, chacun perd la valeur des cartes restées dans sa main et le gagnant
+  encaisse la somme de ces cartes — le décompte est donc à somme nulle. Le
+  classement final se fait au cumul, et la pastille de l'en-tête suit votre
+  score en cours.
 - **Niveau des joueurs virtuels** : *facile* — ils ne réorganisent jamais la
   table et se contentent des ajouts évidents et de leurs propres
   combinaisons ; *normal* (par défaut) — ils jouent au plus simple et ne

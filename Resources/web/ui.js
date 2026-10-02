@@ -17,7 +17,7 @@
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
   var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
-                niveau: 'normal', lastDeal: null, saved: null };
+                niveau: 'normal', manches: 3, lastDeal: null, saved: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
   var FELTS = [
@@ -61,6 +61,7 @@
       if (p.niveau === 'facile' || p.niveau === 'normal' || p.niveau === 'difficile') {
         prefs.niveau = p.niveau;
       }
+      if (p.manches === 1 || p.manches === 3 || p.manches === 5) prefs.manches = p.manches;
     }
     E.options.keepPlaces = prefs.keepPlaces;
     E.options.difficulty = prefs.niveau;
@@ -77,6 +78,7 @@
   var drag = null;
   var history = [];          // état au début de chacun de vos tours
   var aiJustPlayed = {};     // cartes ajoutées par les joueurs virtuels depuis votre tour
+  var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
   var turnStack = [];        // états successifs pendant le tour en cours
 
   /* ================= Accueil ====================================== */
@@ -119,9 +121,15 @@
 
   /* ================= Cycle de partie ============================== */
 
-  function newGame(deal) {
+  function newGame(deal, suite) {
     game = new E.Game(deal ? deal.n : nVirtual, deal);
     if (deal) nVirtual = deal.n;
+    if (!suite) {
+      var zero = [];
+      for (var z = 0; z <= nVirtual; z++) zero.push(0);
+      match = { total: prefs.manches, manche: 1, scores: zero,
+                noms: game.players.map(function (p) { return p.name; }) };
+    }
     prefs.lastDeal = game.deal;
     savePrefs();
     history = [game.captureState()];
@@ -732,6 +740,16 @@
     paintRack();
     paintOpponents(opts.thinking);
     $('#deckcount').textContent = game.deck.length;
+    var rp = $('#roundpill');
+    if (rp) {
+      var plusieursManches = match && match.total > 1;
+      rp.classList.toggle('hidden', !plusieursManches);
+      if (plusieursManches) {
+        rp.innerHTML = 'Manche&nbsp;<b>' + match.manche + '/' + match.total + '</b>' +
+          (match.scores[0] ? ' &middot; vous&nbsp;<b>' + (match.scores[0] > 0 ? '+' : '') +
+            match.scores[0] + '</b>' : '');
+      }
+    }
     var p = game.player();
     $('#turnpill').innerHTML = 'Tour&nbsp;<b>' + (game.finished ? 'terminé' : p.name) + '</b>';
     var hm = game.human();
@@ -1315,7 +1333,10 @@
   /* La partie en cours est enregistrée au début de chacun de vos tours : de
      quoi la retrouver si l'app est fermée ou déchargée par le système. */
   function saveGame() {
-    prefs.saved = (game && !game.finished) ? game.serialize() : null;
+    if (!game || game.finished) { prefs.saved = null; savePrefs(); return; }
+    var d = game.serialize();
+    d.match = match;
+    prefs.saved = d;
     savePrefs();
   }
 
@@ -1325,6 +1346,7 @@
     nVirtual = d.n;
     game = new E.Game(d.n, d.deal);
     game.loadSerialized(d);
+    match = d.match || null;
     history = [game.captureState()];
     turnStack = [];
     aiJustPlayed = {};
@@ -1465,36 +1487,92 @@
 
   /* ================= Fin de partie ================================ */
 
+  /* Décompte d'une manche : chacun perd la valeur de ses cartes restantes,
+     le gagnant encaisse la somme de ce que les autres gardent en main. */
+  function roundScores() {
+    var mains = game.players.map(function (p) { return game.handScore(p); });
+    var gagnant = game.winner ? game.winner.index : 0;
+    if (!game.winner) {
+      for (var k = 1; k < mains.length; k++) if (mains[k] < mains[gagnant]) gagnant = k;
+    }
+    var pts = mains.map(function (h, i) { return i === gagnant ? 0 : -h; });
+    var somme = 0;
+    for (var i = 0; i < mains.length; i++) if (i !== gagnant) somme += mains[i];
+    pts[gagnant] = somme;
+    return { pts: pts, gagnant: gagnant };
+  }
+
+  function nextRound() {
+    match.manche++;
+    newGame({ n: nVirtual, names: match.noms.slice(1) }, true);
+  }
+
   function gameOver() {
     sndWin();
     prefs.saved = null;
     savePrefs();
     var w = game.winner;
-    var rows = game.players.map(function (p) {
-      return { p: p, score: game.handScore(p) };
-    }).sort(function (a, b) { return a.score - b.score; });
-    var html = '<div class="panel"><div class="trophy">' +
-      (w && w.human ? '🏆' : '🃏') + '</div>' +
-      '<h2 style="text-align:center">' +
-      (w ? (w.human ? 'Vous gagnez !' : w.name + ' gagne') : 'Partie terminée') + '</h2>' +
-      '<p style="text-align:center">' +
-      (w && !w.hand.length ? 'Main vidée la première.' : 'Pioche épuisée : le moins de points gagne.') +
-      '</p><table class="scores">';
-    for (var i = 0; i < rows.length; i++) {
-      html += '<tr class="' + (rows[i].p === w ? 'win' : '') + '"><td>' +
-        (i + 1) + '. ' + rows[i].p.name + '</td><td class="n">' +
-        rows[i].p.hand.length + ' cartes</td><td class="n">' +
-        rows[i].score + ' pts</td></tr>';
+    var m = match || { total: 1, manche: 1, scores: game.players.map(function () { return 0; }) };
+    var r = roundScores();
+    for (var s = 0; s < r.pts.length; s++) m.scores[s] += r.pts[s];
+    var plusieurs = m.total > 1;
+    var derniere = m.manche >= m.total;
+
+    var rows = game.players.map(function (p, i) {
+      return { p: p, cartes: p.hand.length, enMain: game.handScore(p),
+               manche: r.pts[i], total: m.scores[i] };
+    });
+    rows.sort(plusieurs
+      ? function (a, b) { return b.total - a.total; }
+      : function (a, b) { return a.enMain - b.enMain; });
+
+    var titre, sous;
+    if (plusieurs && !derniere) {
+      titre = 'Manche ' + m.manche + ' sur ' + m.total;
+      sous = w ? (w.human ? 'Vous remportez la manche.' : w.name + ' remporte la manche.')
+               : 'Pioche épuisée : la plus petite main l’emporte.';
+    } else if (plusieurs) {
+      titre = rows[0].p.human ? 'Vous gagnez la partie !' : rows[0].p.name + ' gagne la partie';
+      sous = 'Classement après ' + m.total + ' manches.';
+    } else {
+      titre = w ? (w.human ? 'Vous gagnez !' : w.name + ' gagne') : 'Partie terminée';
+      sous = w && !w.hand.length ? 'Main vidée la première.'
+                                 : 'Pioche épuisée : le moins de points gagne.';
     }
-    html += '</table><div class="row"><button class="cta" id="again" style="flex:1">Nouvelle partie</button>' +
-      '<button class="btn" id="redeal">\u21ba M\u00eame donne</button>' +
-      '<button class="btn" id="tomenu">Menu</button></div></div>';
+
+    var html = '<div class="panel"><div class="trophy">' +
+      (rows[0].p.human ? '🏆' : '🃏') + '</div>' +
+      '<h2 style="text-align:center">' + titre + '</h2>' +
+      '<p style="text-align:center">' + sous + '</p><table class="scores">';
+    if (plusieurs) {
+      html += '<tr><td></td><td class="n">cartes</td><td class="n">manche</td>' +
+'<td class="n">total</td>' +
+              '</tr>';
+    }
+    for (var i = 0; i < rows.length; i++) {
+      var signe = rows[i].manche > 0 ? '+' : '';
+      html += '<tr class="' + (i === 0 ? 'win' : '') + '"><td>' +
+        (i + 1) + '. ' + rows[i].p.name + '</td>' +
+        '<td class="n">' + rows[i].cartes + ' cartes</td>' +
+        (plusieurs ? '<td class="n">' + signe + rows[i].manche + '</td>' +
+                     '<td class="n">' + rows[i].total + ' pts</td>'
+                   : '<td class="n">' + rows[i].enMain + ' pts</td>') +
+        '</tr>';
+    }
+    html += '</table><div class="row">';
+    html += (plusieurs && !derniere)
+      ? '<button class="cta" id="next" style="flex:1">Manche suivante</button>'
+      : '<button class="cta" id="again" style="flex:1">Nouvelle partie</button>' +
+        '<button class="btn" id="redeal">\u21ba M\u00eame donne</button>';
+    html += '<button class="btn" id="tomenu">Menu</button></div></div>';
+
     var ov = $('#overlay');
     ov.innerHTML = html;
     ov.classList.remove('hidden');
     var donne = game.deal;
-    $('#again').onclick = function () { newGame(); };
-    $('#redeal').onclick = function () { newGame(donne); };
+    if ($('#next')) $('#next').onclick = function () { ov.classList.add('hidden'); nextRound(); };
+    if ($('#again')) $('#again').onclick = function () { newGame(); };
+    if ($('#redeal')) $('#redeal').onclick = function () { newGame(donne); };
     $('#tomenu').onclick = function () {
       ov.classList.add('hidden');
       $('#game').classList.add('hidden');
@@ -1518,6 +1596,13 @@
         'A A 2 2 3 3\u2026 les cartes de m\u00eame valeur voisines') +
       optionRow('tri', 'suit', prefs.tri === 'suit', 'Par valeur dans les couleurs',
         'toute une couleur dans l\u2019ordre, puis la suivante') +
+      '<h3>Durée de la partie</h3>' +
+      optionRow('manches', '1', prefs.manches === 1, 'Une manche',
+        'la partie s’arrête dès qu’un joueur vide sa main') +
+      optionRow('manches', '3', prefs.manches === 3, 'Trois manches',
+        'score cumulé : le gagnant encaisse les cartes restées en main') +
+      optionRow('manches', '5', prefs.manches === 5, 'Cinq manches',
+        'même décompte, partie plus longue') +
       '<h3>Niveau des joueurs virtuels</h3>' +
       optionRow('niveau', 'facile', prefs.niveau === 'facile', 'Facile',
         'ils ne r\u00e9organisent jamais la table') +
@@ -1546,6 +1631,8 @@
           prefs.tri = value;
           E.options.sort = value;
           if (game) { game.sortHand(game.human(), value); render(); }
+        } else if (name === 'manches') {
+          prefs.manches = +value;
         } else if (name === 'niveau') {
           prefs.niveau = value;
           E.options.difficulty = value;
@@ -1583,8 +1670,11 @@
       '<li>Sur une <b>table vide</b>, la partie doit s\u2019ouvrir par une <b>suite</b> : ' +
       'ni brelan ni carré en première pose.</li>' +
       '<li>Rien à poser ? Vous piochez et le tour passe.</li>' +
-      '<li>Le premier à vider sa main gagne. Si la pioche s’épuise, ' +
-      'c’est le joueur avec le moins de points en main.</li></ul>' +
+      '<li>Le premier à vider sa main gagne la manche. Si la pioche s’épuise, ' +
+      'c’est le joueur avec le moins de points en main.</li>' +
+      '<li>En <b>plusieurs manches</b> (option), chacun perd la valeur des cartes ' +
+      'restées dans sa main et le gagnant encaisse la somme de ces cartes. ' +
+      'Le classement final se fait au cumul.</li></ul>' +
       '<h3>Placement automatique</h3><ul>' +
       '<li><b>Glissez</b> une carte vers la table : l’emplacement exact apparaît ' +
       'et la carte s’y pose toute seule.</li>' +
