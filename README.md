@@ -131,6 +131,12 @@ fredonnement grave bouche fermée (110 Hz), hauteur qui monte puis retombe, lég
 vibrato, identique pour tous les joueurs. La version « je passe », faute de
 pioche, est plus grave et plus traînante. Le haut-parleur de l'en-tête coupe l'ensemble.
 
+## Couleur du tapis
+
+La palette de l'en-tête fait défiler six teintes de feutre — vert, bleu nuit,
+bordeaux, ardoise, prune, tabac — appliquées par variables CSS et conservées
+d'une partie à l'autre comme les autres réglages.
+
 ## Options
 
 Accessibles par l'engrenage (ou ⌘, / menu **Partie ▸ Options**), conservées

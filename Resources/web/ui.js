@@ -16,7 +16,30 @@
        tri        : 'suit' = par couleur puis valeur
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
-  var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false };
+  var prefs = { tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0 };
+
+  /* Couleurs de tapis, du plus classique au plus sombre. */
+  var FELTS = [
+    { nom: 'vert', a: '#186354', b: '#0e3e34' },
+    { nom: 'bleu nuit', a: '#1b4a6e', b: '#0c2a42' },
+    { nom: 'bordeaux', a: '#6b2b39', b: '#3b1520' },
+    { nom: 'ardoise', a: '#3b4450', b: '#1f252e' },
+    { nom: 'prune', a: '#4b3568', b: '#281a3c' },
+    { nom: 'tabac', a: '#6a4a26', b: '#3a2714' }
+  ];
+
+  function applyFelt() {
+    var f = FELTS[prefs.felt % FELTS.length];
+    document.documentElement.style.setProperty('--felt1', f.a);
+    document.documentElement.style.setProperty('--felt2', f.b);
+  }
+
+  function nextFelt() {
+    prefs.felt = (prefs.felt + 1) % FELTS.length;
+    applyFelt();
+    savePrefs();
+    toast('Tapis ' + FELTS[prefs.felt].nom);
+  }
 
   function loadPrefs() {
     var p = window.APP_PREFS || null;
@@ -29,6 +52,7 @@
       if (typeof p.keepPlaces === 'boolean') prefs.keepPlaces = p.keepPlaces;
       if (typeof p.hints === 'boolean') prefs.hints = p.hints;
       if (typeof p.autoArrange === 'boolean') prefs.autoArrange = p.autoArrange;
+      if (typeof p.felt === 'number' && p.felt >= 0) prefs.felt = p.felt % FELTS.length;
     }
     E.options.keepPlaces = prefs.keepPlaces;
   }
@@ -1457,6 +1481,8 @@
       'ensemble ; \u00e0 mesure que vous en placez, l\u2019indication se met \u00e0 jour.</li>' +
       '<li><b>Jouer au mieux</b> calcule et joue le coup maximal du tour.</li>' +
       '<li><b>Annuler</b> d\u00e9fait vos mouvements un par un, dans l\u2019ordre inverse.</li>' +
+      '<li>La palette de l\u2019en-t\u00eate change la <b>couleur du tapis</b> ' +
+      '(six teintes, conserv\u00e9es d\u2019une partie \u00e0 l\u2019autre).</li>' +
       '<li><b>Revenir avant l\u2019IA</b> annule le dernier coup des joueurs ' +
       'virtuels : la partie repart du début de votre tour précédent. ' +
       'Appuyez plusieurs fois pour remonter plus loin.</li>' +
@@ -1493,6 +1519,7 @@
     $('#game').classList.add('hidden');
     $('#menu').classList.remove('hidden');
   };
+  $('#felt').onclick = nextFelt;
   $('#options').onclick = showOptions;
   $('#menu-options').onclick = showOptions;
   $('#sound').onclick = function () {
@@ -1526,6 +1553,7 @@
 
   loadPrefs();
   E.options.sort = prefs.tri;
+  applyFelt();
   stampFooter();
   buildMenu();
 
