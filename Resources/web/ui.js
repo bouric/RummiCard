@@ -423,8 +423,9 @@
      mais nécessaires pour ne jamais superposer deux suites. */
   function extraColX(e, m, nc) {
     var g = ecarts(nc);
-    // Au-dela de la zone « Nouvelle suite », qui garde une place fixe.
-    return runsWidth(m, nc) + m.cw + 10 + e * (m.cw + g.rg);
+    // Juste apres les colonnes fixes : elles occupent le vide qui separe la
+    // derniere couleur de la zone « Nouvelle suite », repoussee a droite.
+    return runsWidth(m, nc) + e * (m.cw + g.rg);
   }
   function runsWidth(m, nc) {
     return runColX(3, nc - 1, m, nc) + m.cw + 10;
@@ -567,10 +568,16 @@
       }
     }
     addSuitMarks(zRuns, m, nc);
-    // La zone « Nouvelle suite » suit les colonnes fixes et n'en bouge plus,
-    // quel que soit le remplissage de la table.
-    var newRunsX = runsWidth(m, nc);
-    var apresSuites = extra.length ? extraColX(extra.length, m, nc) : newRunsX + m.cw + 10;
+    // Les deux zones « nouvelle combinaison » se rangent contre la
+    // frontiere, a la meme distance d'elle. Cette distance est celle que la
+    // moitie gauche peut offrir : 6 px quand la place le permet, moins si
+    // les colonnes des suites vont presque jusqu'au bord.
+    var largeurMoitie = empile ? (board.clientWidth || 1200)
+      : Math.floor((board.clientWidth || 1200) / 2);
+    var finColonnes = extra.length ? extraColX(extra.length, m, nc) : runsWidth(m, nc);
+    var ecartBord = Math.max(0, Math.min(6, largeurMoitie - finColonnes - m.cw));
+    var newRunsX = Math.max(finColonnes, largeurMoitie - ecartBord - m.cw);
+    var apresSuites = newRunsX + m.cw + 10;
 
     // Groupes : une case fixe par valeur, As à Roi — 7 lignes puis la colonne
     // suivante. Une valeur est donc toujours au même endroit, qu'elle soit
@@ -580,7 +587,7 @@
     // La zone « Nouveau groupe » occupe le bord gauche : elle se retrouve
     // ainsi juste a cote de « Nouvelle suite », qui borde la zone de gauche.
     var NEUVE_W = m.cw + 10;
-    var GX = GROUP_X + NEUVE_W;
+    var GX = ecartBord + NEUVE_W;
     // Largeur dont dispose reellement la grille des valeurs : tout le plateau
     // si les deux parties sont empilees, ce que les suites laissent sinon.
     // Les deux moities font exactement la meme largeur : la frontiere tombe
@@ -593,11 +600,11 @@
     // de peu, on resserre la case jusqu'a la largeur d'un carre plutot que
     // de renvoyer deux valeurs sous la ligne de flottaison.
     var caseMin = 3 * gstep + m.cw;
-    if (GROUP_X + colsVoulues * groupW > largeurG &&
-        GROUP_X + colsVoulues * caseMin <= largeurG) {
-      groupW = Math.floor((largeurG - GROUP_X) / colsVoulues);
+    if (ecartBord + colsVoulues * groupW > largeurG &&
+        ecartBord + colsVoulues * caseMin <= largeurG) {
+      groupW = Math.floor((largeurG - ecartBord) / colsVoulues);
     }
-    var cols = Math.max(1, Math.min(Math.floor((largeurG - GROUP_X) / groupW) || 1,
+    var cols = Math.max(1, Math.min(Math.floor((largeurG - ecartBord) / groupW) || 1,
                                     colsVoulues, 14));
     var rows = Math.ceil(14 / cols);
     var rowH = Math.max(m.ch + 6, Math.floor(hauteur / rows));
@@ -619,7 +626,7 @@
     // Hors de votre tour elles sont seulement estompees.
     // Memes dimensions des deux cotes : elles se font face.
     placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, hauteur, 'runs', 'Nouvelle suite');
-    placeNewZone(zGroups, GROUP_X, GRID_TOP, m.cw, hauteur, 'groups', 'Nouveau groupe');
+    placeNewZone(zGroups, ecartBord, GRID_TOP, m.cw, hauteur, 'groups', 'Nouveau groupe');
     // Les espaceurs donnent sa hauteur de defilement a chaque grille ; ils
     // doivent etre poses avant qu'une moitie ne soit repliee.
     spacer(zRuns, gridH + GRID_TOP + 12);
