@@ -291,6 +291,11 @@
   function runColX(suit, k, m) {
     return RULER_W + suit * (2 * (m.cw + RUN_GAP) + SUIT_GAP) + k * (m.cw + RUN_GAP);
   }
+  /* Colonnes d'appoint, au-delà des deux colonnes fixes d'une couleur : rares,
+     mais nécessaires pour ne jamais superposer deux suites. */
+  function extraColX(e, m) {
+    return runColX(3, 1, m) + m.cw + SUIT_GAP + e * (m.cw + RUN_GAP);
+  }
   function runsWidth(m) {
     return runColX(3, 1, m) + m.cw + 10;
   }
@@ -365,20 +370,29 @@
     }
 
     // Suites : deux colonnes fixes par couleur. Une suite prend la première
-    // colonne encore libre à sa hauteur, sinon la moins encombrée.
+    // colonne libre à sa hauteur ; si les deux sont occupées, elle part dans
+    // une colonne d'appoint plutôt que de recouvrir une autre suite.
     runs.sort(function (a, b) { return (a.suit - b.suit) || (a.low - b.low); });
     var pad = Math.ceil(m.ch / step) - 1;      // rangées couvertes par la dernière carte
     var busy = [[-99, -99], [-99, -99], [-99, -99], [-99, -99]];
+    var extra = [];
     for (i = 0; i < runs.length; i++) {
-      var r = runs[i], ends = busy[r.suit], k;
+      var r = runs[i], ends = busy[r.suit], k = -1;
       if (ends[0] < r.low) k = 0;
       else if (ends[1] < r.low) k = 1;
-      else k = ends[0] <= ends[1] ? 0 : 1;
-      ends[k] = r.high + pad;
-      place(zRuns, r.el, runColX(r.suit, k, m), GRID_TOP + (r.low - 1) * step);
+      if (k >= 0) {
+        ends[k] = r.high + pad;
+        place(zRuns, r.el, runColX(r.suit, k, m), GRID_TOP + (r.low - 1) * step);
+      } else {
+        var e = 0;
+        while (e < extra.length && extra[e] >= r.low) e++;
+        if (e === extra.length) extra.push(-99);
+        extra[e] = r.high + pad;
+        place(zRuns, r.el, extraColX(e, m), GRID_TOP + (r.low - 1) * step);
+      }
     }
     addSuitMarks(zRuns, m);
-    var newRunsX = runsWidth(m);
+    var newRunsX = extra.length ? extraColX(extra.length, m) : runsWidth(m);
 
     // Groupes : une case fixe par valeur, As à Roi — 7 lignes puis la colonne
     // suivante. Une valeur est donc toujours au même endroit, qu'elle soit
@@ -523,7 +537,7 @@
     }
     for (var d = 0; d < DENSITIES.length; d++) {
       var m = METRICS[DENSITIES[d]];
-      var need = runsWidth(m) + (m.cw + 10) + GROUP_X +
+      var need = runsWidth(m) + 2 * (m.cw + RUN_GAP) + GROUP_X +
                  (2 + (nCols > 1 ? 1 : 0)) * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24;
       var high = GRID_TOP + Math.max(13 * Math.round(m.ch * 0.28) + m.ch,
                                      VALUE_ROWS * (m.ch + 6));

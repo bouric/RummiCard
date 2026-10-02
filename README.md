@@ -152,10 +152,12 @@ le navigateur dans son `localStorage`.
   sans déplacer les cartes déjà posées.
 
   Les colonnes y sont **fixes : deux par couleur, toujours au même endroit**,
-  repérées par leur symbole. Deux colonnes suffisent toujours — chaque valeur
-  n'existant qu'en deux exemplaires, jamais plus de deux suites d'une même
-  couleur ne se superposent — et deux suites qui ne se croisent pas (♦2-3-4 et
-  ♦9-10-V par exemple) partagent la même colonne.
+  repérées par leur symbole. Deux suites qui ne se croisent pas (♦2-3-4 et
+  ♦9-10-V par exemple) partagent la même colonne, à condition de laisser la
+  place à la dernière carte de celle du dessus, qui est affichée en entier.
+  Quand les deux colonnes d'une couleur sont prises, la suite part dans une
+  **colonne d'appoint** à droite plutôt que d'en recouvrir une autre : les
+  combinaisons restent alignées sur leurs valeurs et jamais superposées.
 
   À droite, **une case fixe par valeur**, de l'As au Roi : sept lignes puis la
   colonne suivante. La case d'une valeur est dessinée même vide, donc on sait
