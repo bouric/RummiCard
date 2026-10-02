@@ -666,11 +666,25 @@
     var pool = hand.concat(game.stagedCards());
 
     var best = Solver.solve(board, pool, { objective: 'count' });
-    var ids = {}, inHand = {}, n = 0;
-    for (i = 0; i < hand.length; i++) inHand[hand[i].id] = true;
+    var ids = {}, n = 0;
     if (best) {
+      // Les deux exemplaires d'une carte sont interchangeables : le solveur
+      // peut retenir celui de la main alors que l'autre est déjà sur la
+      // table. On raisonne donc sur les cartes à poser (couleur + valeur),
+      // en défalquant celles déjà posées pendant ce tour.
+      var need = {}, key2;
       for (i = 0; i < best.played.length; i++) {
-        if (inHand[best.played[i].id]) { ids[best.played[i].id] = true; n++; }
+        key2 = best.played[i].suit + '-' + best.played[i].rank;
+        need[key2] = (need[key2] || 0) + 1;
+      }
+      var staged = game.stagedCards();
+      for (i = 0; i < staged.length; i++) {
+        key2 = staged[i].suit + '-' + staged[i].rank;
+        if (need[key2]) need[key2]--;
+      }
+      for (i = 0; i < hand.length; i++) {
+        key2 = hand[i].suit + '-' + hand[i].rank;
+        if (need[key2] > 0) { ids[hand[i].id] = true; need[key2]--; n++; }
       }
     }
     hintCache = { key: key, ids: ids, total: n };
