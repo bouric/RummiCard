@@ -130,8 +130,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         let gameMenu = NSMenu(title: "Partie")
         gameMenu.addItem(withTitle: "Nouvelle partie…", action: #selector(newGame), keyEquivalent: "n").target = self
         gameMenu.addItem(.separator())
-        gameMenu.addItem(withTitle: "Valider le tour", action: #selector(commitTurn), keyEquivalent: "\r").target = self
-        gameMenu.addItem(withTitle: "Annuler le tour", action: #selector(undoTurn), keyEquivalent: "z").target = self
+        gameMenu.addItem(withTitle: "Au suivant\u{202F}!", action: #selector(commitTurn), keyEquivalent: "\r").target = self
+        gameMenu.addItem(withTitle: "Annuler le dernier mouvement", action: #selector(undoTurn), keyEquivalent: "z").target = self
         let rewind = gameMenu.addItem(withTitle: "Refaire mon tour",
                                       action: #selector(rewindAI), keyEquivalent: "z")
         rewind.keyEquivalentModifierMask = [.command, .shift]
