@@ -303,6 +303,13 @@
     'dense': { cw: 48, ch: 68 },
     'denser': { cw: 40, ch: 57 }
   };
+  /* Décalage entre deux cartes d'une suite, en fraction de la hauteur d'une
+     carte : c'est aussi le pas de la graduation des valeurs. Au doigt, on
+     l'élargit — la bande qui dépasse est la seule prise pour attraper une
+     carte au milieu d'une suite. */
+  var touchMode = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  function runStep(ch) { return Math.round(ch * (touchMode ? 0.4 : 0.28)); }
+
   var GRID_TOP = 34;     // sous l'intitulé de la zone et les repères de couleur
   var RULER_W = 22;      // colonne des valeurs, côté suites
   var GROUP_X = 6;       // marge gauche côté brelans et carrés
@@ -362,7 +369,7 @@
   function paintGrid(view, board, dens) {
     var m = METRICS[dens] || METRICS[''];
     var avail = board.clientHeight || 520;
-    var step = Math.round(m.ch * 0.28);
+    var step = runStep(m.ch);
     board.style.setProperty('--step', step + 'px');
     var gridH = 13 * step + m.ch;
 
@@ -563,7 +570,7 @@
       var m = METRICS[DENSITIES[d]];
       var need = runsWidth(m) + 2 * (m.cw + RUN_GAP) + GROUP_X +
                  (2 + (nCols > 1 ? 1 : 0)) * (4 * (m.cw + 3) + 18) + (m.cw + 10) + 24;
-      var high = GRID_TOP + Math.max(13 * Math.round(m.ch * 0.28) + m.ch,
+      var high = GRID_TOP + Math.max(13 * runStep(m.ch) + m.ch,
                                      VALUE_ROWS * (m.ch + 6));
       if (need <= width && high <= height) return DENSITIES[d];
     }
@@ -583,7 +590,7 @@
     }
     board.className = dens + (split ? ' split' : '');
     board.style.setProperty('--step',
-      Math.round((METRICS[dens] || METRICS['']).ch * 0.28) + 'px');
+      runStep((METRICS[dens] || METRICS['']).ch) + 'px');
     board.innerHTML = '';
     if (split) paintGrid(view, board, dens);
     else paintFlow(view, board);
@@ -1592,6 +1599,8 @@
     updateBar: updateBar,
     newGame: newGame,
     setVirtual: function (n) { nVirtual = n; },
+    forceTouch: function (v) { touchMode = !!v; if (game) render(); },
+    isTouch: function () { return touchMode; },
     showRules: showRules,
     showOptions: showOptions,
     rewind: doRewind,

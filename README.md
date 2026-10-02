@@ -56,6 +56,9 @@ Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installé
 - Les **groupes** (brelans et carrés) s'affichent **horizontalement**, en ligne.
 - En *table rangée*, le décalage vaut exactement une ligne de la graduation :
   les cartes d'une suite tombent donc pile sur les lignes de leurs valeurs.
+- Sur **écran tactile**, ce décalage passe de 28 % à 40 % de la hauteur d'une
+  carte : la bande qui dépasse — seule prise pour attraper une carte au milieu
+  d'une suite — gagne 44 %, sans réduire les cartes ni provoquer de défilement.
 
 L'orientation est déduite du contenu et bascule en direct, y compris pendant
 l'aperçu d'un glisser-déposer : deux cartes de même couleur à la suite passent
