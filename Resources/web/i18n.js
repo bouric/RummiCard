@@ -92,7 +92,7 @@
     'tip.indices': 'Mettre en avant les cartes de votre main qui peuvent être posées (I)',
     'tip.trier': 'Changer le rangement de votre main : par valeur dans les couleurs, ou par valeur puis couleur (T)',
     'tip.refaire': 'Revenir au début de votre tour précédent : votre coup et les réponses des joueurs virtuels sont défaits (R)',
-    'tip.tapis': 'Couleur du tapis', 'tip.options': 'Options', 'tip.son': 'Son',
+    'opt.tapis': 'Couleur du tapis', 'tip.options': 'Options', 'tip.son': 'Son',
     'tip.regles': 'Règles', 'tip.quitter': 'Quitter la partie',
 
     'bar.ok': '✓ {n} {cartes} {posees} ({p} pts) — au suivant !',
@@ -273,7 +273,7 @@
     'tip.indices': 'Highlight the cards in your hand that can be laid down (I)',
     'tip.trier': 'Change how your hand is arranged: by value within suits, or by value then suit (T)',
     'tip.refaire': 'Go back to the start of your previous turn: your move and the computer players’ replies are undone (R)',
-    'tip.tapis': 'Felt colour', 'tip.options': 'Options', 'tip.son': 'Sound',
+    'opt.tapis': 'Felt colour', 'tip.options': 'Options', 'tip.son': 'Sound',
     'tip.regles': 'Rules', 'tip.quitter': 'Leave the game',
 
     'bar.ok': '✓ {n} {cartes} laid ({p} pts) — next player!',
@@ -452,7 +452,7 @@
     'tip.indices': 'Die Karten Ihrer Hand hervorheben, die gelegt werden können (I)',
     'tip.trier': 'Ordnung Ihrer Hand ändern: nach Wert innerhalb der Farben oder nach Wert, dann Farbe (T)',
     'tip.refaire': 'Zurück zum Beginn Ihres vorigen Zuges: Ihr Zug und die Antworten der Computergegner werden rückgängig gemacht (R)',
-    'tip.tapis': 'Farbe des Tisches', 'tip.options': 'Einstellungen', 'tip.son': 'Ton',
+    'opt.tapis': 'Farbe des Tisches', 'tip.options': 'Einstellungen', 'tip.son': 'Ton',
     'tip.regles': 'Regeln', 'tip.quitter': 'Spiel verlassen',
 
     'bar.ok': '✓ {n} {cartes} gelegt ({p} Pkt.) — weiter!',
@@ -631,7 +631,7 @@
     'tip.indices': 'Evidenzia le carte della sua mano che possono essere calate (I)',
     'tip.trier': 'Cambia l’ordine della sua mano: per valore dentro i semi, o per valore poi seme (T)',
     'tip.refaire': 'Torna all’inizio del suo turno precedente: la sua mossa e le risposte dei giocatori virtuali vengono annullate (R)',
-    'tip.tapis': 'Colore del tavolo', 'tip.options': 'Opzioni', 'tip.son': 'Suono',
+    'opt.tapis': 'Colore del tavolo', 'tip.options': 'Opzioni', 'tip.son': 'Suono',
     'tip.regles': 'Regole', 'tip.quitter': 'Esci dalla partita',
 
     'bar.ok': '✓ {n} {cartes} calate ({p} pt) — al prossimo!',
@@ -810,7 +810,7 @@
     'tip.indices': 'De kaarten in uw hand tonen die gelegd kunnen worden (I)',
     'tip.trier': 'De ordening van uw hand wisselen: op waarde binnen de kleuren, of op waarde en dan kleur (T)',
     'tip.refaire': 'Terug naar het begin van uw vorige beurt: uw zet en de antwoorden van de computerspelers worden ongedaan gemaakt (R)',
-    'tip.tapis': 'Kleur van het tafellaken', 'tip.options': 'Instellingen', 'tip.son': 'Geluid',
+    'opt.tapis': 'Kleur van het tafellaken', 'tip.options': 'Instellingen', 'tip.son': 'Geluid',
     'tip.regles': 'Regels', 'tip.quitter': 'Spel verlaten',
 
     'bar.ok': '✓ {n} {cartes} gelegd ({p} ptn) — volgende!',
@@ -989,7 +989,7 @@
     'tip.indices': 'Resaltar las cartas de su mano que pueden bajarse (I)',
     'tip.trier': 'Cambiar el orden de su mano: por valor dentro de los palos, o por valor y luego palo (T)',
     'tip.refaire': 'Volver al principio de su turno anterior: su jugada y las respuestas de los jugadores virtuales se deshacen (R)',
-    'tip.tapis': 'Color del tapete', 'tip.options': 'Opciones', 'tip.son': 'Sonido',
+    'opt.tapis': 'Color del tapete', 'tip.options': 'Opciones', 'tip.son': 'Sonido',
     'tip.regles': 'Reglas', 'tip.quitter': 'Salir de la partida',
 
     'bar.ok': '✓ {n} {cartes} bajadas ({p} pts) — ¡al siguiente!',

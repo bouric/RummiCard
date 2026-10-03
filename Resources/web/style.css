@@ -111,11 +111,24 @@ header .brand span { color: var(--gold); }
 #meldpill { width: 152px; }
 #turnpill, #meldpill { overflow: hidden; white-space: nowrap; }
 .spacer { flex: 1; }
+/* Les boutons d'icones ne cedent jamais un pixel : quand la ligne est trop
+   courte, c'est le bandeau des joueurs qui se resserre — lui sait passer aux
+   initiales. Sans cela, sur un telephone etroit, les boutons retrecissaient
+   jusqu'a devenir impossibles a viser du doigt. */
 .iconbtn {
   width: 32px; height: 32px; border-radius: 9px; background: var(--panel);
   border: 1px solid var(--stroke); font-size: 14px; display: grid; place-items: center;
+  flex: 0 0 auto;
 }
 .iconbtn:hover { background: rgba(255, 255, 255, .12); }
+/* Au doigt, la cible deborde le dessin : les boutons gardent leur petite
+   taille — chaque pixel de l'entete est rendu aux cartes — mais s'atteignent
+   sur toute la hauteur de la ligne. L'ecart entre deux voisins est preserve,
+   pour qu'aucun ne vole le pouce destine a l'autre. */
+@media (hover: none) and (pointer: coarse) {
+  .iconbtn { position: relative; }
+  .iconbtn::after { content: ''; position: absolute; inset: -8px -2px; }
+}
 
 /* ---------- Adversaires ------------------------------------------- */
 #opponents { display: flex; gap: 9px; flex: 0 0 auto; flex-wrap: wrap; }
@@ -593,6 +606,17 @@ header .brand span { color: var(--gold); }
 }
 
 
+
+/* ---------- Couleur du tapis, dans les options ----------------------
+   Chaque pastille porte la couleur qu'elle propose ; elles sont assez
+   grandes pour être visées du doigt. */
+.felts { display: flex; flex-wrap: wrap; gap: 10px; margin: 2px 0 6px; }
+.feltdot {
+  width: 44px; height: 44px; border-radius: 12px;
+  border: 2px solid var(--stroke); transition: .15s;
+}
+.feltdot:hover { border-color: rgba(255, 255, 255, .45); }
+.feltdot.on { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240, 180, 41, .25); }
 
 /* ---------- Choix de la langue sur l'écran d'accueil ---------------- */
 .langs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }

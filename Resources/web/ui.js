@@ -41,11 +41,10 @@
     document.documentElement.style.setProperty('--felt2', f.b);
   }
 
-  function nextFelt() {
-    prefs.felt = (prefs.felt + 1) % FELTS.length;
+  function choisirFelt(i) {
+    prefs.felt = ((i % FELTS.length) + FELTS.length) % FELTS.length;
     applyFelt();
     savePrefs();
-
   }
 
   function loadPrefs() {
@@ -2275,6 +2274,19 @@
       '<span class="lbl"><b>' + title + '</b><em>' + desc + '</em></span></button>';
   }
 
+  /* Les couleurs de tapis se choisissent a l'oeil : une rangee de pastilles
+     qui portent la couleur elle-meme, plutot que son nom. */
+  function feltRow() {
+    var html = '<div class="felts">', i;
+    for (i = 0; i < FELTS.length; i++) {
+      html += '<button class="feltdot' + (prefs.felt === i ? ' on' : '') +
+        '" data-felt="' + i + '" title="' + TR(FELTS[i].cle) +
+        '" aria-label="' + TR(FELTS[i].cle) + '" style="background:linear-gradient(160deg,' +
+        FELTS[i].a + ' 0%,' + FELTS[i].b + ' 100%)"></button>';
+    }
+    return html + '</div>';
+  }
+
   function showOptions() {
     var ov = $('#overlay');
     var langs = '';
@@ -2301,6 +2313,7 @@
       '<h3>' + TR('opt.sens') + '</h3>' +
       optionRow('sensSuites', 'asc', prefs.sensSuites === 'asc', TR('opt.asc'), TR('opt.asc.d')) +
       optionRow('sensSuites', 'desc', prefs.sensSuites === 'desc', TR('opt.desc'), TR('opt.desc.d')) +
+      '<h3>' + TR('opt.tapis') + '</h3>' + feltRow() +
       '<h3>' + TR('opt.table') + '</h3>' +
       optionRow('keepPlaces', '1', prefs.keepPlaces, TR('opt.rangee'), TR('opt.rangee.d')) +
       optionRow('keepPlaces', '0', !prefs.keepPlaces, TR('opt.libre'), TR('opt.libre.d')) +
@@ -2316,6 +2329,14 @@
     ov.classList.remove('hidden');
     $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
     if ($('#voirjrn')) $('#voirjrn').onclick = showJournal;
+    var dots = ov.querySelectorAll('.feltdot'), d;
+    for (d = 0; d < dots.length; d++) {
+      dots[d].onclick = function () {
+        choisirFelt(+this.dataset.felt);
+        var tous = ov.querySelectorAll('.feltdot'), k;
+        for (k = 0; k < tous.length; k++) tous[k].classList.toggle('on', tous[k] === this);
+      };
+    }
     var rows = ov.querySelectorAll('.optrow');
     for (var i = 0; i < rows.length; i++) {
       rows[i].onclick = function () {
@@ -2557,7 +2578,6 @@
     $('#game').classList.add('hidden');
     $('#menu').classList.remove('hidden');
   };
-  $('#felt').onclick = nextFelt;
   $('#options').onclick = showOptions;
   $('#menu-options').onclick = showOptions;
   $('#sound').onclick = function () {
