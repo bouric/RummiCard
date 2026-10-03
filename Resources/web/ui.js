@@ -1332,13 +1332,14 @@
     var msg = $('#msg');
     msg.className = m.cls;
     msg.innerHTML = m.html;
-    /* Hors ordinateur la barre est masquee : les messages qui restent — ce
-       qu'il manque a une combinaison, un tour pret a etre valide, aucune
-       carte posable — passent en bulle, et seulement quand ils changent. Sur
-       une table vide, le tapis les porte deja : pas de bulle alors. */
+    /* Hors ordinateur la barre est masquee : seul l'avertissement passe en
+       bulle — aucune carte posable, ou l'ouverture a faire en suite. Ce qui
+       ne fait que commenter un geste qu'on vient de faire reste dans la
+       barre, donc sur ordinateur seulement. Sur une table vide, le tapis
+       porte deja le message : pas de bulle alors. */
     if (getComputedStyle(msg).display === 'none') {
       var surTapis = !game.boardCards().length;
-      if (m.html && !surTapis && m.html !== dernierMessage &&
+      if (m.html && m.bulle && !surTapis && m.html !== dernierMessage &&
           !$('#toast').classList.contains('show')) toast(m.html);
       dernierMessage = m.html;
     } else {
@@ -1358,27 +1359,32 @@
     if (!human) return { cls: '', html: '' };
     var staged = game.stagedCards().length;
     var check = game.checkCommit();
+    /* « bulle » distingue l'avertissement — ce qu'on ne peut pas deviner en
+       regardant la table — du commentaire de ce qu'on vient de faire. Seul le
+       premier passe en bulle la ou la barre n'existe pas ; le reste s'affiche
+       dans la barre sur ordinateur, et nulle part ailleurs. */
     if (check.ok) {
-      return { cls: 'good', html: TR('bar.ok', { n: staged, cartes: NC(staged), p: game.stagedPoints(),
-        posees: TR(staged > 1 ? 'bar.posees' : 'bar.posee') }) };
+      return { cls: 'good', bulle: false,
+        html: TR('bar.ok', { n: staged, cartes: NC(staged), p: game.stagedPoints(),
+          posees: TR(staged > 1 ? 'bar.posees' : 'bar.posee') }) };
     }
-    if (staged) return { cls: 'warn', html: check.reason };
+    if (staged) return { cls: 'warn', bulle: false, html: check.reason };
     if (ouvertureAttendue()) {
       var tete = TR('bar.ouverture');
-      if (!prefs.hints) return { cls: 'warn', html: tete };
+      if (!prefs.hints) return { cls: 'warn', bulle: true, html: tete };
       /* Les indices ne proposent qu'une ouverture en suite : s'ils ne
          trouvent rien, aucune n'est possible et il faut piocher. */
       playableIds();
-      return { cls: 'warn', html: hintCache.total
+      return { cls: 'warn', bulle: true, html: hintCache.total
         ? tete + ' — ' + TR('bar.ouvertureN', { n: hintCache.total, cartes: NC(hintCache.total),
             mises: TR(hintCache.total > 1 ? 'bar.mises' : 'bar.mise') })
         : tete + ' — ' + TR('bar.ouvertureRien') };
     }
     calculerCoup();
     var n = hintCache.total;
-    if (!n) return { cls: 'warn', html: TR('bar.indicesRien') };
+    if (!n) return { cls: 'warn', bulle: true, html: TR('bar.indicesRien') };
     if (prefs.hints) {
-      return { cls: 'good', html: TR('bar.indices', { n: n, cartes: NC(n),
+      return { cls: 'good', bulle: false, html: TR('bar.indices', { n: n, cartes: NC(n),
         mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') }) };
     }
     /* Rien de particulier a dire : la barre reste vide. Le rappel « glissez
