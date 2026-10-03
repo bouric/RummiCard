@@ -87,7 +87,7 @@
      EN PAUSE — le code reste en place, il suffit de repasser ce drapeau a
      true pour le reactiver. Sans lui, un ecran etroit garde les deux
      moities empilees, avec une colonne par couleur. */
-  var MODE_TELEPHONE = false;
+  var MODE_TELEPHONE = true;
   var soloZone = 'runs';
   /* Taille de carte retenue au dernier rendu : la main l'adopte aussi, pour
      que toutes les cartes de l'ecran aient la meme taille. */
@@ -936,9 +936,21 @@
       return !(drag && drag.card.id === c.id);
     });
     var hints = drag ? hintCache.ids : playableIds();
+    /* Une seule rangée : si la main ne tient pas en largeur, les cartes se
+       chevauchent juste assez pour rentrer, comme un éventail tenu en main.
+       Sur un téléphone, c'est une rangée de moins — autant de tapis gagné. */
+    var dispo = rack.clientWidth || 600;
+    var chevauche = 0;
+    if (hand.length > 1 && hand.length * (mr.cw + 4) - 4 > dispo) {
+      var pas = Math.floor((dispo - mr.cw) / (hand.length - 1));
+      pas = Math.max(Math.round(mr.cw * 0.38), pas);
+      chevauche = pas - mr.cw - 4;
+    }
+    rack.style.flexWrap = chevauche ? 'nowrap' : 'wrap';
     for (var i = 0; i < hand.length; i++) {
       var el = cardEl(hand[i], { pickable: isHumanTurn() });
       if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
+      if (chevauche && i) el.style.marginLeft = chevauche + 'px';
       rack.appendChild(el);
     }
     var nmain = game.human().hand.length;
