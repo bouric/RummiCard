@@ -528,3 +528,29 @@ header .brand span { color: var(--gold); }
   box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .6);
 }
 #board.solo .zone.folded.target .foldhead b { color: #fff; }
+
+
+/* ---------- Choix de la langue sur l'écran d'accueil ---------------- */
+.langs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
+.langbtn {
+  padding: 5px 11px; border-radius: 999px; font-size: 12px; color: var(--dim);
+  background: var(--panel); border: 1px solid var(--stroke); transition: .15s;
+}
+.langbtn:hover { background: rgba(255, 255, 255, .12); color: var(--ink); }
+.langbtn.on { border-color: var(--gold); color: var(--gold); font-weight: 650; }
+
+/* ---------- Téléphone couché : on demande de le redresser -----------
+   La table se joue à la verticale ; en paysage un téléphone n'a plus la
+   hauteur nécessaire. Le manifeste demande déjà le portrait à l'app
+   installée, ce voile couvre les autres cas. */
+#rotate { display: none; }
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  #rotate {
+    display: grid; place-items: center; position: fixed; inset: 0; z-index: 200;
+    padding: 24px; text-align: center;
+    background: linear-gradient(170deg, #0f1726 0%, #080c14 100%);
+  }
+  #rotate b { display: block; font-size: 19px; margin-bottom: 8px; }
+  #rotate b::before { content: '⟲'; display: block; font-size: 38px; color: var(--gold); margin-bottom: 10px; }
+  #rotate span { font-size: 13.5px; color: var(--dim); }
+}

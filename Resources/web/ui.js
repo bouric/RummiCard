@@ -124,6 +124,19 @@
             adv: TR(d.n > 1 ? 'accueil.adversaires' : 'accueil.adversaire') });
       }
     }
+    var lb = $('#langs');
+    if (lb) {
+      lb.innerHTML = '';
+      for (var L = 0; L < I18N.langues.length; L++) {
+        (function (lg) {
+          var b = document.createElement('button');
+          b.className = 'langbtn' + (I18N.get() === lg.code ? ' on' : '');
+          b.textContent = lg.nom;
+          b.onclick = function () { choisirLangue(lg.code); };
+          lb.appendChild(b);
+        })(I18N.langues[L]);
+      }
+    }
     var box = $('#choices');
     box.innerHTML = '';
     for (var i = 1; i <= 5; i++) {
@@ -1958,10 +1971,7 @@
       rows[i].onclick = function () {
         var name = this.dataset.pref, value = this.dataset.value;
         if (name === 'langue') {
-          prefs.langue = value;
-          I18N.set(value);
-          traduirePage();
-          if (game) { render(); updateBar(); } else { buildMenu(); }
+          choisirLangue(value);
         } else if (name === 'tri') {
           prefs.tri = value;
           E.options.sort = value;
@@ -2009,12 +2019,24 @@
     $('#closerules').onclick = function () { ov.classList.add('hidden'); };
   }
 
+  /* Change la langue partout, et l'enregistre. */
+  function choisirLangue(code) {
+    prefs.langue = code;
+    I18N.set(code);
+    savePrefs();
+    traduirePage();
+    if (game) { render(); updateBar(); } else { buildMenu(); }
+  }
+
   /* Applique la langue aux textes figés de la page. */
   function traduirePage() {
     var i, els = document.querySelectorAll('[data-i18n]');
     for (i = 0; i < els.length; i++) els[i].textContent = TR(els[i].dataset.i18n);
     els = document.querySelectorAll('[data-i18n-title]');
     for (i = 0; i < els.length; i++) els[i].title = TR(els[i].dataset.i18nTitle);
+    var rt = $('#rotate-t'), rp = $('#rotate-p');
+    if (rt) rt.textContent = TR('rotate.titre');
+    if (rp) rp.textContent = TR('rotate.texte');
     document.documentElement.lang = I18N.get();
     stampFooter();
   }
