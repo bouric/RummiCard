@@ -881,7 +881,7 @@
       var m = messageContexte();
       var empty = document.createElement('div');
       empty.className = 'empty' + (m.cls ? ' ' + m.cls : '');
-      empty.innerHTML = m.html || TR('board.vide');
+      empty.innerHTML = m.tapis || m.html || TR('board.vide');
       zone.appendChild(empty);
       if (isHumanTurn()) zone.appendChild(newZone('any', TR('zone.nouvelle')));
       return;
@@ -1358,10 +1358,13 @@
        barre, donc sur ordinateur seulement. Sur une table vide, le tapis
        porte deja le message : pas de bulle alors. */
     if (getComputedStyle(msg).display === 'none') {
+      /* Sur une table vide, le tapis porte deja la consigne : la bulle ne
+         redit alors que ce qui s'y ajoute. */
       var surTapis = !game.boardCards().length;
-      if (m.html && m.bulle && !surTapis && m.html !== dernierMessage &&
-          !$('#toast').classList.contains('show')) toast(m.html);
-      dernierMessage = m.html;
+      var texte = surTapis ? (m.complement || '') : m.html;
+      if (texte && m.bulle && texte !== dernierMessage &&
+          !$('#toast').classList.contains('show')) toast(texte);
+      dernierMessage = texte;
     } else {
       dernierMessage = '';
     }
@@ -1391,14 +1394,18 @@
     if (staged) return { cls: 'warn', bulle: false, html: check.reason };
     if (ouvertureAttendue()) {
       var tete = TR('bar.ouverture');
-      if (!prefs.hints) return { cls: 'warn', bulle: true, html: tete };
+      if (!prefs.hints) return { cls: 'warn', bulle: true, html: tete, tapis: tete };
       /* Les indices ne proposent qu'une ouverture en suite : s'ils ne
-         trouvent rien, aucune n'est possible et il faut piocher. */
+         trouvent rien, aucune n'est possible et il faut piocher. Le tapis ne
+         porte que la consigne ; ce que les indices y ajoutent passe par la
+         barre ou par la bulle, selon l'appareil. */
       playableIds();
-      return { cls: 'warn', bulle: true, html: hintCache.total
-        ? tete + ' — ' + TR('bar.ouvertureN', { n: hintCache.total, cartes: NC(hintCache.total),
+      var queue = hintCache.total
+        ? TR('bar.ouvertureN', { n: hintCache.total, cartes: NC(hintCache.total),
             mises: TR(hintCache.total > 1 ? 'bar.mises' : 'bar.mise') })
-        : tete + ' — ' + TR('bar.ouvertureRien') };
+        : TR('bar.ouvertureRien');
+      return { cls: 'warn', bulle: true, html: tete + ' — ' + queue,
+               tapis: tete, complement: queue };
     }
     /* « Aucune carte posable » suppose d'avoir cherche tous les coups : c'est
        le travail des indices, et on ne le fait pas dans le dos du joueur qui
