@@ -1407,7 +1407,9 @@
       playableIds();
       var n = hintCache.total;
       if (!n) return { cls: 'warn', bulle: true, html: TR('bar.indicesRien') };
-      return { cls: 'good', bulle: false, html: TR('bar.indices', { n: n, cartes: NC(n),
+      /* Le meilleur coup passe en bulle : c'est une reponse a une question
+         posee — les indices allumes — et non le commentaire d'un geste. */
+      return { cls: 'good', bulle: true, html: TR('bar.indices', { n: n, cartes: NC(n),
         mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') }) };
     }
     /* Rien de particulier a dire : la barre reste vide. Le rappel « glissez
