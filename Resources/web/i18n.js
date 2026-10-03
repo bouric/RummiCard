@@ -67,6 +67,7 @@
     'hud.reflechissent': 'Les autres joueurs réfléchissent…',
 
     'zone.suites': 'Suites', 'zone.groupes': 'Brelans et carrés',
+    'zone.nouvelle': 'Nouvelle<br>combinaison',
     'zone.nouvelleSuite': 'Nouvelle suite', 'zone.nouveauGroupe': 'Nouveau groupe',
     'zone.votreMain': 'Votre main — {n} {cartes}',
 
@@ -236,6 +237,7 @@
     'hud.reflechissent': 'The other players are thinking…',
 
     'zone.suites': 'Runs', 'zone.groupes': 'Sets',
+    'zone.nouvelle': 'New<br>combination',
     'zone.nouvelleSuite': 'New run', 'zone.nouveauGroupe': 'New set',
     'zone.votreMain': 'Your hand — {n} {cartes}',
 
@@ -403,6 +405,7 @@
     'hud.reflechissent': 'Die anderen Spieler überlegen …',
 
     'zone.suites': 'Folgen', 'zone.groupes': 'Sätze',
+    'zone.nouvelle': 'Neue<br>Kombination',
     'zone.nouvelleSuite': 'Neue Folge', 'zone.nouveauGroupe': 'Neuer Satz',
     'zone.votreMain': 'Ihre Hand — {n} {cartes}',
 
@@ -570,6 +573,7 @@
     'hud.reflechissent': 'Gli altri giocatori stanno pensando…',
 
     'zone.suites': 'Scale', 'zone.groupes': 'Tris e poker',
+    'zone.nouvelle': 'Nuova<br>combinazione',
     'zone.nouvelleSuite': 'Nuova scala', 'zone.nouveauGroupe': 'Nuovo tris',
     'zone.votreMain': 'La sua mano — {n} {cartes}',
 
@@ -737,6 +741,7 @@
     'hud.reflechissent': 'De andere spelers denken na…',
 
     'zone.suites': 'Reeksen', 'zone.groupes': 'Groepen',
+    'zone.nouvelle': 'Nieuwe<br>combinatie',
     'zone.nouvelleSuite': 'Nieuwe reeks', 'zone.nouveauGroupe': 'Nieuwe groep',
     'zone.votreMain': 'Uw hand — {n} {cartes}',
 
@@ -904,6 +909,7 @@
     'hud.reflechissent': 'Los demás jugadores están pensando…',
 
     'zone.suites': 'Escaleras', 'zone.groupes': 'Tríos y cuartos',
+    'zone.nouvelle': 'Combinación<br>nueva',
     'zone.nouvelleSuite': 'Nueva escalera', 'zone.nouveauGroupe': 'Nuevo trío',
     'zone.votreMain': 'Su mano — {n} {cartes}',
 

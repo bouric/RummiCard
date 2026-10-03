@@ -83,12 +83,6 @@
   var soundOn = true;
   var busy = false;
   var drag = null;
-  /* Affichage telephone : une seule moitie de table depliee a la fois.
-     EN PAUSE — le code reste en place, il suffit de repasser ce drapeau a
-     true pour le reactiver. Sans lui, un ecran etroit garde les deux
-     moities empilees, avec une colonne par couleur. */
-  var MODE_TELEPHONE = true;
-  var soloZone = 'runs';
   /* Taille de carte retenue au dernier rendu : la main l'adopte aussi, pour
      que toutes les cartes de l'ecran aient la meme taille. */
   var densiteCourante = '';
@@ -417,11 +411,10 @@
     return prefs.sensSuites === 'desc' ? (14 - v) : (v - 1);
   }
 
-  var FOLD_H = 48;       // hauteur de la bande d'une moitié repliée
   /* Marges de la table, serrées au plus juste : chaque pixel rendu ici
      permet au calcul de densité de choisir des cartes plus grandes. */
   var PAD_ZONE = 8;      // rembourrage d'une zone (doit suivre style.css)
-  var BAS_ZONE = 10;     // respiration sous la grille
+  var BAS_ZONE = 6;      // respiration sous la grille
   var GRID_TOP = 20;     // sous l'intitulé de la zone
   var RULER_W = 16;      // colonne des valeurs, côté suites
   var GROUP_X = 4;       // marge gauche côté brelans et carrés
@@ -506,7 +499,7 @@
      Chaque valeur a sa ligne, de l'As en haut au Roi en bas, dans les deux
      zones. Une suite occupe donc toujours les lignes de ses valeurs, et un
      brelan la ligne de sa valeur : on sait d'avance où regarder. */
-  function paintGrid(view, board, dens, nc, solo) {
+  function paintGrid(view, board, dens, nc) {
     var m = METRICS[dens] || METRICS[''];
     var empile = board.classList.contains('stack');
     nc = nc || 2;
@@ -518,7 +511,7 @@
     // de colonnes qu'il faut.
     // 34 px d'intitule et de reperes, 26 px de rembourrage de la zone,
     // 12 px de respiration en bas : ce qui reste est pour la grille.
-    var hDispo = solo ? avail - FOLD_H : (empile ? Math.floor(avail / 2) - 1 : avail);
+    var hDispo = empile ? Math.floor(avail / 2) - 1 : avail;
     var hauteur = Math.max(60, hDispo - GRID_TOP - MARGE_H);
     board.dataset.avail = avail;      // pour detecter un plateau redimensionne
     var step = Math.max(minRunStep(m.ch), Math.min(m.ch, Math.floor((hauteur - m.ch) / 13)));
@@ -671,28 +664,7 @@
     spacer(zRuns, gridH + GRID_TOP + BAS_ZONE);
     spacer(zGroups, groupsH + GRID_TOP + BAS_ZONE);
 
-    if (solo) {
-      // Telephone : une moitie depliee en pleine hauteur, l'autre reduite a
-      // une bande qu'on touche pour la decouvrir — et sur laquelle on peut
-      // deposer une carte pour commencer une combinaison de l'autre cote.
-      if (soloZone !== 'runs' && soloZone !== 'groups') soloZone = 'runs';
-      var zActif = soloZone === 'groups' ? zGroups : zRuns;
-      var zPlie = soloZone === 'groups' ? zRuns : zGroups;
-      var nPlie = soloZone === 'groups' ? runs.length : groups.length;
-      while (zPlie.firstChild) zPlie.removeChild(zPlie.firstChild);
-      zPlie.classList.add('folded');
-      zActif.classList.add('active');
-      var tete = document.createElement('button');
-      tete.className = 'foldhead';
-      tete.dataset.goto = zPlie.dataset.zonekind;
-      tete.innerHTML = '<b>' + TR(zPlie.dataset.zonekind === 'runs' ? 'zone.suites' : 'zone.groupes') +
-        '</b><em>' + (nPlie ? nPlie + ' ' + TR(nPlie > 1 ? 'fold.combinaisons' : 'fold.combinaison')
-                            : TR('fold.vide')) +
-        ' &middot; ' + TR('fold.toucher') + '</em>';
-      zPlie.appendChild(tete);
-      zActif.style.flex = '1 1 0';
-      zPlie.style.flex = '0 0 ' + FOLD_H + 'px';
-    } else if (empile) {
+    if (empile) {
       // L'une au-dessus de l'autre, a parts egales.
       zRuns.style.flex = '1 1 0';
       zGroups.style.flex = '1 1 0';
@@ -775,7 +747,7 @@
       empty.className = 'empty';
       empty.innerHTML = TR('board.vide');
       zone.appendChild(empty);
-      if (isHumanTurn()) zone.appendChild(newZone('any', 'Nouvelle<br>combinaison'));
+      if (isHumanTurn()) zone.appendChild(newZone('any', TR('zone.nouvelle')));
       return;
     }
     for (var i = 0; i < view.sets.length; i++) zone.appendChild(setEl(view.sets[i]));
@@ -785,7 +757,7 @@
       ns.appendChild(slotEl());
       zone.appendChild(ns);
     } else if (isHumanTurn()) {
-      zone.appendChild(newZone('any', 'Nouvelle<br>combinaison'));
+      zone.appendChild(newZone('any', TR('zone.nouvelle')));
     }
   }
 
@@ -851,15 +823,11 @@
         return { dens: DENSITIES[d], stack: true, nc: 2 };
       }
     }
-    // 4) ecran de telephone : meme empilees, les deux grilles sont a
-    //    l'etroit. Une seule colonne par couleur, et — quand l'affichage
-    //    telephone est actif — une seule moitie de table depliee.
+    // 4) ecran de telephone : la table rangee ne tient plus, meme empilee.
+    //    On passe a la table libre, d'un seul tenant : une carte peut alors
+    //    aller d'un groupe vers une suite sans changer de vue.
     m = METRICS['denser'];
-    if (minSuites(m, 2) > width || minGroupes(m) > width) {
-      var etroit = { dens: 'denser', stack: true, nc: minSuites(m, 2) <= width ? 2 : 1 };
-      if (MODE_TELEPHONE) etroit.solo = true;
-      return etroit;
-    }
+    if (minSuites(m, 2) > width || minGroupes(m) > width) return { flow: true };
     return { dens: 'denser', stack: true, nc: 2 };
   }
 
@@ -870,24 +838,40 @@
     var total = game.boardCards().length;
     var split = !!E.options.keepPlaces;
     var dens = total > 70 ? 'denser' : (total > 42 ? 'dense' : '');
-    var stack = false, solo = false, nc = 2;
+    var stack = false, nc = 2;
     if (split) {
       var fit = pickLayout(view, board.clientWidth || 1200, board.clientHeight || 520);
-      if (DENSITIES.indexOf(fit.dens) > DENSITIES.indexOf(dens)) dens = fit.dens;
-      stack = fit.stack; solo = !!fit.solo; nc = fit.nc || 2;
+      if (fit.flow) {
+        split = false;                  // trop etroit pour la table rangee
+      } else {
+        if (DENSITIES.indexOf(fit.dens) > DENSITIES.indexOf(dens)) dens = fit.dens;
+        stack = fit.stack; nc = fit.nc || 2;
+      }
     }
-    densiteCourante = dens;
-    board.className = dens + (split ? ' split' : '') + (stack ? ' stack' : '') +
-      (solo ? ' solo' : '');
-    // Valeurs par defaut des deux chevauchements ; la table rangee affine
-    // ensuite le pas vertical pour occuper exactement la hauteur.
-    board.style.setProperty('--step',
-      runStep((METRICS[dens] || METRICS['']).ch) + 'px');
-    board.style.setProperty('--gstep',
-      groupStep((METRICS[dens] || METRICS['']).cw) + 'px');
-    board.innerHTML = '';
-    if (split) paintGrid(view, board, dens, nc, solo);
-    else paintFlow(view, board);
+    function poser(d) {
+      densiteCourante = d;
+      board.className = d + (split ? ' split' : '') + (stack ? ' stack' : '');
+      // Valeurs par defaut des deux chevauchements ; la table rangee affine
+      // ensuite le pas vertical pour occuper exactement la hauteur.
+      board.style.setProperty('--step', runStep((METRICS[d] || METRICS['']).ch) + 'px');
+      board.style.setProperty('--gstep', groupStep((METRICS[d] || METRICS['']).cw) + 'px');
+      board.innerHTML = '';
+      if (split) paintGrid(view, board, d, nc);
+      else paintFlow(view, board);
+    }
+    poser(dens);
+    /* Table libre : la disposition depend du repliement des combinaisons,
+       qu'aucune formule ne prevoit. On mesure, et on rapetisse les cartes
+       tant que la table deborde — deux essais au plus. */
+    if (!split) {
+      var zf = board.querySelector('.zone'), essais = 0;
+      while (zf && zf.scrollHeight > zf.clientHeight + 1 &&
+             DENSITIES.indexOf(dens) < DENSITIES.length - 1 && essais++ < 2) {
+        dens = DENSITIES[DENSITIES.indexOf(dens) + 1];
+        poser(dens);
+        zf = board.querySelector('.zone');
+      }
+    }
     majBarreCompacte();
   }
 
@@ -1372,22 +1356,10 @@
     markTargets();
   }
 
-  /* Toucher la bande repliee affiche l'autre moitie de la table. */
-  function basculeZone(kind) {
-    if (kind !== 'runs' && kind !== 'groups') return;
-    soloZone = kind;
-    render();
-    updateBar();
-  }
 
   function markTargets() {
     var t = drag && drag.target;
     $('#rackwrap').classList.toggle('target', !!t && t.kind === 'hand');
-    var pli = document.querySelector('#board .zone.folded');
-    if (pli) {
-      pli.classList.toggle('target',
-        !!t && t.kind === 'new' && t.zone === pli.dataset.zonekind);
-    }
     var nzs = document.querySelectorAll('#board .newzone');
     for (var i = 0; i < nzs.length; i++) {
       nzs[i].classList.toggle('target',
@@ -1630,11 +1602,6 @@
       fresh.zone = t.zone;
       game.board.push(fresh);
       sndSnap();
-      // Carte lachee sur la bande de l'autre moitie : on l'affiche, sinon
-      // le joueur ne verrait pas ou sa carte est partie.
-      if (t.zone && t.zone !== soloZone && $('#board').classList.contains('solo')) {
-        soloZone = t.zone;
-      }
     }
     game.compact();
     render({ land: card.id });
@@ -2054,12 +2021,6 @@
   $('#auto').onclick = doAuto;
   $('#sort').onclick = doSort;
   $('#rewind').onclick = doRewind;
-  /* La bande d'une moitié repliée est un bouton : on délègue, elle est
-     reconstruite à chaque rendu. */
-  $('#board').addEventListener('click', function (e) {
-    var b = e.target && e.target.closest ? e.target.closest('.foldhead') : null;
-    if (b) basculeZone(b.dataset.goto);
-  });
   $('#hints').onclick = toggleHints;
   function confirmQuit() {
     return window.confirm(TR('toast.abandon'));
