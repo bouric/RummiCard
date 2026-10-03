@@ -1148,6 +1148,7 @@
        dont on dispose, et les cartes restantes y gagnent en taille. Si aucune
        n'est posable, on les laisse toutes : une main vide alarmerait pour
        rien, et le message dit déjà qu'il n'y a pas de coup. */
+    var tenues = hand.length;        // avant le filtre : la taille n'en depend pas
     if (hints) {
       var posables = hand.filter(function (c) { return hints[c.id]; });
       if (posables.length) hand = posables;
@@ -1161,11 +1162,15 @@
        de l'ecran : elles rapetissent plutot d'un cran, jusqu'a ce que la
        tranche visible laisse lire la valeur. Mieux vaut dix-sept petites
        cartes toutes visibles que quatre invisibles au bout de la rangee. */
+    /* La taille se decide sur la main entiere, indices ou non : masquer les
+       cartes injouables desserre l'eventail, ce n'est pas une raison pour
+       redessiner les cartes a une autre echelle. Allumer les indices ne doit
+       rien changer d'autre que ce qui est montre. */
     var di = DENSITIES.indexOf(densiteCourante);
     if (di < 0) di = 0;
-    while (hand.length > 1 && di < DENSITIES.length - 1) {
+    while (tenues > 1 && di < DENSITIES.length - 1) {
       var m2 = METRICS[DENSITIES[di]];
-      if (Math.floor((dispo - m2.cw) / (hand.length - 1)) >= Math.round(m2.cw * 0.42)) break;
+      if (Math.floor((dispo - m2.cw) / (tenues - 1)) >= Math.round(m2.cw * 0.42)) break;
       di++;
     }
     mr = METRICS[DENSITIES[di]];
