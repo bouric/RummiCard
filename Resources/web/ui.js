@@ -207,6 +207,7 @@
     history = [game.captureState()];
     turnStack = [];
     piochee = null;
+    dernierMessage = '';     // la consigne d'ouverture se redit a chaque partie
     jrnNouvelle();
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
@@ -1358,9 +1359,12 @@
        barre, donc sur ordinateur seulement. Sur une table vide, le tapis
        porte deja le message : pas de bulle alors. */
     if (getComputedStyle(msg).display === 'none') {
-      /* Sur une table vide, le tapis porte deja la consigne : la bulle ne
-         redit alors que ce qui s'y ajoute. */
-      var surTapis = !game.boardCards().length;
+      /* La bulle ne redit pas ce que le tapis porte deja — mais seule la
+         table libre du telephone affiche ce message en son milieu : la table
+         rangee, elle, n'a pas de place vide ou l'ecrire, et c'est alors a la
+         bulle de dire la consigne entiere. On regarde donc si elle est bien
+         a l'ecran, plutot que de supposer. */
+      var surTapis = !!document.querySelector('#board .empty');
       var texte = surTapis ? (m.complement || '') : m.html;
       if (texte && m.bulle && texte !== dernierMessage &&
           !$('#toast').classList.contains('show')) toast(texte);
