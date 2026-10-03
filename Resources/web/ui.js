@@ -1072,6 +1072,15 @@
       return !(drag && drag.card.id === c.id);
     });
     var hints = drag ? hintCache.ids : playableIds();
+    /* Indices allumés : la main ne montre plus que les cartes posables. Les
+       autres disparaissent au lieu de se ternir — on voit d'un coup d'œil ce
+       dont on dispose, et les cartes restantes y gagnent en taille. Si aucune
+       n'est posable, on les laisse toutes : une main vide alarmerait pour
+       rien, et le message dit déjà qu'il n'y a pas de coup. */
+    if (hints) {
+      var posables = hand.filter(function (c) { return hints[c.id]; });
+      if (posables.length) hand = posables;
+    }
     /* Une seule rangée : si la main ne tient pas en largeur, les cartes se
        chevauchent juste assez pour rentrer, comme un éventail tenu en main.
        Sur un téléphone, c'est une rangée de moins — autant de tapis gagné. */
