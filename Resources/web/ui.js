@@ -1411,7 +1411,13 @@
     var check = human ? game.checkCommit() : { ok: false, reason: '' };
     $('#commit').disabled = !human || !check.ok;
     $('#undo').disabled = !human || !turnStack.length;
-    $('#draw').disabled = !human;
+    /* Piocher defait les poses du tour et le clot aussitot : offert apres
+       qu'une carte est posee, c'etait un piege — un clic effacait le travail
+       sans rien demander. Le bouton s'eteint donc des la premiere pose, et
+       « Annuler » reprend les cartes pour qui veut piocher malgre tout. */
+    var piocheBloquee = human && !!staged;
+    $('#draw').disabled = !human || piocheBloquee;
+    $('#draw').title = piocheBloquee ? TR('tip.piocheBloquee') : '';
     $('#auto').disabled = !human;
     $('#sort').disabled = !human;
     $('#rewind').disabled = !canRewind();
@@ -2152,6 +2158,7 @@
 
   function doDraw() {
     if (!isHumanTurn()) return;
+    if (game.stagedCards().length) return;   // meme barriere pour la touche P
     jrn('pioche');
     var card = game.draw();
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
