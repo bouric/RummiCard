@@ -141,6 +141,7 @@
     'err.pasSuite': 'ses valeurs ne se suivent pas',
     'err.manqueValeurs': 'il manque {x} pour que la suite se tienne',
     'err.niNi': 'ni une suite ni un groupe',
+    'err.interne': 'Incident pendant le tour des joueurs virtuels — la main vous revient.',
 
     'opt.titre': 'Options',
     'opt.langue': 'Langue',
@@ -322,6 +323,7 @@
     'err.pasSuite': 'its values are not consecutive',
     'err.manqueValeurs': '{x} missing for the run to hold together',
     'err.niNi': 'neither a run nor a set',
+    'err.interne': 'Something went wrong during the virtual players\u2019 turn \u2014 it is your turn again.',
 
     'opt.titre': 'Options', 'opt.langue': 'Language',
     'opt.tri': 'Arranging your hand',
@@ -501,6 +503,7 @@
     'err.pasSuite': 'die Werte folgen nicht aufeinander',
     'err.manqueValeurs': 'es fehlt {x}, damit die Folge zusammenhält',
     'err.niNi': 'weder Folge noch Satz',
+    'err.interne': 'Beim Zug der virtuellen Spieler ist ein Fehler aufgetreten \u2014 Sie sind wieder an der Reihe.',
 
     'opt.titre': 'Einstellungen', 'opt.langue': 'Sprache',
     'opt.tri': 'Ordnung Ihrer Hand',
@@ -680,6 +683,7 @@
     'err.pasSuite': 'i valori non si susseguono',
     'err.manqueValeurs': 'manca {x} perché la scala tenga',
     'err.niNi': 'né una scala né un tris',
+    'err.interne': 'Problema durante il turno dei giocatori virtuali \u2014 tocca di nuovo a lei.',
 
     'opt.titre': 'Opzioni', 'opt.langue': 'Lingua',
     'opt.tri': 'Ordine della sua mano',
@@ -859,6 +863,7 @@
     'err.pasSuite': 'de waarden volgen elkaar niet op',
     'err.manqueValeurs': '{x} ontbreekt om de reeks sluitend te maken',
     'err.niNi': 'geen reeks en geen groep',
+    'err.interne': 'Er ging iets mis tijdens de beurt van de virtuele spelers \u2014 u bent weer aan zet.',
 
     'opt.titre': 'Instellingen', 'opt.langue': 'Taal',
     'opt.tri': 'Ordening van uw hand',
@@ -1038,6 +1043,7 @@
     'err.pasSuite': 'sus valores no son consecutivos',
     'err.manqueValeurs': 'falta {x} para que la escalera se sostenga',
     'err.niNi': 'ni una escalera ni un trío',
+    'err.interne': 'Incidencia durante el turno de los jugadores virtuales \u2014 le toca de nuevo.',
 
     'opt.titre': 'Opciones', 'opt.langue': 'Idioma',
     'opt.tri': 'Orden de su mano',

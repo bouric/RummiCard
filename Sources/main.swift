@@ -54,10 +54,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         let saved = UserDefaults.standard.string(forKey: Self.prefsKey) ?? "null"
 
         // La page affiche la version et le copyright du bundle.
+        // Les réglages passent par une chaîne échappée puis JSON.parse : ils
+        // restent une donnée. Concaténés tels quels, le contenu de
+        // UserDefaults — que n'importe quel processus de la session peut
+        // réécrire — devenait du code exécuté au chargement de la page.
         let stamp = "window.APP_VERSION=\(jsLiteral(Self.version));" +
                     "window.APP_BUILD=\(jsLiteral(Self.buildDate));" +
                     "window.APP_COPYRIGHT=\(jsLiteral(Self.copyright));" +
-                    "window.APP_PREFS=\(saved);"
+                    "try{window.APP_PREFS=JSON.parse(\(jsLiteral(saved)));}" +
+                    "catch(e){window.APP_PREFS=null;}"
         config.userContentController.addUserScript(
             WKUserScript(source: stamp, injectionTime: .atDocumentStart, forMainFrameOnly: true))
 
@@ -121,6 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
              "options": "Options…", "fenetre": "Fenêtre", "reduire": "Réduire",
              "zoom": "Zoom", "plein": "Plein écran", "aide": "Aide", "regles": "Règles du jeu",
              "version": "Version", "compilee": "Compilée le", "fermer": "Fermer",
+             "continuer": "Continuer", "renoncer": "Annuler",
              "desc": "Les règles du rami, jouées avec 2 jeux de 52 cartes.\nGlissez une carte vers la table : elle se place toute seule au bon endroit, et la table se réorganise si nécessaire."],
       "en": ["apropos": "About RummiCard", "masquer": "Hide RummiCard",
              "masquerAutres": "Hide Others", "quitter": "Quit RummiCard",
@@ -130,6 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
              "options": "Options…", "fenetre": "Window", "reduire": "Minimise",
              "zoom": "Zoom", "plein": "Full Screen", "aide": "Help", "regles": "Rules of the Game",
              "version": "Version", "compilee": "Built on", "fermer": "Close",
+             "continuer": "Continue", "renoncer": "Cancel",
              "desc": "The rules of rummy, played with 2 decks of 52 cards.\nDrag a card onto the table: it settles into the right place by itself, and the table rearranges if need be."],
       "de": ["apropos": "Über RummiCard", "masquer": "RummiCard ausblenden",
              "masquerAutres": "Andere ausblenden", "quitter": "RummiCard beenden",
@@ -139,6 +146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
              "options": "Einstellungen…", "fenetre": "Fenster", "reduire": "Im Dock ablegen",
              "zoom": "Zoomen", "plein": "Vollbild", "aide": "Hilfe", "regles": "Spielregeln",
              "version": "Fassung", "compilee": "Erstellt am", "fermer": "Schließen",
+             "continuer": "Fortfahren", "renoncer": "Abbrechen",
              "desc": "Die Regeln von Rommé, gespielt mit 2 Kartenspielen zu 52 Blatt.\nZiehen Sie eine Karte auf den Tisch: Sie legt sich von selbst an die richtige Stelle, und der Tisch ordnet sich bei Bedarf neu."],
       "it": ["apropos": "Informazioni su RummiCard", "masquer": "Nascondi RummiCard",
              "masquerAutres": "Nascondi altre", "quitter": "Esci da RummiCard",
@@ -148,6 +156,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
              "options": "Opzioni…", "fenetre": "Finestra", "reduire": "Riduci",
              "zoom": "Zoom", "plein": "Schermo intero", "aide": "Aiuto", "regles": "Regole del gioco",
              "version": "Versione", "compilee": "Compilata il", "fermer": "Chiudi",
+             "continuer": "Continua", "renoncer": "Annulla",
              "desc": "Le regole del ramino, giocate con 2 mazzi da 52 carte.\nTrascini una carta sul tavolo: si sistema da sola al posto giusto, e il tavolo si riorganizza se serve."],
       "nl": ["apropos": "Over RummiCard", "masquer": "Verberg RummiCard",
              "masquerAutres": "Verberg andere", "quitter": "Stop RummiCard",
@@ -157,6 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
              "options": "Instellingen…", "fenetre": "Venster", "reduire": "Minimaliseer",
              "zoom": "Zoom", "plein": "Volledig scherm", "aide": "Help", "regles": "Spelregels",
              "version": "Versie", "compilee": "Gebouwd op", "fermer": "Sluiten",
+             "continuer": "Doorgaan", "renoncer": "Annuleer",
              "desc": "De regels van rummy, gespeeld met 2 spellen van 52 kaarten.\nSleep een kaart naar de tafel: ze legt zichzelf op de juiste plaats, en de tafel schikt zich zo nodig opnieuw."],
       "es": ["apropos": "Acerca de RummiCard", "masquer": "Ocultar RummiCard",
              "masquerAutres": "Ocultar otros", "quitter": "Salir de RummiCard",
@@ -166,6 +176,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
              "options": "Opciones…", "fenetre": "Ventana", "reduire": "Minimizar",
              "zoom": "Zoom", "plein": "Pantalla completa", "aide": "Ayuda", "regles": "Reglas del juego",
              "version": "Versión", "compilee": "Compilada el", "fermer": "Cerrar",
+             "continuer": "Continuar", "renoncer": "Cancelar",
              "desc": "Las reglas del rummy, jugadas con 2 barajas de 52 cartas.\nArrastre una carta a la mesa: se coloca sola en el lugar correcto, y la mesa se reorganiza si hace falta."]
     ]
 
@@ -315,8 +326,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
                  completionHandler: @escaping (Bool) -> Void) {
         let alert = NSAlert()
         alert.messageText = message
-        alert.addButton(withTitle: "Continuer")
-        alert.addButton(withTitle: "Annuler")
+        alert.addButton(withTitle: M("continuer"))
+        alert.addButton(withTitle: M("renoncer"))
         completionHandler(alert.runModal() == .alertFirstButtonReturn)
     }
 }

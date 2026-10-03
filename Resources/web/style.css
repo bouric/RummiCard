@@ -625,6 +625,20 @@ header .brand span { color: var(--gold); }
 .feltdot:hover { border-color: rgba(255, 255, 255, .45); }
 .feltdot.on { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240, 180, 41, .25); }
 
+/* ---------- Mouvement réduit ----------------------------------------
+   Qui a demandé moins d'animation au niveau du système ne doit pas voir les
+   cartes glisser d'un bout à l'autre de la table. Les durées tombent à
+   presque rien plutôt qu'à zéro : les transitions continuent de se terminer,
+   et le code qui les attend n'est pas pris en défaut. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ---------- Choix de la langue sur l'écran d'accueil ---------------- */
 .langs { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
 .langbtn {

@@ -1200,6 +1200,16 @@
     $('#racklabel').textContent = TR('zone.votreMain', { n: nmain, cartes: NC(nmain) });
   }
 
+  /* Les noms des joueurs virtuels sont choisis par le jeu — sauf quand une
+     partie est rejouee depuis un journal, qui peut venir de n'importe ou. Un
+     nom est du texte, jamais du balisage : on l'echappe partout ou il entre
+     dans la page. */
+  function echapper(txt) {
+    return String(txt).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
   function paintOpponents(thinking) {
     paintOpponentsMini(thinking);
     var box = $('#opponents');
@@ -1213,8 +1223,8 @@
       var shown = Math.min(p.hand.length, 6);
       for (var k = 0; k < shown; k++) fan += '<i></i>';
       d.innerHTML =
-        '<div class="av">' + (p.human ? '★' : p.name.charAt(0)) + '</div>' +
-        '<div class="who"><div class="nm">' + p.name + '</div><div class="sub">' +
+        '<div class="av">' + (p.human ? '★' : echapper(p.name.charAt(0))) + '</div>' +
+        '<div class="who"><div class="nm">' + echapper(p.name) + '</div><div class="sub">' +
         p.hand.length + ' ' + NC(p.hand.length) + ' · ' +
         TR(p.melded ? 'hud.enJeu' : 'hud.aPoser') +
         '</div></div><div class="fan">' + fan + '</div>';
@@ -1249,7 +1259,7 @@
          l'initiale en plus rognait ce nom sur un telephone. */
       d.innerHTML = (p.human ? '<b>\u2605</b>' : '') +
         (p.human && initiales ? '' : '<span class="nm">' +
-          (initiales ? p.name.charAt(0) : p.name) + '</span>') +
+          echapper(initiales ? p.name.charAt(0) : p.name) + '</span>') +
         '<span class="n">' + p.hand.length + '</span>';
       box.appendChild(d);
     }
@@ -1274,7 +1284,19 @@
     return m;
   }
 
+  /* La feuille de style neutralise les animations CSS quand le systeme
+     demande moins de mouvement ; les animations FLIP sont ecrites en
+     JavaScript et lui echappent. On les saute ici. */
+  function mouvementReduit() {
+    return !!(window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
   function flip(prev, opts) {
+    if (mouvementReduit()) {
+      if (opts && opts.land) marquerArrivee(opts.land);
+      return;
+    }
     var els = document.querySelectorAll('.card[data-id]');
     for (var i = 0; i < els.length; i++) {
       var el = els[i], r0 = prev[el.dataset.id];
@@ -1291,10 +1313,14 @@
         [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }],
         { duration: 320, easing: 'cubic-bezier(.22,.78,.26,1)' });
     }
-    if (opts && opts.land) {
-      var t = document.querySelector('.card[data-id="' + opts.land + '"]');
-      if (t) { t.classList.add('landed'); setTimeout(function () { t.classList.remove('landed'); }, 420); }
-    }
+    if (opts && opts.land) marquerArrivee(opts.land);
+  }
+
+  function marquerArrivee(id) {
+    var t = document.querySelector('.card[data-id="' + id + '"]');
+    if (!t) return;
+    t.classList.add('landed');
+    setTimeout(function () { t.classList.remove('landed'); }, 420);
   }
 
   function render(opts) {
@@ -2141,6 +2167,33 @@
     busy = true;
     aiJustPlayed = {};         // on repart d'une table sans surlignage
     updateBar();
+    try {
+      await tourDesVirtuels();
+    } catch (e) {
+      /* Sans ce filet, une exception laissait `busy` leve pour toujours :
+         plus un bouton ne repondait et rien ne disait pourquoi. Relacher le
+         drapeau ne suffit pas — le tour appartient encore au joueur en
+         faute, et la barre reste donc eteinte. Celui-la passe son tour, et
+         l'on avance jusqu'a vous : la partie continue vraiment. */
+      if (window.console) window.console.error(e);
+      var sauts = 0;
+      while (!game.finished && !game.player().human && sauts++ <= game.players.length) {
+        game.pass();
+        game.nextPlayer();
+      }
+      toast(TR('err.interne'));
+    }
+    busy = false;
+    pushHistory();
+    render();
+    updateBar();
+    /* La table reste assombrie une seconde apres votre retour : le temps de
+       voir ce qui a change pendant que les autres jouaient. */
+    if (projecteur === 'table') projecteurTimer = setTimeout(eteindreProjecteur, 1000);
+    if (game.finished) gameOver();
+  }
+
+  async function tourDesVirtuels() {
     while (!game.finished && !game.player().human) {
       var p = game.player();
       render({ thinking: true });
@@ -2165,15 +2218,6 @@
       if (game.finished) break;
       game.nextPlayer();
     }
-    busy = false;
-    pushHistory();
-    render();
-    updateBar();
-    /* La table reste assombrie une seconde apres votre retour : le temps de
-       voir ce qui a change pendant que les autres jouaient. */
-    if (projecteur === 'table') projecteurTimer = setTimeout(eteindreProjecteur, 1000);
-    if (game.finished) gameOver();
-
   }
 
   /* ================= Fin de partie ================================ */
@@ -2220,13 +2264,16 @@
     var titre, sous;
     if (plusieurs && !derniere) {
       titre = TR('fin.mancheSur', { n: m.manche, t: m.total });
-      sous = w ? (w.human ? TR('fin.vousManche') : TR('fin.ilManche', { nom: w.name }))
+      sous = w ? (w.human ? TR('fin.vousManche')
+                          : TR('fin.ilManche', { nom: echapper(w.name) }))
                : TR('fin.piocheVide1');
     } else if (plusieurs) {
-      titre = rows[0].p.human ? TR('fin.vousPartie') : TR('fin.ilPartie', { nom: rows[0].p.name });
+      titre = rows[0].p.human ? TR('fin.vousPartie')
+                              : TR('fin.ilPartie', { nom: echapper(rows[0].p.name) });
       sous = TR('fin.classement', { n: m.total });
     } else {
-      titre = w ? (w.human ? TR('fin.vousGagnez') : TR('fin.ilGagne', { nom: w.name }))
+      titre = w ? (w.human ? TR('fin.vousGagnez')
+                           : TR('fin.ilGagne', { nom: echapper(w.name) }))
                 : TR('fin.terminee');
       sous = w && !w.hand.length ? TR('fin.videePremiere') : TR('fin.piocheVide2');
     }
@@ -2243,7 +2290,7 @@
     for (var i = 0; i < rows.length; i++) {
       var signe = rows[i].manche > 0 ? '+' : '';
       html += '<tr class="' + (i === 0 ? 'win' : '') + '"><td>' +
-        (i + 1) + '. ' + rows[i].p.name + '</td>' +
+        (i + 1) + '. ' + echapper(rows[i].p.name) + '</td>' +
         '<td class="n">' + rows[i].cartes + ' ' + NC(rows[i].cartes) + '</td>' +
         (plusieurs ? '<td class="n">' + signe + rows[i].manche + '</td>' +
                      '<td class="n">' + rows[i].total + ' ' + TR('hud.pts') + '</td>'
@@ -2596,6 +2643,11 @@
   document.addEventListener('keydown', function (e) {
     if ($('#game').classList.contains('hidden')) return;
     if (!$('#overlay').classList.contains('hidden')) return;
+    /* Les lettres seules commandent le jeu, jamais quand une touche de
+       commande les accompagne : Cmd+P imprime, Cmd+T ouvre un onglet, et le
+       jeu piochait ou changeait le tri par-dessus — un tour perdu sans
+       retour possible pour une frappe qui ne le concernait pas. */
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'Enter') { doCommit(); }
     else if (e.key === 'Backspace') { e.preventDefault(); doUndo(); }
     else if (e.key === 'p' || e.key === 'P') { doDraw(); }
