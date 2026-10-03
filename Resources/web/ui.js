@@ -241,13 +241,21 @@
      qui vient d'arriver — les cartes qu'un joueur virtuel vient de poser, ou
      celle qu'on vient de piocher. */
   var projecteur = null, projecteurTimer = null;
-  function allumerProjecteur(zone) {
+  /* Sans duree, le projecteur reste allume jusqu'a ce qu'on l'eteigne : c'est
+     le cas du tour des joueurs virtuels, ou trois poses de suite feraient
+     clignoter la table si chacune rallumait la sienne. Il s'allume a la
+     premiere carte posee et ne s'eteint qu'une seconde apres votre retour. */
+  function allumerProjecteur(zone, duree) {
     projecteur = zone;
     clearTimeout(projecteurTimer);
-    projecteurTimer = setTimeout(function () {
-      projecteur = null;
-      if (game) render({ animate: false });
-    }, 2000);
+    projecteurTimer = duree ? setTimeout(eteindreProjecteur, duree) : null;
+  }
+  function eteindreProjecteur(sansRedessiner) {
+    clearTimeout(projecteurTimer);
+    projecteurTimer = null;
+    if (!projecteur) return;
+    projecteur = null;
+    if (game && sansRedessiner !== true) render({ animate: false });
   }
 
   function isStaged(card) {
@@ -2001,6 +2009,9 @@
   /* Mémorise l'état avant chaque mouvement, pour les défaire un par un. */
   function pushTurnState() {
     aiJustPlayed = {};         // votre premier geste efface le surlignage
+    /* Sans cartes en lumiere, le projecteur n'eclairerait plus rien : il
+       assombrirait toute la table. Votre premier geste l'eteint. */
+    eteindreProjecteur(true);
     turnStack.push(cloneState());
     if (turnStack.length > 200) turnStack.shift();
   }
@@ -2019,7 +2030,7 @@
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
        ne sait plus laquelle on vient de prendre. Elle reste signalée tant
        qu'on ne l'a pas posée ni remplacée par une nouvelle pioche. */
-    if (card) { piochee = card.id; allumerProjecteur('main'); }
+    if (card) { piochee = card.id; allumerProjecteur('main', 2000); }
     render(); updateBar();
     sndHmm(!card);
     if (!card) toast(TR('toast.piocheVide'));
@@ -2097,6 +2108,9 @@
     pushHistory();
     render();
     updateBar();
+    /* La table reste assombrie une seconde apres votre retour : le temps de
+       voir ce qui a change pendant que les autres jouaient. */
+    if (projecteur === 'table') projecteurTimer = setTimeout(eteindreProjecteur, 1000);
     if (game.finished) gameOver();
 
   }
