@@ -607,6 +607,13 @@ header .brand span { color: var(--gold); }
 
 
 
+/* La version, au pied du panneau des options : discrete, mais lisible sans
+   quitter la partie. */
+.versiontxt {
+  margin: 10px 0 0; text-align: center;
+  font-size: 11.5px; color: rgba(255, 255, 255, .34);
+}
+
 /* ---------- Couleur du tapis, dans les options ----------------------
    Chaque pastille porte la couleur qu'elle propose ; elles sont assez
    grandes pour être visées du doigt. */

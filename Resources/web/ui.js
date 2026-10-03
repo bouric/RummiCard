@@ -2330,7 +2330,8 @@
           TR('btn.journal') + '</button></div>'
         : '') +
       '<div class="row"><button class="cta" id="closeopts" style="flex:1">' +
-      TR('btn.fermer') + '</button></div></div>';
+      TR('btn.fermer') + '</button></div>' +
+      '<p class="versiontxt">' + texteVersion + '</p></div>';
     ov.classList.remove('hidden');
     $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
     if ($('#voirjrn')) $('#voirjrn').onclick = showJournal;
@@ -2609,21 +2610,34 @@
   });
 
   /* Version et copyright : fournis par l'hôte natif, sinon mode navigateur. */
+  /* La version se lit a deux endroits : au pied de l'ecran d'accueil, et dans
+     les options — seul endroit atteignable une partie commencee, et le
+     premier ou l'on regarde quand on se demande si l'appareil a bien recu la
+     derniere correction. Le texte est retenu ici pour que le panneau, rebati
+     a chaque ouverture, puisse l'afficher sans tout remesurer. */
+  var texteVersion = '';
+
+  function ecrireVersion(txt) {
+    texteVersion = txt;
+    var cibles = document.querySelectorAll('#version, .versiontxt'), i;
+    for (i = 0; i < cibles.length; i++) cibles[i].textContent = txt;
+  }
+
   function stampFooter() {
     var v = $('#version');
     if (!v) return;
-    if (window.APP_BUILD) { v.textContent = TR('accueil.versionDu', { d: window.APP_BUILD }); return; }
+    if (window.APP_BUILD) { ecrireVersion(TR('accueil.versionDu', { d: window.APP_BUILD })); return; }
     /* Hors de l'app macOS, la date de publication fait l'affaire — mais celle
        de la page ne bouge que si index.html change, et une correction portee
        a ui.js passait inapercue : sur l'iPad on croyait tourner sur du neuf
        en lisant une date d'hier. On retient donc la plus recente des dates de
        publication des fichiers du jeu. */
     function ecrire(d) {
-      v.textContent = isNaN(d.getTime())
+      ecrireVersion(isNaN(d.getTime())
         ? TR('accueil.versionDev')
         : TR('accueil.versionDu', { d: ('0' + d.getDate()).slice(-2) + '/' +
             ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() + ' ' +
-            ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) });
+            ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) }));
     }
     var plusRecente = new Date(document.lastModified);
     ecrire(plusRecente);
