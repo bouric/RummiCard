@@ -682,11 +682,29 @@
         ecartBord + colsVoulues * caseMin <= largeurG) {
       groupW = Math.floor((largeurG - ecartBord) / colsVoulues);
     }
-    var cols = Math.max(1, Math.min(Math.floor((largeurG - ecartBord) / groupW) || 1,
-                                    colsVoulues, 14));
+    /* Deux combinaisons de meme valeur ne peuvent pas tenir dans la meme
+       case : la seconde part dans une colonne d'appoint. On lui reserve sa
+       place dans la grille, sinon elle deborde et la zone se met a defiler. */
+    var doubles = {}, enTrop = 0;
+    for (i = 0; i < groups.length; i++) {
+      var vv = groups[i].low;
+      if (doubles[vv]) enTrop++; else doubles[vv] = 1;
+    }
+    var tiennent = Math.floor((largeurG - ecartBord) / groupW) || 1;
+    var cols = Math.max(1, Math.min(tiennent - enTrop, colsVoulues, 14));
     var rows = Math.ceil(14 / cols);
-    var rowH = Math.max(m.ch + 6, Math.floor(hauteur / rows));
+    /* Les lignes se resserrent jusqu'a ce que les cartes se touchent avant
+       de laisser la grille deborder : mieux vaut 6 pixels d'air en moins
+       qu'un ascenseur. */
+    var rowH = Math.max(m.ch, Math.floor(hauteur / rows));
     addValueCells(zGroups, rowH, groupW, m, rows, GX);
+    /* La case de la valeur revient a la combinaison la plus avancee : une
+       carte esseulee ne doit pas prendre la place d'un brelan constitue. */
+    groups.sort(function (a, b) {
+      if (a.low !== b.low) return 0;
+      var va = E.isValidSet(a.s.cards) ? 1 : 0, vb = E.isValidSet(b.s.cards) ? 1 : 0;
+      return (vb - va) || (b.s.cards.length - a.s.cards.length);
+    });
     var occ = {}, maxX = GX + cols * groupW;
     for (i = 0; i < groups.length; i++) {
       var v = groups[i].low;
