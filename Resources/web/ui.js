@@ -937,19 +937,8 @@
     if (!drag) { splitGaps(); mergeRuns(); tidyBoard(); }
     var view = currentView();
     var board = $('#board');
-    var total = game.boardCards().length;
     var split = !!E.options.keepPlaces;
-    var dens = total > 70 ? 'denser' : (total > 42 ? 'dense' : '');
-    var stack = false, nc = 2, part = 0.5;
-    if (split) {
-      var fit = pickLayout(view, board.clientWidth || 1200, board.clientHeight || 520, dens);
-      if (fit.flow) {
-        split = false;                  // trop etroit pour la table rangee
-      } else {
-        if (DENSITIES.indexOf(fit.dens) > DENSITIES.indexOf(dens)) dens = fit.dens;
-        stack = fit.stack; nc = fit.nc || 2; part = fit.part || 0.5;
-      }
-    }
+    var dens = '', stack = false, nc = 2, part = 0.5;
     function poser(d) {
       densiteCourante = d;
       board.className = d + (split ? ' split' : '') + (stack ? ' stack' : '');
@@ -961,18 +950,30 @@
       if (split) paintGrid(view, board, d, nc, part);
       else paintFlow(view, board);
     }
-    poser(dens);
-    /* Table libre : la disposition depend du repliement des combinaisons,
-       qu'aucune formule ne prevoit. On mesure, et on rapetisse les cartes
-       tant que la table deborde — deux essais au plus. */
-    if (!split) {
-      var zf = board.querySelector('.zone'), essais = 0;
-      while (zf && zf.scrollHeight > zf.clientHeight + 1 &&
-             DENSITIES.indexOf(dens) < DENSITIES.length - 1 && essais++ < 2) {
-        dens = DENSITIES[DENSITIES.indexOf(dens) + 1];
-        poser(dens);
-        zf = board.querySelector('.zone');
+    /* Dessine la table avec des cartes d'au plus la taille demandee : la
+       disposition est choisie pour cette taille-la, puis posee. */
+    function dessiner(d) {
+      dens = d;
+      if (split) {
+        var fit = pickLayout(view, board.clientWidth || 1200, board.clientHeight || 520, d);
+        if (fit.flow) split = false;    // trop etroit pour la table rangee
+        else {
+          if (DENSITIES.indexOf(fit.dens) > DENSITIES.indexOf(dens)) dens = fit.dens;
+          stack = fit.stack; nc = fit.nc || 2; part = fit.part || 0.5;
+        }
       }
+      poser(dens);
+    }
+    /* On part des plus grandes cartes et on ne rapetisse que si la table
+       deborde vraiment. Le nombre de cartes posees ne dit rien de la place
+       qu'elles prennent : vingt cartes en six combinaisons eparpillees
+       tiennent moins bien que quarante bien rangees, et un seuil sur le
+       compte faisait rapetisser toute la table sans raison visible. Deux
+       essais au plus — il n'y a que trois tailles. */
+    dessiner('');
+    var essais = 0;
+    while (tableDeborde() && DENSITIES.indexOf(dens) < DENSITIES.length - 1 && essais++ < 2) {
+      dessiner(DENSITIES[DENSITIES.indexOf(dens) + 1]);
     }
     majBarreCompacte();
   }
