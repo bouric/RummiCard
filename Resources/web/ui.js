@@ -695,7 +695,12 @@
       : runsWidth(m, nc, serre);
     var LN = largeurNeuve(m);
     var ecartBord = Math.max(0, Math.min(6, largeurMoitie - MARGE_L - finColonnes - LN));
-    var newRunsX = Math.max(finColonnes, largeurMoitie - MARGE_L - ecartBord - LN);
+    /* Les deux bandes se placent dans le meme repere, celui de leur zone :
+       celle des groupes a « ecartBord » du bord gauche, celle des suites a
+       « ecartBord » du bord droit. On retranchait ici une marge de zone en
+       trop, et la bande des suites se retrouvait seize pixels plus loin de
+       la frontiere que sa voisine. */
+    var newRunsX = Math.max(finColonnes, largeurMoitie - ecartBord - LN);
     var apresSuites = newRunsX + LN + 8;
 
     // Groupes : une case fixe par valeur, As à Roi — 7 lignes puis la colonne
