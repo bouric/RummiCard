@@ -277,6 +277,75 @@
     return { id: id, suit: +p[0], rank: +p[1], copy: +p[2] };
   }
 
+  /* ---- Donnes venues de l'extérieur -------------------------------
+     Un journal collé et des réglages relus du disque ne sont pas écrits par
+     le jeu : ils peuvent avoir été touchés entre-temps, ou venir d'une autre
+     machine. On ne les croit que s'ils décrivent exactement le jeu de 104
+     cartes, chacune une fois, et que les noms figurent dans la liste. Sans
+     ce filtre, « 9-99-7 » fabriquait une carte de couleur 9 et de valeur 99
+     que la table affichait en « undefinedundefined », et un nom quelconque
+     entrait dans la page. */
+
+  var ID_CARTE = /^[0-3]-(?:[1-9]|1[0-3])-[01]$/;
+
+  function nomsValides(noms, n) {
+    if (noms === null || noms === undefined) return null;
+    if (!Array.isArray(noms) || noms.length !== n) return undefined;   // refus
+    for (var i = 0; i < noms.length; i++) {
+      if (AI_NAMES.indexOf(noms[i]) < 0) return undefined;             // refus
+    }
+    return noms.slice();
+  }
+
+  /**
+   * @returns {?Object} une donne sûre, ou null si elle n'est pas crédible
+   */
+  function donneValide(deal) {
+    if (!deal || typeof deal !== 'object') return null;
+    if (typeof deal.n !== 'number' || deal.n < 1 || deal.n > 5) return null;
+    if (!Array.isArray(deal.order) || deal.order.length !== 104) return null;
+    var vu = Object.create(null), i;
+    for (i = 0; i < deal.order.length; i++) {
+      var id = deal.order[i];
+      if (typeof id !== 'string' || !ID_CARTE.test(id) || vu[id]) return null;
+      vu[id] = true;
+    }
+    var noms = nomsValides(deal.names, deal.n);
+    if (noms === undefined) return null;
+    return { n: deal.n, order: deal.order.slice(), names: noms };
+  }
+
+  /* Une partie enregistrée : mêmes exigences sur la donne et les noms, le
+     reste étant relu carte par carte par loadSerialized. */
+  function sauvegardeValide(d) {
+    if (!d || typeof d !== 'object') return null;
+    if (!Array.isArray(d.hands) || !Array.isArray(d.deck)) return null;
+    if (typeof d.n !== 'number' || d.n < 1 || d.n > 5) return null;
+    if (d.hands.length !== d.n + 1) return null;
+    if (d.deal !== undefined && d.deal !== null && !donneValide(d.deal)) return null;
+    var noms = nomsValides(d.names, d.n);
+    if (noms === undefined) return null;
+    var tout = [], i;
+    for (i = 0; i < d.hands.length; i++) {
+      if (!Array.isArray(d.hands[i])) return null;
+      tout = tout.concat(d.hands[i]);
+    }
+    if (!Array.isArray(d.board)) return null;
+    for (i = 0; i < d.board.length; i++) {
+      if (!d.board[i] || !Array.isArray(d.board[i].cards)) return null;
+      tout = tout.concat(d.board[i].cards);
+    }
+    tout = tout.concat(d.deck);
+    if (tout.length !== 104) return null;
+    var vu = Object.create(null);
+    for (i = 0; i < tout.length; i++) {
+      if (typeof tout[i] !== 'string' || !ID_CARTE.test(tout[i]) || vu[tout[i]]) return null;
+      vu[tout[i]] = true;
+    }
+    d.names = noms;
+    return d;
+  }
+
   /**
    * @param {number} nVirtual nombre de joueurs virtuels
    * @param {Object} [deal] donne à rejouer : { order: [identifiants], names: [...] }
@@ -549,6 +618,8 @@
     HAND_SIZE: HAND_SIZE,
     options: options,
     alignBoard: alignBoard,
+    donneValide: donneValide,
+    sauvegardeValide: sauvegardeValide,
     makeDeck: makeDeck,
     shuffle: shuffle,
     label: label,

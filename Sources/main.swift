@@ -34,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     static let buildDate = info["RCBuildDate"] as? String ?? "—"
     static let copyright = info["NSHumanReadableCopyright"] as? String ?? ""
     static let prefsKey = "RCPreferences"
+    static let fond = NSColor(calibratedRed: 0.04, green: 0.06, blue: 0.09, alpha: 1)
 
     var window: NSWindow!
     var web: WKWebView!
@@ -46,7 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         buildMenu()
 
         let config = WKWebViewConfiguration()
-        config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         config.defaultWebpagePreferences.allowsContentJavaScript = true
 
         // Les réglages du joueur sont conservés d'une partie à l'autre.
@@ -70,7 +70,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         web.navigationDelegate = self
         web.uiDelegate = self
         web.allowsBackForwardNavigationGestures = false
-        web.setValue(false, forKey: "drawsBackground")
+        // Deux réglages passaient par des clés privées (`developerExtrasEnabled`,
+        // `drawsBackground`) : hors API publique, elles peuvent disparaître à
+        // une mise à jour de macOS — et un `setValue` sur une clé inconnue fait
+        // tomber l'app au lancement. Les équivalents officiels font le même
+        // travail : la couleur hors page remplace la transparence, dont le seul
+        // rôle visible était d'éviter l'éclair blanc avant le premier rendu,
+        // puisque la page peint elle-même un fond opaque.
+        web.underPageBackgroundColor = Self.fond
+        if #available(macOS 13.3, *) { web.isInspectable = true }
 
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1280, height: 840),
@@ -79,7 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             defer: false)
         window.title = "RummiCard"
         window.minSize = NSSize(width: 1000, height: 680)
-        window.backgroundColor = NSColor(calibratedRed: 0.04, green: 0.06, blue: 0.09, alpha: 1)
+        window.backgroundColor = Self.fond
         window.contentView = web
         window.isReleasedWhenClosed = false
         if !window.setFrameUsingName("RummiCardMain") { window.center() }

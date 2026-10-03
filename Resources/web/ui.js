@@ -59,10 +59,9 @@
       if (typeof p.hints === 'boolean') prefs.hints = p.hints;
       if (typeof p.autoArrange === 'boolean') prefs.autoArrange = p.autoArrange;
       if (typeof p.felt === 'number' && p.felt >= 0) prefs.felt = p.felt % FELTS.length;
-      if (p.lastDeal && p.lastDeal.order && p.lastDeal.order.length === 104) {
-        prefs.lastDeal = p.lastDeal;
-      }
-      if (p.saved && p.saved.hands && p.saved.deck) prefs.saved = p.saved;
+      /* Ce qui vient du disque n'a pas forcement ete ecrit par le jeu. */
+      prefs.lastDeal = E.donneValide(p.lastDeal);
+      prefs.saved = E.sauvegardeValide(p.saved);
       if (p.niveau === 'facile' || p.niveau === 'normal' || p.niveau === 'difficile') {
         prefs.niveau = p.niveau;
       }
@@ -2573,15 +2572,33 @@
 
   /* Rejoue un journal et signale le premier écart avec ce qui avait été
      enregistré. Sans écart, la séquence est reproduite à l'identique. */
+  /* Un reglage relu de l'exterieur n'est retenu que s'il fait partie des
+     valeurs prevues : sinon on garde celui du joueur. */
+  function reglageSur(valeur, permises, defaut) {
+    return permises.indexOf(valeur) >= 0 ? valeur : defaut;
+  }
+
   function rejouerJournal(txt) {
     var j = typeof txt === 'string' ? JSON.parse(txt) : txt;
+    /* Le journal vient d'ailleurs : on ne rejoue que s'il decrit vraiment une
+       partie. Une donne incomplete fabriquait des cartes impossibles, et un
+       nom libre entrait dans la page. */
+    var donne = E.donneValide(j && j.donne);
+    if (!donne || !Array.isArray(j.actes)) {
+      toast(TR('dbg.journalInvalide'));
+      /* Le rejeu normal rend une promesse : le refus aussi, pour que l'appelant
+         n'ait pas deux formes de reponse a distinguer. */
+      return Promise.resolve({ actes: 0, rejoues: 0, divergences: [{ no: -1,
+               acte: 'journal', probleme: TR('dbg.journalInvalide') }] });
+    }
     if (j.reglages) {
-      prefs.tri = j.reglages.tri;
-      prefs.keepPlaces = j.reglages.keepPlaces;
-      prefs.autoArrange = j.reglages.autoArrange;
-      prefs.niveau = j.reglages.niveau;
-      prefs.manches = j.reglages.manches;
-      prefs.sensSuites = j.reglages.sensSuites;
+      var g = j.reglages;
+      prefs.tri = reglageSur(g.tri, ['suit', 'rank'], prefs.tri);
+      prefs.keepPlaces = typeof g.keepPlaces === 'boolean' ? g.keepPlaces : prefs.keepPlaces;
+      prefs.autoArrange = typeof g.autoArrange === 'boolean' ? g.autoArrange : prefs.autoArrange;
+      prefs.niveau = reglageSur(g.niveau, ['facile', 'normal', 'difficile'], prefs.niveau);
+      prefs.manches = reglageSur(g.manches, [1, 3, 5], prefs.manches);
+      prefs.sensSuites = reglageSur(g.sensSuites, ['asc', 'desc'], prefs.sensSuites);
       E.options.sort = prefs.tri;
       E.options.keepPlaces = prefs.keepPlaces;
       E.options.difficulty = prefs.niveau;
@@ -2589,7 +2606,7 @@
     rejeuEnCours = true;
     var garde = prefs.debug;
     prefs.debug = false;               // on ne reecrit pas le journal en le rejouant
-    newGame(j.donne);
+    newGame(donne);
     var rapport = [], i = 0;
     function suite() {
       if (i >= j.actes.length || rapport.length) {

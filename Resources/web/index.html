@@ -3,7 +3,30 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- Le jeu ne charge rien d'ailleurs : la règle peut donc être stricte sans
+     rien coûter. Elle n'autorise de script que les cinq fichiers du jeu, et
+     surtout aucun script en ligne — ni balise injectée, ni attribut onerror.
+     C'est la deuxième barrière derrière l'échappement des noms venus d'un
+     journal.
+     « 'unsafe-inline' » ne vaut que pour les styles : la taille des cartes et
+     la couleur du tapis s'écrivent dans l'attribut style.
+     Vérifié dans une vraie WKWebView chargée en file://, comme l'app macOS :
+     « 'self' » y désigne bien les fichiers du bundle, contrairement à ce que
+     laisse craindre l'origine opaque d'un document local. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data:;
+  connect-src 'self';
+  manifest-src 'self';
+  worker-src 'self';
+  base-uri 'none';
+  form-action 'none'">
+<!-- Le zoom à deux doigts reste permis : l'interdire ne protégeait de rien
+     que « touch-action: manipulation » n'empêche déjà (le zoom au double-tap),
+     et privait de tout recours qui a besoin d'agrandir. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RummiCard</title>
 <meta name="description" content="Un rami de combinaisons joué avec 2 jeux de 52 cartes.">
 <meta name="robots" content="noindex, nofollow">
