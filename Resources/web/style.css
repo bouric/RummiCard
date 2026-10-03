@@ -127,10 +127,14 @@ header .brand span { color: var(--gold); }
 #oppmini .mini {
   display: flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 999px;
   background: var(--panel); border: 1px solid var(--stroke);
-  font-size: 12px; color: var(--dim); min-width: 0; flex: 0 1 auto;
+  font-size: 12px; color: var(--dim); flex: 0 0 auto;
 }
+/* Réduites aux initiales, les pastilles acceptent de se serrer : à six
+   joueurs sur un téléphone, mieux vaut quelques pixels de rembourrage en
+   moins que la dernière coupée au bord. */
+#oppmini.initiales .mini { flex: 0 1 auto; min-width: 0; padding: 4px 5px; gap: 3px; }
 #oppmini .mini b { color: var(--ink); font-weight: 700; font-size: 11px; }
-#oppmini .mini .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#oppmini .mini .nm { white-space: nowrap; }
 #oppmini .mini .n { color: var(--ink); font-weight: 650; }
 #oppmini .mini.actif {
   background: linear-gradient(180deg, rgba(240, 180, 41, .2), rgba(240, 180, 41, .07));
@@ -394,8 +398,10 @@ header .brand span { color: var(--gold); }
 #rack .card:hover .voile.terne { background: rgba(8, 12, 20, .18); }
 /* Projecteur : ce qui n'a pas bougé s'efface deux secondes, le temps qu'on
    voie ce qui vient d'arriver. */
-.card .voile.eteinte { background: rgba(8, 12, 20, .66); animation: voilerCarte .22s ease-out; }
-@keyframes voilerCarte { from { background: rgba(8, 12, 20, 0); } }
+/* Pas d'animation d'apparition : la table se redessine entierement a chaque
+   coup des joueurs virtuels, et le voile, recree avec elle, rejouait son
+   fondu a chaque fois — c'est ce qui faisait clignoter l'assombrissement. */
+.card .voile.eteinte { background: rgba(8, 12, 20, .66); }
 
 /* La dernière carte piochée : même bleu que les cartes fraîchement posées
    par les joueurs virtuels, puisque c'est le même propos — voici ce qui

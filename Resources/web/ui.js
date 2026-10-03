@@ -1151,10 +1151,25 @@
        chevauchent juste assez pour rentrer, comme un éventail tenu en main.
        Sur un téléphone, c'est une rangée de moins — autant de tapis gagné. */
     var dispo = rack.clientWidth || 600;
+    /* La main doit tenir sur sa rangee, en entier. Au-dela d'une quinzaine de
+       cartes, l'eventail se resserrait au point que les dernieres sortaient
+       de l'ecran : elles rapetissent plutot d'un cran, jusqu'a ce que la
+       tranche visible laisse lire la valeur. Mieux vaut dix-sept petites
+       cartes toutes visibles que quatre invisibles au bout de la rangee. */
+    var di = DENSITIES.indexOf(densiteCourante);
+    if (di < 0) di = 0;
+    while (hand.length > 1 && di < DENSITIES.length - 1) {
+      var m2 = METRICS[DENSITIES[di]];
+      if (Math.floor((dispo - m2.cw) / (hand.length - 1)) >= Math.round(m2.cw * 0.42)) break;
+      di++;
+    }
+    mr = METRICS[DENSITIES[di]];
+    rack.style.setProperty('--cw', mr.cw + 'px');
+    rack.style.setProperty('--ch', mr.ch + 'px');
     var chevauche = 0;
     if (hand.length > 1 && hand.length * (mr.cw + 4) - 4 > dispo) {
       var pas = Math.floor((dispo - mr.cw) / (hand.length - 1));
-      pas = Math.max(Math.round(mr.cw * 0.38), pas);
+      pas = Math.max(14, Math.min(pas, mr.cw + 4));
       chevauche = pas - mr.cw - 4;
     }
     rack.style.flexWrap = chevauche ? 'nowrap' : 'wrap';
@@ -1205,16 +1220,16 @@
     var box = $('#oppmini');
     if (!box) return;
     remplirMini(box, thinking, false);
-    /* Les noms rognes ne disent plus rien : a cinq ou six joueurs sur un
-       telephone, on repasse aux initiales, qui tiennent toujours. */
-    var rogne = box.querySelectorAll('.nm'), i;
-    for (i = 0; i < rogne.length; i++) {
-      if (rogne[i].scrollWidth > rogne[i].clientWidth + 1) { remplirMini(box, thinking, true); break; }
-    }
+    /* Les noms rognes ne disent plus rien : des que le bandeau deborde de sa
+       place, on repasse aux initiales, qui tiennent toujours. Les pastilles
+       ne se compriment pas — c'est ce debordement, et non un nom tronque par
+       l'ellipse, qui se mesure franchement. */
+    if (box.scrollWidth > box.clientWidth + 1) remplirMini(box, thinking, true);
   }
 
   function remplirMini(box, thinking, initiales) {
     box.innerHTML = '';
+    box.classList.toggle('initiales', !!initiales);
     for (var i = 0; i < game.players.length; i++) {
       var p = game.players[i];
       var actif = (i === game.current) && !game.finished;
