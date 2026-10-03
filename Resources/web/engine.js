@@ -211,6 +211,19 @@
 
   var setSeq = 0;
 
+  /* Les identifiants d'une partie reprise ont ete frappes lors d'une autre
+     session, ou le compteur est reparti de zero depuis. Il faut le replacer
+     au-dessus du plus grand d'entre eux : sinon une combinaison neuve recoit
+     l'identifiant d'une combinaison deja posee, et la carte qu'on destine a
+     l'une atterrit dans l'autre — une suite se retrouve coupee par un roi
+     etranger, et passe du cote des brelans puisqu'elle n'est plus une suite. */
+  function reserverIds(sets) {
+    for (var i = 0; i < sets.length; i++) {
+      var m = /^s(\d+)$/.exec((sets[i] && sets[i].id) || '');
+      if (m && +m[1] > setSeq) setSeq = +m[1];
+    }
+  }
+
   /**
    * Reconstruit la table à partir d'une nouvelle répartition des cartes.
    * Si options.keepPlaces est vrai, chaque nouvelle combinaison reprend la
@@ -308,7 +321,11 @@
   };
 
   Game.prototype.newSet = function (cards) {
-    return { id: 's' + (++setSeq), cards: cards || [] };
+    /* Ceinture et bretelles : jamais l'identifiant d'une combinaison deja
+       sur la table, meme si le compteur avait ete mal replace. */
+    var id;
+    do { id = 's' + (++setSeq); } while (this.setById(id));
+    return { id: id, cards: cards || [] };
   };
 
   Game.prototype.setById = function (id) {
@@ -463,6 +480,7 @@
       if (s.zone) o.zone = s.zone;
       return o;
     });
+    reserverIds(this.board);
     for (var i = 0; i < this.players.length; i++) {
       this.players[i].hand = (d.hands[i] || []).map(cardFromId);
       this.players[i].melded = !!d.melded[i];
@@ -495,6 +513,7 @@
 
   Game.prototype.applyState = function (st) {
     this.board = st.board.map(function (s) { return { id: s.id, cards: s.cards.slice() }; });
+    reserverIds(this.board);
     for (var i = 0; i < this.players.length; i++) {
       this.players[i].hand = st.hands[i].slice();
       this.players[i].melded = st.melded[i];
