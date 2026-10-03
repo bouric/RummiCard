@@ -270,6 +270,10 @@ header .brand span { color: var(--gold); }
   box-shadow: inset 0 0 0 2px #5bc8ff;
 }
 .zone.grid .card.fromai { box-shadow: 0 0 10px rgba(91, 200, 255, .55), 0 2px 5px rgba(0, 0, 0, .34); }
+/* Vos cartes du tour en cours : même traitement que celles des joueurs
+   virtuels, mais en doré — tant que « Au suivant ! » n'est pas cliqué, on
+   voit d'un coup d'œil ce qu'on a posé et ce qu'on peut encore reprendre. */
+.zone.grid .card.staged { box-shadow: 0 0 10px rgba(240, 180, 41, .5), 0 2px 5px rgba(0, 0, 0, .34); }
 .card.staged.fromai::after { box-shadow: inset 0 0 0 2px var(--gold); }
 
 .card.lifted { opacity: .25; }
@@ -357,8 +361,19 @@ header .brand span { color: var(--gold); }
   content: ''; position: absolute; inset: 0; border-radius: var(--radius);
   box-shadow: inset 0 0 0 2px #52d39a, 0 0 12px rgba(82, 211, 154, .5);
 }
-#rack .card.idle { opacity: .48; }
-#rack .card.idle:hover { opacity: .85; }
+/* Cartes injouables : un voile uniforme, posé sur chaque carte. L'ancienne
+   transparence laissait voir deux épaisseurs là où les cartes se
+   chevauchent, et la tranche découverte de chaque carte paraissait plus
+   claire que le reste — une bande verticale sur toute la main. */
+.card .voile {
+  position: absolute; inset: 0; border-radius: var(--radius);
+  background: rgba(8, 12, 20, .55); pointer-events: none;
+}
+#rack .card:hover .voile.terne { background: rgba(8, 12, 20, .18); }
+/* Projecteur : ce qui n'a pas bougé s'efface deux secondes, le temps qu'on
+   voie ce qui vient d'arriver. */
+.card .voile.eteinte { background: rgba(8, 12, 20, .66); animation: voilerCarte .22s ease-out; }
+@keyframes voilerCarte { from { background: rgba(8, 12, 20, 0); } }
 
 /* La dernière carte piochée : même bleu que les cartes fraîchement posées
    par les joueurs virtuels, puisque c'est le même propos — voici ce qui
@@ -372,9 +387,9 @@ header .brand span { color: var(--gold); }
   box-shadow: inset 0 0 0 2px #5bc8ff;
 }
 #rack .card.playable.piochee::after { inset: 3px; border-radius: calc(var(--radius) - 2px); }
-/* Les indices ternissent les cartes injouables, anneau compris : celle que
-   l'on vient de piocher s'efface un peu moins, sinon son repère disparaît. */
-#rack .card.idle.piochee { opacity: .78; }
+/* La carte que l'on vient de piocher s'efface moins que les autres, sinon
+   son repère bleu disparaîtrait sous le voile. */
+#rack .card.piochee .voile { background: rgba(8, 12, 20, .22); }
 
 #msg {
   font-size: 12.5px; color: var(--dim); flex: 1; min-width: 0;

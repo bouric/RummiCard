@@ -238,6 +238,19 @@
     return null;
   }
 
+  /* Projecteur : deux secondes durant, la table ou la main s'eteint sauf ce
+     qui vient d'arriver — les cartes qu'un joueur virtuel vient de poser, ou
+     celle qu'on vient de piocher. */
+  var projecteur = null, projecteurTimer = null;
+  function allumerProjecteur(zone) {
+    projecteur = zone;
+    clearTimeout(projecteurTimer);
+    projecteurTimer = setTimeout(function () {
+      projecteur = null;
+      if (game) render({ animate: false });
+    }, 2000);
+  }
+
   function isStaged(card) {
     return !!(game.snapshot && !game.snapshot.boardIds[card.id]);
   }
@@ -256,7 +269,12 @@
       '<div class="corner"><span class="rank">' + E.rankLabel(card.rank) +
       '</span><span class="cs">' + E.SUIT_GLYPH[card.suit] + '</span></div>' +
       '<div class="mid">' + E.SUIT_GLYPH[card.suit] + '</div>' +
-      '<div class="suit">' + E.SUIT_GLYPH[card.suit] + '</div>';
+      '<div class="suit">' + E.SUIT_GLYPH[card.suit] + '</div>' +
+      /* Un voile pose par-dessus, et non une transparence de la carte
+         entiere : deux cartes qui se chevauchent laisseraient voir deux
+         epaisseurs, et la tranche decouverte paraitrait plus claire que le
+         reste. Dernier enfant, donc sous les anneaux de couleur. */
+      (opts.voile ? '<div class="voile ' + opts.voile + '"></div>' : '');
     return d;
   }
 
@@ -520,7 +538,8 @@
         elems.push(cardEl(s.cards[k], {
           staged: isStaged(s.cards[k]),
           fromAI: !!aiJustPlayed[s.cards[k].id],
-          pickable: isHumanTurn()
+          pickable: isHumanTurn(),
+          voile: (projecteur === 'table' && !aiJustPlayed[s.cards[k].id]) ? 'eteinte' : ''
         }));
       }
     }
@@ -1109,7 +1128,10 @@
        symbole de couleur passe donc sous la valeur (voir la feuille de style). */
     rack.classList.toggle('serre', !!chevauche);
     for (var i = 0; i < hand.length; i++) {
-      var el = cardEl(hand[i], { pickable: isHumanTurn() });
+      var voile = '';
+      if (hints && !hints[hand[i].id]) voile = 'terne';
+      if (projecteur === 'main' && piochee !== hand[i].id) voile = 'eteinte';
+      var el = cardEl(hand[i], { pickable: isHumanTurn(), voile: voile });
       if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
       if (piochee === hand[i].id) el.classList.add('piochee');
       if (chevauche && i) el.style.marginLeft = chevauche + 'px';
@@ -1935,7 +1957,7 @@
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
        ne sait plus laquelle on vient de prendre. Elle reste signalée tant
        qu'on ne l'a pas posée ni remplacée par une nouvelle pioche. */
-    if (card) piochee = card.id;
+    if (card) { piochee = card.id; allumerProjecteur('main'); }
     render(); updateBar();
     sndHmm(!card);
     if (card) toast(TR(had ? 'toast.piochezRetour' : 'toast.piochez', { x: E.label(card) }));
@@ -2001,6 +2023,7 @@
         for (var ci = 0; ci < r.cards.length; ci++) aiJustPlayed[r.cards[ci].id] = true;
       }
       if (r.kind === 'play') {
+        allumerProjecteur('table');
         toast(TR('toast.iaPose', { nom: p.name, n: r.played, cartes: NC(r.played) }));
         sndSnap();
       } else if (r.kind === 'draw') {
