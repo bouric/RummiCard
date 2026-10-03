@@ -2331,7 +2331,8 @@
         : '') +
       '<div class="row"><button class="cta" id="closeopts" style="flex:1">' +
       TR('btn.fermer') + '</button></div>' +
-      '<p class="versiontxt">' + texteVersion + '</p></div>';
+      '<p class="versiontxt">' + texteVersion + '<br>' +
+      COPYRIGHT.replace(/&/g, '&amp;') + '</p></div>';
     ov.classList.remove('hidden');
     $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
     if ($('#voirjrn')) $('#voirjrn').onclick = showJournal;
@@ -2616,6 +2617,7 @@
      derniere correction. Le texte est retenu ici pour que le panneau, rebati
      a chaque ouverture, puisse l'afficher sans tout remesurer. */
   var texteVersion = '';
+  var COPYRIGHT = '\u00a9 2026 Richard Boulais & Claude';
 
   function ecrireVersion(txt) {
     texteVersion = txt;
@@ -2625,6 +2627,8 @@
 
   function stampFooter() {
     var v = $('#version');
+    var c = $('#copyright');
+    if (c) c.textContent = '\u00a0\u00b7\u00a0' + COPYRIGHT;
     if (!v) return;
     if (window.APP_BUILD) { ecrireVersion(TR('accueil.versionDu', { d: window.APP_BUILD })); return; }
     /* Hors de l'app macOS, la date de publication fait l'affaire — mais celle
