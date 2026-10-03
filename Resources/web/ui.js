@@ -1343,7 +1343,10 @@
      ordinateur, et ce que la table porte quand elle est vide. */
   function messageContexte() {
     var human = isHumanTurn();
-    if (!human) return { cls: '', html: game.finished ? '' : TR('hud.reflechissent') };
+    /* Pendant le tour des autres, la barre se tait : la pastille doree du
+       joueur en cours et les points de suspension apres son nom disent deja
+       qui joue, et le tapis s'assombrit derriere ce qu'il vient de poser. */
+    if (!human) return { cls: '', html: '' };
     var staged = game.stagedCards().length;
     var check = game.checkCommit();
     if (check.ok) {
