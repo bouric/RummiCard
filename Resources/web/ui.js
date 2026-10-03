@@ -1260,6 +1260,14 @@
 
   /* ================= Glisser-deposer ============================== */
 
+  /* Distance du curseur au cadre d'une combinaison : nulle a l'interieur,
+     sinon l'ecart au bord le plus proche. */
+  function distanceAuCadre(r, x, y) {
+    var dx = Math.max(r.left - x, 0, x - r.right);
+    var dy = Math.max(r.top - y, 0, y - r.bottom);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
   function inRect(r, x, y, pad) {
     if (!r) return false;
     pad = pad || 0;
@@ -1389,24 +1397,24 @@
       if (splitParts(hover.cards, card)) return { kind: 'split', setId: hover.id };
     }
 
-    // 2) sinon, la meilleure combinaison du plateau
+    // 2) sinon, la meilleure combinaison du plateau. Une carte qui n'a
+    //    qu'une seule place possible la rejoint, meme a l'autre bout : c'est
+    //    tout l'interet. Mais quand plusieurs conviennent, c'est la plus
+    //    proche du curseur qui gagne — et la distance se mesure au bord de
+    //    la combinaison, pas a son centre, qu'une longue suite eloigne.
     var best = null, bestScore = -1e9;
     for (i = 0; i < sets.length; i++) {
       var s = sets[i];
       var idx = E.acceptIndex(s.cards, card);
       if (idx < 0) continue;
-      var score = 0;
+      var r = drag.rects[s.id];
+      var score = -2 * (r ? distanceAuCadre(r, x, y) : 400);
       if (E.isValidSet(s.cards.concat([card]))) score += 5000;
-      score += s.cards.length * 120;
+      score += s.cards.length * 10;
       // Une carte sortie d'une combinaison ne doit pas y retourner d'elle-même :
       // sinon impossible de déplacer une carte d'un carré vers un autre groupe
       // sans viser au pixel près. On y revient en relâchant dessus.
       if (drag.origin.type === 'set' && s.id === drag.origin.setId) score -= 4000;
-      var r = drag.rects[s.id];
-      if (r) {
-        var dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2);
-        score -= Math.sqrt(dx * dx + dy * dy) / 5;
-      }
       if (score > bestScore) { bestScore = score; best = { kind: 'insert', setId: s.id, index: idx }; }
     }
     if (best) return best;
