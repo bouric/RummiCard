@@ -686,19 +686,26 @@
     /* Deux combinaisons de meme valeur ne peuvent pas tenir dans la meme
        case : la seconde part dans une colonne d'appoint. On lui reserve sa
        place dans la grille, sinon elle deborde et la zone se met a defiler. */
-    var doubles = {}, enTrop = 0;
+    var presentes = {}, distinctes = 0, enTrop = 0;
     for (i = 0; i < groups.length; i++) {
       var vv = groups[i].low;
-      if (doubles[vv]) enTrop++; else doubles[vv] = 1;
+      if (presentes[vv]) enTrop++; else { presentes[vv] = 1; distinctes++; }
     }
     var tiennent = Math.floor((largeurG - ecartBord) / groupW) || 1;
-    var cols = Math.max(1, Math.min(tiennent - enTrop, colsVoulues, 14));
+    var cols = Math.max(1, Math.min(tiennent, colsVoulues, 14));
     var rows = Math.ceil(14 / cols);
+    /* Les cases libres accueillent les doublons ; s'il n'y en a pas assez,
+       on retranche des colonnes pour menager celles d'appoint, sinon la
+       grille deborderait et la zone se mettrait a defiler. */
+    var manque = Math.max(0, enTrop - (rows * cols - distinctes));
+    if (manque) {
+      cols = Math.max(1, Math.min(tiennent - manque, colsVoulues, 14));
+      rows = Math.ceil(14 / cols);
+    }
     /* Les lignes se resserrent jusqu'a ce que les cartes se touchent avant
        de laisser la grille deborder : mieux vaut 6 pixels d'air en moins
        qu'un ascenseur. */
     var rowH = Math.max(m.ch, Math.floor(hauteur / rows));
-    addValueCells(zGroups, rowH, groupW, m, rows, GX);
     /* La case de la valeur revient a la combinaison la plus avancee : une
        carte esseulee ne doit pas prendre la place d'un brelan constitue. */
     groups.sort(function (a, b) {
@@ -706,13 +713,35 @@
       var va = E.isValidSet(a.s.cards) ? 1 : 0, vb = E.isValidSet(b.s.cards) ? 1 : 0;
       return (vb - va) || (b.s.cards.length - a.s.cards.length);
     });
-    var occ = {}, maxX = GX + cols * groupW;
+    /* Chaque valeur rejoint sa case, toujours la meme. */
+    var occ = {}, vus = {}, doublons = [], maxX = GX + cols * groupW, gx;
     for (i = 0; i < groups.length; i++) {
       var v = groups[i].low;
-      var n = occ[v] || 0;
-      occ[v] = n + 1;
-      var gx = GX + (n ? cols + n - 1 : valueCol(v, rows)) * groupW;
-      place(zGroups, groups[i].el, gx, GRID_TOP + valueRow(v, rows) * rowH);
+      if (vus[v]) { doublons.push(groups[i]); continue; }
+      vus[v] = 1;
+      var cv = valueCol(v, rows);
+      occ[valueRow(v, rows) + ':' + cv] = 1;
+      place(zGroups, groups[i].el, GX + cv * groupW, GRID_TOP + valueRow(v, rows) * rowH);
+    }
+    /* Une seconde combinaison de meme valeur se range dans la case libre la
+       plus proche de sa jumelle : juste a cote de preference — cote a cote,
+       on les compare d'un coup d'oeil — a defaut juste au-dessous, et vers
+       la droite plutot que vers la gauche. La grille entiere pleine, une
+       colonne d'appoint la recueille. */
+    var appoint = 0;
+    for (i = 0; i < doublons.length; i++) {
+      var g = doublons[i], r0 = valueRow(g.low, rows), c0 = valueCol(g.low, rows);
+      var pr = -1, pc = -1, mieux = 1e9, rr, cc, dist;
+      for (rr = 0; rr < rows; rr++) {
+        for (cc = 0; cc < cols; cc++) {
+          if (occ[rr + ':' + cc]) continue;
+          dist = Math.abs(cc - c0) + 2 * Math.abs(rr - r0) + (cc < c0 ? 0.5 : 0);
+          if (dist < mieux) { mieux = dist; pr = rr; pc = cc; }
+        }
+      }
+      if (pc >= 0) { occ[pr + ':' + pc] = 1; gx = GX + pc * groupW; }
+      else { gx = GX + (cols + appoint++) * groupW; pr = r0; }
+      place(zGroups, g.el, gx, GRID_TOP + pr * rowH);
       if (gx + groupW > maxX) maxX = gx + groupW;
     }
     var groupsH = rows * rowH;
@@ -766,19 +795,6 @@
 
   /* Trame des valeurs côté groupes : chaque valeur garde sa case, occupée ou
      non, pour qu'on sache toujours où regarder. */
-  function addValueCells(zone, rowH, groupW, m, rows, gx) {
-    for (var v = 1; v <= 13; v++) {
-      var cell = document.createElement('div');
-      cell.className = 'valuecell';
-      cell.style.left = (gx + valueCol(v, rows) * groupW) + 'px';
-      cell.style.top = (GRID_TOP + valueRow(v, rows) * rowH) + 'px';
-      cell.style.width = (groupW - 10) + 'px';
-      cell.style.height = m.ch + 'px';
-      cell.innerHTML = '<i>' + E.rankLabel(v) + '</i>';
-      zone.appendChild(cell);
-    }
-  }
-
   function addRuler(zone, step, gridH) {
     var r = document.createElement('div');
     r.className = 'ruler';
