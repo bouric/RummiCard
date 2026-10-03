@@ -975,6 +975,7 @@
     while (tableDeborde() && DENSITIES.indexOf(dens) < DENSITIES.length - 1 && essais++ < 2) {
       dessiner(DENSITIES[DENSITIES.indexOf(dens) + 1]);
     }
+    majBoutonsIcones();
     majBarreCompacte();
   }
 
@@ -991,6 +992,26 @@
     var large = bar.offsetHeight;
     if (etait) jeu.classList.add('compact');
     return large - serree;
+  }
+
+  /* Les boutons doivent tenir sur une seule rangee. S'ils debordent sur une
+     seconde, tous perdent leur libelle — « Au suivant ! », « Annuler » et
+     « Piocher » compris : sur un telephone, cette rangee de moins est autant
+     de tapis gagne. On mesure toujours la barre libelles rendus, jamais
+     l'etat courant, sinon le resserrement se jugerait sur son propre effet
+     et la barre clignoterait d'un rendu a l'autre. */
+  function majBoutonsIcones() {
+    var jeu = $('#game'), btns = document.querySelectorAll('#bar .btn');
+    if (btns.length < 2) return;
+    var compact = jeu.classList.contains('compact'), i;
+    jeu.classList.remove('icones');
+    jeu.classList.remove('compact');
+    var y = btns[0].offsetTop, deborde = false;
+    for (i = 1; i < btns.length; i++) {
+      if (btns[i].offsetTop > y + 2) { deborde = true; break; }
+    }
+    if (compact) jeu.classList.add('compact');
+    jeu.classList.toggle('icones', deborde);
   }
 
   /* Une zone de la table a-t-elle besoin d'un ascenseur ? */

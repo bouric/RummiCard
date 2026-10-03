@@ -332,6 +332,11 @@ header .brand span { color: var(--gold); }
 /* Les boutons devenus étroits, le message retrouve leur rangée : c'est de là
    que vient la hauteur rendue au plateau. */
 #game.compact #msg { flex: 1 1 auto; order: 0; white-space: nowrap; height: 1.4em; }
+/* Et quand les sept boutons ne tiennent pas sur une rangée, les trois
+   principaux se réduisent eux aussi à leur pictogramme plutôt que de
+   déborder sur une seconde — le cas du téléphone. */
+#game.icones .btn .lbl { display: none; }
+#game.icones .btn { padding: 9px 12px; }
 .btn.go { background: linear-gradient(180deg, #2f9c76, #1d7a5c); border-color: #3fb68c; color: #fff; }
 .btn.go:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(45, 150, 115, .4); }
 .btn.magic { background: linear-gradient(180deg, #4a3fb6, #352c8c); border-color: #6559d6; color: #fff; }
