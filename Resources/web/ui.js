@@ -1142,6 +1142,7 @@
   }
 
   function paintOpponents(thinking) {
+    paintOpponentsMini(thinking);
     var box = $('#opponents');
     box.innerHTML = '';
     for (var i = 0; i < game.players.length; i++) {
@@ -1159,6 +1160,40 @@
         TR(p.melded ? 'hud.enJeu' : 'hud.aPoser') +
         '</div></div><div class="fan">' + fan + '</div>';
       box.appendChild(d);
+    }
+  }
+
+  /* Bandeau compact de la premiere ligne : qui joue, avec combien de cartes,
+     et ce qui reste a piocher. Sur tablette et telephone il tient lieu de
+     rangee des joueurs et de pastilles — une ligne de moins avant la table,
+     et autant de hauteur rendue aux cartes. */
+  function paintOpponentsMini(thinking) {
+    var box = $('#oppmini');
+    if (!box) return;
+    box.innerHTML = '';
+    for (var i = 0; i < game.players.length; i++) {
+      var p = game.players[i];
+      var actif = (i === game.current) && !game.finished;
+      var d = document.createElement('div');
+      d.className = 'mini' + (actif ? ' actif' : '') + (actif && !p.human && thinking ? ' pense' : '');
+      /* L'etoile marque votre place ; pour les autres le nom suffit, et
+         l'initiale en plus rognait ce nom sur un telephone. */
+      d.innerHTML = (p.human ? '<b>\u2605</b>' : '') +
+        '<span class="nm">' + p.name + '</span>' +
+        '<span class="n">' + p.hand.length + '</span>';
+      box.appendChild(d);
+    }
+    var pioche = document.createElement('div');
+    pioche.className = 'mini pioche';
+    pioche.innerHTML = '<b>\uD83C\uDCA0</b><span class="n">' + game.deck.length + '</span>';
+    box.appendChild(pioche);
+    /* Le numero de manche, quand il y en a plusieurs : c'est la seule
+       pastille a laquelle le bandeau ne pouvait pas renoncer. */
+    if (match && match.total > 1) {
+      var manche = document.createElement('div');
+      manche.className = 'mini pioche manche';
+      manche.innerHTML = '<span class="n">' + match.manche + '/' + match.total + '</span>';
+      box.appendChild(manche);
     }
   }
 
