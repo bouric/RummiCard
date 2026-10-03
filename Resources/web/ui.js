@@ -143,6 +143,11 @@
     if (prefs.lastDeal) newGame(prefs.lastDeal);
   }
 
+  /* Un nombre de joueurs virtuels, dit comme le titre de la rubrique. */
+  function virtuels(n) {
+    return TR(n > 1 ? 'accueil.virtuels' : 'accueil.virtuel');
+  }
+
   function buildMenu() {
     var reprise = $('#resume');
     if (reprise) {
@@ -151,7 +156,7 @@
       if (sv) {
         reprise.innerHTML = '\u25b6 ' + TR('accueil.reprendre') + ' ' +
           TR('accueil.reprendreDetail', { n: sv.n, c: sv.hands[0].length,
-            adv: TR(sv.n > 1 ? 'accueil.adversaires' : 'accueil.adversaire') });
+            cartes: NC(sv.hands[0].length), adv: virtuels(sv.n) });
       }
     }
     var replay = $('#replay');
@@ -160,8 +165,7 @@
       replay.classList.toggle('hidden', !d);
       if (d) {
         replay.innerHTML = '\u21ba ' + TR('accueil.redonne') + ' ' +
-          TR('accueil.redonneDetail', { n: d.n,
-            adv: TR(d.n > 1 ? 'accueil.adversaires' : 'accueil.adversaire') });
+          TR('accueil.redonneDetail', { n: d.n, adv: virtuels(d.n) });
       }
     }
     var lb = $('#langs');
@@ -183,7 +187,9 @@
       (function (n) {
         var b = document.createElement('button');
         b.className = 'choice' + (n === nVirtual ? ' on' : '');
-        b.innerHTML = n + '<small>' + TR(n > 1 ? 'accueil.adversaires' : 'accueil.adversaire') + '</small>';
+        /* Le titre de la rubrique dit deja de quoi il s'agit : le chiffre
+           seul suffit, et la rangee y gagne en clarte. */
+        b.textContent = n;
         b.onclick = function () { nVirtual = n; buildMenu(); };
         box.appendChild(b);
       })(i);

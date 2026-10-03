@@ -62,19 +62,19 @@ button:disabled { cursor: default; }
 #menu h2 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
 
 .choices { display: flex; gap: 10px; }
+/* Le chiffre seul : le titre de la rubrique dit deja ce qu'on compte. Les
+   pastilles redeviennent carrees, et le chiffre occupe la place rendue. */
 .choice {
-  width: 62px; height: 66px; border-radius: 14px;
+  width: 58px; height: 58px; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--stroke);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  font-size: 23px; font-weight: 700; transition: .16s;
+  display: grid; place-items: center;
+  font-size: 26px; font-weight: 700; transition: .16s;
 }
-.choice small { font-size: 10px; font-weight: 500; color: var(--dim); letter-spacing: .04em; }
 .choice:hover { background: rgba(255, 255, 255, .11); transform: translateY(-2px); }
 .choice.on {
   background: linear-gradient(180deg, #2f7f68, #1d6252);
   border-color: #46a789; box-shadow: 0 6px 20px rgba(32, 120, 98, .45);
 }
-.choice.on small { color: #bfe8d9; }
 
 .cta {
   padding: 14px 42px; border-radius: 13px; font-size: 16px; font-weight: 700;
