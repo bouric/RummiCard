@@ -80,6 +80,13 @@
     try { window.localStorage.setItem('rummicard.prefs', JSON.stringify(prefs)); } catch (e) { /* file:// */ }
     try { window.webkit.messageHandlers.prefs.postMessage(prefs); } catch (e) { /* hors app */ }
   }
+  /* L'astuce « Refaire » ne se dit qu'une fois par partie, a la premiere
+     pioche. Piocher clot le tour sans retour possible par « Annuler », et le
+     seul recours — « Refaire » — ne porte pas son nom sur telephone, ou le
+     libelle est masque pour tenir la ligne : il n'y reste que l'icone.
+     0 = jamais dite, 1 = a dire des que la main revient, 2 = dite. */
+  var astuceRefaire = 0;
+
   var soundOn = true;
   var busy = false;
   var drag = null;
@@ -212,6 +219,7 @@
     turnStack = [];
     piochee = null;
     dernierMessage = '';     // la consigne d'ouverture se redit a chaque partie
+    astuceRefaire = 0;
     jrnNouvelle();
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
@@ -2126,7 +2134,14 @@
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
        ne sait plus laquelle on vient de prendre. Elle reste signalée tant
        qu'on ne l'a pas posée ni remplacée par une nouvelle pioche. */
-    if (card) { piochee = card.id; allumerProjecteur('main', 2000); }
+    if (card) {
+      piochee = card.id;
+      allumerProjecteur('main', 2000);
+      /* On ne la dit pas tout de suite : le bouton reste eteint tant que les
+         joueurs virtuels n'ont pas repondu. Elle attend votre retour, moment
+         ou elle devient vraie et ou l'on peut y donner suite. */
+      if (astuceRefaire === 0) astuceRefaire = 1;
+    }
     render(); updateBar();
     sndHmm(!card);
     if (!card) toast(TR('toast.piocheVide'));
@@ -2199,7 +2214,17 @@
     /* La table reste assombrie une seconde apres votre retour : le temps de
        voir ce qui a change pendant que les autres jouaient. */
     if (projecteur === 'table') projecteurTimer = setTimeout(eteindreProjecteur, 1000);
+    direAstuceRefaire();
     if (game.finished) gameOver();
+  }
+
+  /* Un vrai avertissement passe avant une astuce : si une bulle est deja a
+     l'ecran, celle-ci attend la prochaine occasion plutot que de l'effacer. */
+  function direAstuceRefaire() {
+    if (astuceRefaire !== 1 || !canRewind()) return;
+    if ($('#toast').classList.contains('show')) return;
+    astuceRefaire = 2;
+    toast(TR('toast.refaireAstuce', { b: TR('btn.refaire') }));
   }
 
   async function tourDesVirtuels() {

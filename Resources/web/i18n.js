@@ -79,6 +79,7 @@
     'btn.suivant': 'Au suivant !', 'btn.annuler': 'Annuler', 'btn.piocher': 'Piocher',
     'btn.indices': 'Indices', 'btn.magique': 'Magique', 'btn.trier': 'Trier',
     'btn.refaire': 'Refaire', 'btn.fermer': 'Fermer', 'btn.menu': 'Menu',
+    'toast.refaireAstuce': '\u21ba {b} revient avant votre pioche.',
     'btn.mancheSuivante': 'Manche suivante', 'btn.nouvellePartie': 'Nouvelle partie',
     'btn.memeDonne': 'Même donne',
 
@@ -236,6 +237,7 @@
     'btn.suivant': 'Next player!', 'btn.annuler': 'Undo', 'btn.piocher': 'Draw',
     'btn.indices': 'Hints', 'btn.magique': 'Magic', 'btn.trier': 'Sort',
     'btn.refaire': 'Rewind', 'btn.fermer': 'Close', 'btn.menu': 'Menu',
+    'toast.refaireAstuce': '\u21ba {b} takes you back to before your draw.',
     'btn.mancheSuivante': 'Next round', 'btn.nouvellePartie': 'New game',
     'btn.memeDonne': 'Same deal',
 
@@ -391,6 +393,7 @@
     'btn.suivant': 'Weiter!', 'btn.annuler': 'Zurück', 'btn.piocher': 'Ziehen',
     'btn.indices': 'Hinweise', 'btn.magique': 'Magie', 'btn.trier': 'Sortieren',
     'btn.refaire': 'Zug zurück', 'btn.fermer': 'Schließen', 'btn.menu': 'Menü',
+    'toast.refaireAstuce': '\u21ba {b} bringt Sie vor Ihr Ziehen zurück.',
     'btn.mancheSuivante': 'Nächste Runde', 'btn.nouvellePartie': 'Neues Spiel',
     'btn.memeDonne': 'Gleiche Austeilung',
 
@@ -546,6 +549,7 @@
     'btn.suivant': 'Al prossimo!', 'btn.annuler': 'Annulla', 'btn.piocher': 'Pesca',
     'btn.indices': 'Suggerimenti', 'btn.magique': 'Magia', 'btn.trier': 'Ordina',
     'btn.refaire': 'Rigioca', 'btn.fermer': 'Chiudi', 'btn.menu': 'Menu',
+    'toast.refaireAstuce': '\u21ba {b} riporta a prima della pesca.',
     'btn.mancheSuivante': 'Mano successiva', 'btn.nouvellePartie': 'Nuova partita',
     'btn.memeDonne': 'Stessa distribuzione',
 
@@ -701,6 +705,7 @@
     'btn.suivant': 'Volgende!', 'btn.annuler': 'Ongedaan', 'btn.piocher': 'Trekken',
     'btn.indices': 'Tips', 'btn.magique': 'Magie', 'btn.trier': 'Sorteren',
     'btn.refaire': 'Terug', 'btn.fermer': 'Sluiten', 'btn.menu': 'Menu',
+    'toast.refaireAstuce': '\u21ba {b} brengt u tot vóór uw trekbeurt.',
     'btn.mancheSuivante': 'Volgende ronde', 'btn.nouvellePartie': 'Nieuw spel',
     'btn.memeDonne': 'Zelfde deling',
 
@@ -856,6 +861,7 @@
     'btn.suivant': '¡Al siguiente!', 'btn.annuler': 'Deshacer', 'btn.piocher': 'Robar',
     'btn.indices': 'Pistas', 'btn.magique': 'Magia', 'btn.trier': 'Ordenar',
     'btn.refaire': 'Rehacer', 'btn.fermer': 'Cerrar', 'btn.menu': 'Menú',
+    'toast.refaireAstuce': '\u21ba {b} vuelve a antes de robar.',
     'btn.mancheSuivante': 'Manga siguiente', 'btn.nouvellePartie': 'Nueva partida',
     'btn.memeDonne': 'Mismo reparto',
 
