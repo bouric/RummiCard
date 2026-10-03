@@ -206,7 +206,6 @@
     history = [game.captureState()];
     turnStack = [];
     jrnNouvelle();
-    compactFige = false;
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
     $('#game').classList.remove('hidden');
@@ -940,23 +939,53 @@
     majBarreCompacte();
   }
 
-  /* Si la table deborde et doit defiler, les boutons perdent leurs libelles :
-     le message rejoint leur rangee et le plateau gagne une quarantaine de
-     pixels. Une fois la barre resserree on l'y laisse jusqu'au prochain
-     changement de taille de fenetre : la rendre large ferait reapparaitre
-     l'ascenseur, qui la resserrerait de nouveau, sans fin. */
-  var compactFige = false;
-  function majBarreCompacte() {
-    var zones = document.querySelectorAll('#board .zone');
-    var deborde = false, i, z;
+  /* Ce que la barre resserree rendrait au tapis : la difference de hauteur
+     entre ses deux etats. On les mesure l'un apres l'autre sans laisser
+     l'ecran se redessiner entre les deux, donc sans clignotement. Sur un
+     large ecran le message tient deja sur la rangee des boutons : le gain
+     est nul, et il n'y a aucune raison de masquer les libelles. */
+  function gainCompact(jeu) {
+    var bar = $('#bar'), etait = jeu.classList.contains('compact');
+    jeu.classList.add('compact');
+    var serree = bar.offsetHeight;
+    jeu.classList.remove('compact');
+    var large = bar.offsetHeight;
+    if (etait) jeu.classList.add('compact');
+    return large - serree;
+  }
+
+  /* Une zone de la table a-t-elle besoin d'un ascenseur ? */
+  function tableDeborde() {
+    var zones = document.querySelectorAll('#board .zone'), i, z;
     for (i = 0; i < zones.length; i++) {
       z = zones[i];
       if (z.classList.contains('folded')) continue;
-      if (z.scrollHeight > z.clientHeight + 1 || z.scrollWidth > z.clientWidth + 1) deborde = true;
+      if (z.scrollHeight > z.clientHeight + 1 || z.scrollWidth > z.clientWidth + 1) return true;
     }
-    var jeu = $('#game');
-    if (deborde) { jeu.classList.add('compact'); compactFige = true; }
-    else if (!compactFige) jeu.classList.remove('compact');
+    return false;
+  }
+
+  /* Si la table deborde et doit defiler, les boutons perdent leurs libelles :
+     le message rejoint leur rangee et le plateau gagne une rangee entiere.
+     Quand l'ascenseur a disparu, on ne se contente pas de rendre les
+     libelles : on redessine la table avec la barre large, et on ne garde ce
+     retour que si l'ascenseur ne reparait pas. La grille remplit toujours la
+     hauteur offerte, aucune mesure ne dit donc a l'avance s'il reste de la
+     marge — seul l'essai le dit. Et comme c'est le meme rendu qui tranche,
+     la barre ne peut pas se mettre a clignoter d'un tour a l'autre. */
+  var essaiLibelles = false;
+  function majBarreCompacte() {
+    var jeu = $('#game'), gain = gainCompact(jeu);
+    /* Sur un large ecran le message tient deja sur la rangee des boutons :
+       les resserrer ne rendrait rien au tapis. */
+    if (gain <= 0) { jeu.classList.remove('compact'); return; }
+    if (tableDeborde()) { jeu.classList.add('compact'); return; }
+    if (!jeu.classList.contains('compact') || essaiLibelles) return;
+    essaiLibelles = true;
+    jeu.classList.remove('compact');
+    paintBoard();
+    if (tableDeborde()) { jeu.classList.add('compact'); paintBoard(); }
+    essaiLibelles = false;
   }
 
   /* Suite (même couleur, valeurs qui se suivent) -> affichage vertical.
@@ -2296,7 +2325,6 @@
   });
 
   window.addEventListener('resize', function () {
-    compactFige = false;
     $('#game').classList.remove('compact');
     if (game) render({ animate: false });
   });
