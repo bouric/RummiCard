@@ -349,9 +349,12 @@ header .brand span { color: var(--gold); }
   background: linear-gradient(180deg, #caa02a, #a67d16); border-color: #e3bb49; color: #fff;
 }
 
-/* Cartes de la main que l'on peut poser. */
+/* Cartes de la main que l'on peut poser. L'anneau reste dans le plan de sa
+   carte : dans une main resserree, s'il passait au-dessus, on verrait des
+   contours verts flotter par-dessus les cartes voisines. Seule la tranche
+   visible se borde de vert, et cela suffit a la reconnaitre. */
 #rack .card.playable::before {
-  content: ''; position: absolute; inset: 0; border-radius: var(--radius); z-index: 1;
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
   box-shadow: inset 0 0 0 2px #52d39a, 0 0 12px rgba(82, 211, 154, .5);
 }
 #rack .card.idle { opacity: .48; }
@@ -361,14 +364,11 @@ header .brand span { color: var(--gold); }
    par les joueurs virtuels, puisque c'est le même propos — voici ce qui
    vient d'arriver. Si la carte est aussi jouable, l'anneau vert garde le
    bord et le bleu se glisse en dedans : les deux restent lisibles. */
-#rack .card.piochee {
-  /* Au-dessus de ses voisines : dans une main resserrée en éventail, la
-     carte suivante recouvrirait la moitié de l'anneau. */
-  z-index: 3;
-  box-shadow: 0 0 12px rgba(91, 200, 255, .6), 0 2px 5px rgba(0, 0, 0, .34);
-}
+/* Comme l'anneau vert, celui-ci reste dans le plan de sa carte : sa tranche
+   visible se borde de bleu, et rien ne flotte au-dessus des voisines. */
+#rack .card.piochee { box-shadow: 0 0 12px rgba(91, 200, 255, .6), 0 2px 5px rgba(0, 0, 0, .34); }
 #rack .card.piochee::after {
-  content: ''; position: absolute; inset: 0; border-radius: var(--radius); z-index: 2;
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
   box-shadow: inset 0 0 0 2px #5bc8ff;
 }
 #rack .card.playable.piochee::after { inset: 3px; border-radius: calc(var(--radius) - 2px); }
