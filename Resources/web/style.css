@@ -139,6 +139,7 @@ header .brand span { color: var(--gold); }
 #oppmini .mini.actif b { color: var(--gold); }
 #oppmini .mini.pense .nm::after { content: ' \2026'; color: var(--gold); }
 #oppmini .mini.pioche { color: var(--dim); }
+#oppmini .mini .lbl { color: var(--dim); }
 .opp {
   display: flex; align-items: center; gap: 8px; padding: 6px 11px 6px 8px; border-radius: 12px;
   background: var(--panel); border: 1px solid var(--stroke); transition: .22s;
@@ -221,6 +222,7 @@ header .brand span { color: var(--gold); }
   width: 100%; margin-bottom: -4px; font-size: 10px; font-weight: 600;
   letter-spacing: .13em; text-transform: uppercase; color: rgba(255, 255, 255, .38);
 }
+#board.moyen { --cw: 54px; --ch: 77px; }
 #board.dense { --cw: 48px; --ch: 68px; }
 #board.denser { --cw: 40px; --ch: 57px; }
 #board .empty {
@@ -407,9 +409,6 @@ header .brand span { color: var(--gold); }
   box-shadow: inset 0 0 0 2px #5bc8ff;
 }
 #rack .card.playable.piochee::after { inset: 3px; border-radius: calc(var(--radius) - 2px); }
-/* La carte que l'on vient de piocher s'efface moins que les autres, sinon
-   son repère bleu disparaîtrait sous le voile. */
-#rack .card.piochee .voile { background: rgba(8, 12, 20, .22); }
 
 #msg {
   font-size: 12.5px; color: var(--dim); flex: 1; min-width: 0;
@@ -524,8 +523,10 @@ header .brand span { color: var(--gold); }
 
 /* Tablette et téléphone : une seule ligne avant la table. Les pastilles et
    la rangée des joueurs laissent la place au bandeau compact, qui dit la
-   même chose dans la ligne déjà occupée par les boutons d'icônes. */
-@media (max-width: 1040px) {
+   même chose dans la ligne déjà occupée par les boutons d'icônes.
+   Le doigt vaut la largeur : un iPad en paysage est plus large que bien des
+   fenêtres d'ordinateur, et c'est pourtant lui qui a besoin de la place. */
+@media (max-width: 1040px), (hover: none) and (pointer: coarse) {
   #game header .brand, #game header .pill, #game #opponents { display: none; }
   #game #oppmini { display: flex; }
   #game header { flex-wrap: nowrap; }
