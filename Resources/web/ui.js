@@ -1372,7 +1372,10 @@
         ? TR('bar.indices', { n: n, cartes: NC(n), mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') })
         : TR('bar.indicesRien') };
     }
-    return { cls: '', html: TR('bar.glisser') };
+    /* Rien de particulier a dire : la barre reste vide. Le rappel « glissez
+       une carte sur la table » revenait a chaque tour pour une consigne que
+       les regles donnent une fois pour toutes. */
+    return { cls: '', html: '' };
   }
 
   /* ================= Aide : cartes posables ======================= */
