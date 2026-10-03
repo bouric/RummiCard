@@ -2570,13 +2570,33 @@
     var v = $('#version');
     if (!v) return;
     if (window.APP_BUILD) { v.textContent = TR('accueil.versionDu', { d: window.APP_BUILD }); return; }
-    // Hors de l'app macOS, la date de publication de la page fait l'affaire.
-    var d = new Date(document.lastModified);
-    v.textContent = isNaN(d.getTime())
-      ? TR('accueil.versionDev')
-      : TR('accueil.versionDu', { d: ('0' + d.getDate()).slice(-2) + '/' +
-          ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() + ' ' +
-          ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) });
+    /* Hors de l'app macOS, la date de publication fait l'affaire — mais celle
+       de la page ne bouge que si index.html change, et une correction portee
+       a ui.js passait inapercue : sur l'iPad on croyait tourner sur du neuf
+       en lisant une date d'hier. On retient donc la plus recente des dates de
+       publication des fichiers du jeu. */
+    function ecrire(d) {
+      v.textContent = isNaN(d.getTime())
+        ? TR('accueil.versionDev')
+        : TR('accueil.versionDu', { d: ('0' + d.getDate()).slice(-2) + '/' +
+            ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() + ' ' +
+            ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) });
+    }
+    var plusRecente = new Date(document.lastModified);
+    ecrire(plusRecente);
+    if (!window.fetch) return;
+    var fichiers = ['index.html', 'i18n.js', 'solver.js', 'engine.js', 'ai.js', 'ui.js', 'style.css'];
+    Promise.all(fichiers.map(function (f) {
+      return fetch(f, { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+        var h = r.headers.get('last-modified');
+        return h ? new Date(h) : null;
+      }).catch(function () { return null; });
+    })).then(function (dates) {
+      for (var i = 0; i < dates.length; i++) {
+        if (dates[i] && !isNaN(dates[i].getTime()) && dates[i] > plusRecente) plusRecente = dates[i];
+      }
+      ecrire(plusRecente);
+    });
   }
 
   /* Hors ligne : une fois la page ouverte, le jeu se relance sans réseau.
