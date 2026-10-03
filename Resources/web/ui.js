@@ -163,10 +163,14 @@
   var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
   var turnStack = [];        // états successifs pendant le tour en cours
   var piochee = null;        // la dernière carte piochée, signalée en bleu dans la main
-  /* Le coup que « Magique » met en lumière, sans jamais le jouer :
-     { ids: cartes de la main a poser, sets: combinaisons a remanier,
-       n: combien de cartes, neuves: combinaisons a creer de toutes pieces } */
-  var solution = null;
+  /* « Magique » est un mode, pas un coup joue : allume, il transforme la main
+     en loupe. Toucher une carte montre ou elle se pose — et rien d'autre ne
+     s'allume. C'est la question « celle-ci, ou va-t-elle ? » posee carte par
+     carte, la seule facon d'apprendre la table au lieu de la subir.
+     montre = { carte: identifiant, sets: combinaisons concernees, rien: true
+     si la carte ne se pose nulle part } */
+  var magique = false;
+  var montre = null;
 
   /* ================= Accueil ====================================== */
 
@@ -245,7 +249,8 @@
     piochee = null;
     dernierMessage = '';     // la consigne d'ouverture se redit a chaque partie
     astuceRefaire = 0;
-    solution = null;
+    magique = false;
+    montre = null;
     jrnNouvelle();
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
@@ -586,7 +591,7 @@
      chercher parmi quinze autres. Le projecteur des joueurs virtuels obeit au
      meme principe et cede la place quand les deux se presentent. */
   function voileCarte(s, carte) {
-    if (solution) return solution.sets[s.id] ? '' : 'eteinte';
+    if (montre && !montre.rien) return montre.sets[s.id] ? '' : 'eteinte';
     if (projecteur === 'table' && !aiJustPlayed[carte.id]) return 'eteinte';
     return '';
   }
@@ -597,7 +602,7 @@
     var el = document.createElement('div');
     el.className = 'set' + (vertical ? ' run' : (full.length >= 2 ? ' group' : '')) +
       (E.isValidSet(full) ? '' : ' bad') + (s.slot >= 0 ? ' target' : '') +
-      (solution && solution.sets[s.id] ? ' montree' : '');
+      (montre && montre.sets[s.id] ? ' montree' : '');
     el.dataset.set = s.id;
     var elems = [];
     for (var k = 0; k <= s.cards.length; k++) {
@@ -609,7 +614,7 @@
           /* Pendant qu'un coup est montre, le bleu « vient d'etre pose par un
              virtuel » se tait : une seule couleur parle a la fois, sinon les
              deux se disputent le regard et aucune ne porte. */
-          fromAI: !solution && !!aiJustPlayed[s.cards[k].id],
+          fromAI: !montre && !!aiJustPlayed[s.cards[k].id],
           pickable: isHumanTurn(),
           voile: voileCarte(s, s.cards[k])
         }));
@@ -1246,7 +1251,7 @@
       var el = cardEl(hand[i], { pickable: isHumanTurn(), voile: voile });
       if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
       if (piochee === hand[i].id) el.classList.add('piochee');
-      if (solution && solution.ids[hand[i].id]) el.classList.add('montree');
+      if (montre && montre.carte === hand[i].id) el.classList.add('montree');
       if (chevauche && i) el.style.marginLeft = chevauche + 'px';
       rack.appendChild(el);
     }
@@ -1442,7 +1447,7 @@
     $('#sort').disabled = !human;
     $('#rewind').disabled = !canRewind();
     $('#hints').classList.toggle('on', !!prefs.hints);
-    $('#auto').classList.toggle('on', !!solution);
+    $('#auto').classList.toggle('on', magique);
 
     var m = messageContexte();
     var msg = $('#msg');
@@ -1461,7 +1466,12 @@
          a l'ecran, plutot que de supposer. */
       var surTapis = !!document.querySelector('#board .empty');
       var texte = surTapis ? (m.complement || '') : m.html;
-      if (texte && m.bulle && texte !== dernierMessage &&
+      /* Une reponse directe passe devant : en mode loupe, on interroge une
+         carte apres l'autre, et la bulle precedente est encore a l'ecran
+         quand la suivante arrive. Lui ceder la place ferait repondre la bulle
+         avec un coup de retard — elle nommerait la carte d'avant. */
+      if (texte && m.forcer && texte !== dernierMessage) { toast(texte); }
+      else if (texte && m.bulle && texte !== dernierMessage &&
           !$('#toast').classList.contains('show')) toast(texte);
       dernierMessage = texte;
     } else {
@@ -1479,12 +1489,19 @@
        joueur en cours et les points de suspension apres son nom disent deja
        qui joue, et le tapis s'assombrit derriere ce qu'il vient de poser. */
     if (!human) return { cls: '', html: '' };
-    /* Le coup montre passe avant tout le reste : c'est une reponse a une
+    /* Le mode loupe passe avant tout le reste : c'est une reponse a une
        question qu'on vient de poser. */
-    if (solution) {
-      return { cls: 'good', bulle: true,
-        html: TR(solution.vises ? 'bar.magiqueTable' : 'bar.magique',
-          { n: solution.n, cartes: NC(solution.n) }) };
+    if (magique) {
+      if (montre && montre.rien) {
+        return { cls: 'warn', bulle: true, forcer: true,
+          html: TR('bar.magiqueRien', { c: E.label(montre.carteObj) }) };
+      }
+      if (montre) {
+        return { cls: 'good', bulle: true, forcer: true,
+          html: TR(montre.remanie ? 'bar.magiqueRemanie' : 'bar.magiqueCarte',
+            { c: E.label(montre.carteObj) }) };
+      }
+      return { cls: 'good', bulle: true, html: TR('bar.magiqueMode') };
     }
     var staged = game.stagedCards().length;
     var check = game.checkCommit();
@@ -1991,7 +2008,19 @@
     if (!drag) return;
     detachDrag();
 
-    // Simple clic sans deplacement : placement automatique.
+    // Simple clic sans deplacement : placement automatique — sauf en mode
+    // loupe, ou le meme geste interroge la carte au lieu de la poser. Le
+    // glisser, lui, continue de poser dans les deux cas.
+    if (!drag.moved && drag.origin.type === 'hand' && magique) {
+      var carte = drag.card;
+      var fantome = drag.ghost;
+      drag = null;
+      if (fantome) fantome.remove();
+      $('#rackwrap').classList.remove('target');
+      render();
+      montrerCarte(carte);
+      return;
+    }
     if (!drag.moved && drag.origin.type === 'hand') {
       var b = drag.rects.__board;
       setTarget(b.left + b.width / 2, b.top + b.height * .45, true, true);
@@ -2128,7 +2157,8 @@
     history = [game.captureState()];
     turnStack = [];
     aiJustPlayed = {};
-    solution = null;
+    magique = false;
+    montre = null;
     $('#menu').classList.add('hidden');
     $('#game').classList.remove('hidden');
     $('#overlay').classList.add('hidden');
@@ -2147,7 +2177,7 @@
   function doRewind() {
     if (!canRewind()) return;
     jrn('refaire');
-    eteindreSolution(true);
+    eteindreMontre(true);
     history.pop();
     game.applyState(history[history.length - 1]);
     turnStack = [];
@@ -2159,7 +2189,7 @@
   function doCommit() {
     if (!isHumanTurn()) return;
     jrn('suivant');
-    eteindreSolution(true);
+    eteindreMontre(true);
     var res = game.commit();
     if (!res.ok) { toast(res.reason); return; }
     var n = game.stagedCards().length;
@@ -2173,9 +2203,10 @@
   /* Mémorise l'état avant chaque mouvement, pour les défaire un par un. */
   function pushTurnState() {
     aiJustPlayed = {};         // votre premier geste efface le surlignage
-    /* Le coup montre valait pour la table d'avant : des qu'elle bouge, il
-       designerait des combinaisons qui ne sont plus les memes. */
-    eteindreSolution(true);
+    /* Ce qui etait montre valait pour la table d'avant : des qu'elle bouge,
+       la loupe designerait des combinaisons qui ne sont plus les memes. Le
+       mode, lui, reste allume. */
+    eteindreMontre(true);
     /* Sans cartes en lumiere, le projecteur n'eclairerait plus rien : il
        assombrirait toute la table. Votre premier geste l'eteint. */
     eteindreProjecteur(true);
@@ -2186,7 +2217,7 @@
   function doUndo() {
     if (!isHumanTurn() || !turnStack.length) return;
     jrn('annule');
-    eteindreSolution(true);
+    eteindreMontre(true);
     restoreState(turnStack.pop());
     render(); updateBar(); sndLift();
   }
@@ -2194,7 +2225,7 @@
   function doDraw() {
     if (!isHumanTurn()) return;
     if (game.stagedCards().length) return;   // meme barriere pour la touche P
-    eteindreSolution(true);
+    eteindreMontre(true);
     jrn('pioche');
     var card = game.draw();
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
@@ -2217,63 +2248,92 @@
     aiPhase();
   }
 
-  /* « Magique » montre le coup, il ne le joue pas : on vient le consulter
-     quand on ne trouve pas, et jouer a votre place ne vous apprend rien. Les
-     cartes a poser s'allument dans la main, les combinaisons a remanier
-     s'eclairent sur la table, et rien ne bouge. Un second appui eteint tout.
+  /* « Magique » n'est pas un coup, c'est un mode : allume, il transforme la
+     main en loupe. On touche une carte, et la table montre ce qu'elle en
+     ferait — la combinaison qui l'accueille, ou celles qui se remanient pour
+     lui faire place. Tout le reste s'efface. Une carte a la fois : c'est ainsi
+     qu'on apprend a lire une table, la ou une solution toute faite ne laisse
+     rien dans la memoire.
 
-     Le coup est cherche depuis la table telle qu'elle est — vos poses du tour
-     comprises — et non depuis le debut du tour : une proposition qui
-     contredirait ce qu'on a sous les yeux ne montrerait rien du tout. Pour la
-     meilleure solution d'ensemble, il suffit de reprendre ses cartes. */
+     Tant que le mode est allume, un simple appui interroge au lieu de poser ;
+     le glisser, lui, pose toujours. */
   function doAuto() {
     if (!isHumanTurn()) return;
     jrn('magique');
-    if (solution) { eteindreSolution(); return; }
-    var board = game.boardCards();
-    var best = chrono('magique', function () {
-      return AI.bestPartition(board, game.human().hand, null, tourDOuverture());
-    });
-    if (!best || !best.count) {
-      /* Sur une table vierge, « aucun coup » veut dire « aucune suite » :
-         le dire, sinon le joueur qui tient un beau brelan ne comprend pas. */
-      toast(TR(tourDOuverture() ? 'toast.rienOuvrir' : 'toast.rienAJouer'));
-      return;
-    }
-    solution = analyserSolution(best);
-    sndMagic();
+    magique = !magique;
+    montre = null;
+    if (magique) sndMagic();
     render();
     updateBar();
   }
 
-  function eteindreSolution(sansRedessiner) {
-    if (!solution) return;
-    solution = null;
+  function eteindreMontre(sansRedessiner) {
+    if (!montre) return;
+    montre = null;
     if (!sansRedessiner) { render(); updateBar(); }
   }
 
-  /* Traduit la partition rendue par le solveur en deux listes a eclairer :
-     les cartes de la main qu'elle emploie, et les combinaisons posees dont le
-     contenu change. Chaque nouvelle combinaison est rapprochee de l'ancienne
-     avec laquelle elle partage le plus de cartes — meme appariement que celui
-     qui garde les combinaisons a leur place sur la table. */
-  function analyserSolution(best) {
-    var anciens = game.board, i, j, k;
-    var mainIds = {}, h = game.human().hand;
-    for (i = 0; i < h.length; i++) mainIds[h[i].id] = true;
-    var ids = {}, n = 0;
-    for (i = 0; i < best.played.length; i++) {
-      if (mainIds[best.played[i].id] && !ids[best.played[i].id]) {
-        ids[best.played[i].id] = true; n++;
+  /* Ou se poserait cette carte ? Le solveur cherche une partition de la table
+     qui l'emploie obligatoirement ; les combinaisons dont le contenu change
+     sont celles qui la concernent. Forcer une carte precise reduit tellement
+     la recherche qu'elle coute moins d'une milliseconde, meme table pleine. */
+  function montrerCarte(card) {
+    if (montre && montre.carte === card.id) { eteindreMontre(); return; }
+    montre = { carte: card.id, carteObj: card, sets: {}, rien: true, remanie: false };
+
+    /* D'abord la reponse simple : la carte se range-t-elle telle quelle au
+       bout d'une combinaison posee ? C'est ainsi qu'un joueur regarde, et
+       cela evite d'eclairer tout un remaniement la ou il suffit de tendre le
+       bras. Le solveur, lui, cherche une partition valable, pas la moins
+       remuante : laisse seul, il deplacait des combinaisons sans rapport avec
+       la question posee. */
+    var i, directes = {}, trouvees = 0;
+    for (i = 0; i < game.board.length; i++) {
+      var jeu = game.board[i];
+      if (E.acceptIndex(jeu.cards, card) >= 0 && E.isValidSet(jeu.cards.concat([card]))) {
+        directes[jeu.id] = true; trouvees++;
       }
     }
+    if (trouvees) {
+      montre.sets = directes;
+      montre.rien = false;
+      sndSnap();
+      render(); updateBar();
+      return;
+    }
+
+    /* Aucune place toute faite : il faut remanier. On demande alors au
+       solveur une table qui emploie cette carte, et l'on eclaire ce qui
+       bouge. */
+    var board = game.boardCards();
+    var res = board.length ? chrono('magique', function () {
+      return Solver.solve(board, [card], { objective: 'count', mustUse: [card] });
+    }) : null;
+    if (res && res.count) {
+      montre.sets = combinaisonsTouchees(res.sets);
+      montre.rien = false;
+      montre.remanie = true;
+      sndSnap();
+    } else {
+      sndHmm(true);
+    }
+    render();
+    updateBar();
+  }
+
+  /* Combinaisons posees dont le contenu change dans la partition proposee.
+     Chaque nouvelle combinaison est rapprochee de l'ancienne avec laquelle
+     elle partage le plus de cartes — meme appariement que celui qui garde les
+     combinaisons a leur place sur la table. */
+  function combinaisonsTouchees(nouvelles) {
+    var anciens = game.board, i, j, k;
     var scores = [];
     for (i = 0; i < anciens.length; i++) {
       var dedans = {};
       for (k = 0; k < anciens[i].cards.length; k++) dedans[anciens[i].cards[k].id] = true;
-      for (j = 0; j < best.sets.length; j++) {
+      for (j = 0; j < nouvelles.length; j++) {
         var partagees = 0;
-        for (k = 0; k < best.sets[j].length; k++) if (dedans[best.sets[j][k].id]) partagees++;
+        for (k = 0; k < nouvelles[j].length; k++) if (dedans[nouvelles[j][k].id]) partagees++;
         if (partagees) scores.push({ o: i, n: j, s: partagees });
       }
     }
@@ -2287,16 +2347,12 @@
     function signature(cartes) {
       return cartes.map(function (c) { return c.id; }).sort().join(',');
     }
-    var sets = {}, vises = 0;
+    var sets = {};
     for (i = 0; i < anciens.length; i++) {
-      var apres = paires[i] !== undefined ? best.sets[paires[i]] : null;
-      if (!apres || signature(apres) !== signature(anciens[i].cards)) {
-        sets[anciens[i].id] = true; vises++;
-      }
+      var apres = paires[i] !== undefined ? nouvelles[paires[i]] : null;
+      if (!apres || signature(apres) !== signature(anciens[i].cards)) sets[anciens[i].id] = true;
     }
-    var neuves = 0;
-    for (j = 0; j < best.sets.length; j++) if (!prisN[j]) neuves++;
-    return { ids: ids, sets: sets, n: n, vises: vises, neuves: neuves };
+    return sets;
   }
 
   /* Le bouton bascule entre les deux rangements. Trier tout court n'aurait
