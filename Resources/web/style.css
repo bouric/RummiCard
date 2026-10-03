@@ -525,3 +525,12 @@ header .brand span { color: var(--gold); }
   #rotate b::before { content: '⟲'; display: block; font-size: 38px; color: var(--gold); margin-bottom: 10px; }
   #rotate span { font-size: 13.5px; color: var(--dim); }
 }
+
+
+/* ---------- Journal de mise au point -------------------------------- */
+.jrn {
+  width: 100%; height: 160px; margin-top: 10px; padding: 8px 10px;
+  border-radius: 10px; border: 1px solid var(--stroke); background: rgba(0, 0, 0, .3);
+  color: var(--dim); font-family: ui-monospace, Menlo, monospace; font-size: 10.5px;
+  line-height: 1.45; resize: vertical; -webkit-user-select: text; user-select: text;
+}

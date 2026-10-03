@@ -11,7 +11,8 @@
   function TR(cle, p) { return I18N.t(cle, p); }
   function NC(n) { return I18N.cartes(n); }
   function $(s) { return document.querySelector(s); }
-  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  var rejeuEnCours = false;
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, rejeuEnCours ? 0 : ms); }); }
 
   var game = null;
   var nVirtual = 2;
@@ -19,7 +20,7 @@
        tri        : 'suit' = par couleur puis valeur
                     'rank' = par valeur puis couleur
        keepPlaces : garder les combinaisons à leur place sur la table */
-  var prefs = { langue: null,
+  var prefs = { langue: null, debug: false,
                 tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
                 niveau: 'normal', manches: 3, sensSuites: 'asc',
                 lastDeal: null, saved: null };
@@ -69,6 +70,7 @@
       if (p.manches === 1 || p.manches === 3 || p.manches === 5) prefs.manches = p.manches;
       if (p.sensSuites === 'asc' || p.sensSuites === 'desc') prefs.sensSuites = p.sensSuites;
       if (typeof p.langue === 'string') prefs.langue = p.langue;
+      if (typeof p.debug === 'boolean') prefs.debug = p.debug;
     }
     E.options.keepPlaces = prefs.keepPlaces;
     E.options.difficulty = prefs.niveau;
@@ -86,6 +88,50 @@
   /* Taille de carte retenue au dernier rendu : la main l'adopte aussi, pour
      que toutes les cartes de l'ecran aient la meme taille. */
   var densiteCourante = '';
+
+  /* ---- Journal de mise au point ------------------------------------
+     Quand il est actif, chaque geste est note avec la donne et les
+     reglages : de quoi rejouer une partie a l'identique et retrouver
+     d'ou vient une anomalie. Rien n'est envoye nulle part ; le texte est
+     affiche pour etre copie a la main. */
+  var journal = null;
+
+  function jrnSignature() {
+    return game.board.map(function (s) {
+      return s.cards.map(function (c) { return c.id; }).join(',');
+    }).join(' | ');
+  }
+
+  function jrnNouvelle() {
+    if (!prefs.debug || !game) { journal = null; return; }
+    journal = {
+      version: (($('#version') || {}).textContent || '').trim(),
+      ecran: window.innerWidth + 'x' + window.innerHeight,
+      langue: I18N.get(),
+      donne: game.deal,
+      reglages: { tri: prefs.tri, keepPlaces: prefs.keepPlaces, autoArrange: prefs.autoArrange,
+                  niveau: prefs.niveau, manches: prefs.manches, sensSuites: prefs.sensSuites },
+      actes: []
+    };
+  }
+
+  function jrnEtat() {
+    return { table: jrnSignature(),
+             main: game.human().hand.map(function (c) { return c.id; }).join(',') };
+  }
+
+  /* L'etat note est toujours celui d'AVANT l'acte : au rejeu, c'est le point
+     de depart qu'on compare, et le premier ecart designe l'acte fautif. */
+  function jrn(nom, details, avant) {
+    if (!prefs.debug || !journal || !game) return;
+    var a = { a: nom };
+    if (details) for (var k in details) a[k] = details[k];
+    var e = avant || jrnEtat();
+    a.table = e.table;
+    a.main = e.main;
+    journal.actes.push(a);
+    if (journal.actes.length > 600) journal.actes.shift();
+  }
   var history = [];          // état au début de chacun de vos tours
   var aiJustPlayed = {};     // cartes ajoutées par les joueurs virtuels depuis votre tour
   var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
@@ -159,6 +205,7 @@
     savePrefs();
     history = [game.captureState()];
     turnStack = [];
+    jrnNouvelle();
     compactFige = false;
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
@@ -1560,6 +1607,7 @@
     if (t.kind === 'hand') {
       if (d.origin.type === 'hand') { render(); return; }
       if (!isStaged(card)) { toast(TR('toast.dejaTable')); render(); return; }
+      jrn('reprise', { carte: card.id });
       pushTurnState();
       removeFromBoard(card);
       game.human().hand.push(card);
@@ -1569,6 +1617,15 @@
       return;
     }
 
+    var cibleSet = t.setId ? game.setById(t.setId) : null;
+    jrn('pose', { carte: card.id,
+      de: d.origin.type === 'hand' ? 'main' : 'jeu:' + d.origin.setId,
+      cible: { kind: t.kind, index: t.index, zone: t.zone,
+               // la combinaison visee est designee par son contenu : les
+               // identifiants internes changent d'une partie a l'autre.
+               cartes: cibleSet ? cibleSet.cards.map(function (c) { return c.id; }).join(',') : undefined },
+      sets: t.kind === 'rearrange' ? (t.sets || (d.cache && d.cache.re) || []).map(function (cs) {
+        return cs.map(function (c) { return c.id; }); }) : undefined });
     pushTurnState();
     // retire la carte de son origine
     if (d.origin.type === 'hand') {
@@ -1684,6 +1741,7 @@
      votre tour précédent, donc avant leurs réponses. */
   function doRewind() {
     if (!canRewind()) return;
+    jrn('refaire');
     history.pop();
     game.applyState(history[history.length - 1]);
     turnStack = [];
@@ -1695,6 +1753,7 @@
 
   function doCommit() {
     if (!isHumanTurn()) return;
+    jrn('suivant');
     var res = game.commit();
     if (!res.ok) { toast(res.reason); return; }
     var n = game.stagedCards().length;
@@ -1714,6 +1773,7 @@
 
   function doUndo() {
     if (!isHumanTurn() || !turnStack.length) return;
+    jrn('annule');
     restoreState(turnStack.pop());
     render(); updateBar(); sndLift();
     toast(TR(turnStack.length ? 'toast.annule' : 'toast.annuleDebut'));
@@ -1721,6 +1781,7 @@
 
   function doDraw() {
     if (!isHumanTurn()) return;
+    jrn('pioche');
     var had = game.stagedCards().length;
     var card = game.draw();
     render(); updateBar();
@@ -1735,6 +1796,7 @@
 
   function doAuto() {
     if (!isHumanTurn()) return;
+    jrn('magique');
     var before = cloneState();
     pushTurnState();
     game.restoreTurn();
@@ -1760,6 +1822,7 @@
      chaque pioche et des qu'une carte revient de la table. */
   function doSort() {
     if (!isHumanTurn()) return;
+    jrn('tri');
     prefs.tri = prefs.tri === 'suit' ? 'rank' : 'suit';
     E.options.sort = prefs.tri;
     savePrefs();
@@ -1778,7 +1841,10 @@
       var p = game.player();
       render({ thinking: true });
       await sleep(480 + Math.random() * 320);
+      var avantIA = (prefs.debug && journal) ? jrnEtat() : null;
       var r = AI.playAITurn(game);
+      jrn('ia', { joueur: p.name, genre: r.kind,
+        cartes: (r.cards || []).map(function (c) { return c.id; }).join(',') }, avantIA);
       if (r.cards) {
         for (var ci = 0; ci < r.cards.length; ci++) aiJustPlayed[r.cards[ci].id] = true;
       }
@@ -1937,10 +2003,18 @@
       '<h3>' + TR('opt.table') + '</h3>' +
       optionRow('keepPlaces', '1', prefs.keepPlaces, TR('opt.rangee'), TR('opt.rangee.d')) +
       optionRow('keepPlaces', '0', !prefs.keepPlaces, TR('opt.libre'), TR('opt.libre.d')) +
+      '<h3>' + TR('opt.debug') + '</h3>' +
+      optionRow('debug', '1', prefs.debug, TR('opt.debugOn'), TR('opt.debugOn.d')) +
+      optionRow('debug', '0', !prefs.debug, TR('opt.debugOff'), TR('opt.debugOff.d')) +
+      (prefs.debug
+        ? '<div class="row"><button class="btn" id="voirjrn" style="flex:1">' +
+          TR('btn.journal') + '</button></div>'
+        : '') +
       '<div class="row"><button class="cta" id="closeopts" style="flex:1">' +
       TR('btn.fermer') + '</button></div></div>';
     ov.classList.remove('hidden');
     $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
+    if ($('#voirjrn')) $('#voirjrn').onclick = showJournal;
     var rows = ov.querySelectorAll('.optrow');
     for (var i = 0; i < rows.length; i++) {
       rows[i].onclick = function () {
@@ -1958,6 +2032,10 @@
         } else if (name === 'niveau') {
           prefs.niveau = value;
           E.options.difficulty = value;
+        } else if (name === 'debug') {
+          prefs.debug = (value === '1');
+          if (prefs.debug && game && !journal) jrnNouvelle();
+          if (!prefs.debug) journal = null;
         } else if (name === 'autoArrange') {
           prefs.autoArrange = (value === '1');
         } else {
@@ -2014,6 +2092,144 @@
     if (rp) rp.textContent = TR('rotate.texte');
     document.documentElement.lang = I18N.get();
     stampFooter();
+  }
+
+  /* ---- Panneau du journal ------------------------------------------ */
+
+  function showJournal() {
+    var ov = $('#overlay');
+    var txt = journal ? JSON.stringify(journal) : '';
+    ov.innerHTML = '<div class="panel"><h2>' + TR('dbg.titre') + '</h2>' +
+      (txt
+        ? '<p>' + TR('dbg.explication') + '</p>' +
+          '<textarea id="jrntxt" class="jrn" readonly></textarea>' +
+          '<div class="row"><button class="cta" id="jrncopy" style="flex:1">' +
+          TR('dbg.copier') + '</button>' +
+          '<button class="btn" id="jrnclose">' + TR('btn.fermer') + '</button></div>'
+        : '<p>' + TR('dbg.vide') + '</p>' +
+          '<div class="row"><button class="cta" id="jrnclose" style="flex:1">' +
+          TR('btn.fermer') + '</button></div>') +
+      '</div>';
+    ov.classList.remove('hidden');
+    if (txt) $('#jrntxt').value = txt;
+    if ($('#jrncopy')) {
+      $('#jrncopy').onclick = function () {
+        var z = $('#jrntxt');
+        z.select(); z.setSelectionRange(0, z.value.length);
+        try {
+          if (navigator.clipboard) navigator.clipboard.writeText(z.value);
+          else document.execCommand('copy');
+          toast(TR('dbg.copie'));
+        } catch (e) { /* la selection reste, a copier a la main */ }
+      };
+    }
+    $('#jrnclose').onclick = function () { ov.classList.add('hidden'); };
+  }
+
+  /* ---- Rejeu d'un journal ------------------------------------------- */
+
+  function carteParId(id) {
+    var h = game.human().hand, i;
+    for (i = 0; i < h.length; i++) if (h[i].id === id) return h[i];
+    var bc = game.boardCards();
+    for (i = 0; i < bc.length; i++) if (bc[i].id === id) return bc[i];
+    return null;
+  }
+
+  function attendreHumain(max) {
+    var t0 = Date.now();
+    return new Promise(function (resolve) {
+      (function boucle() {
+        if (game.finished || (!busy && game.player().human) || Date.now() - t0 > (max || 8000)) {
+          return resolve();
+        }
+        setTimeout(boucle, 10);
+      })();
+    });
+  }
+
+  function rejouerActe(a) {
+    var c, d, t;
+    if (a.a === 'pose') {
+      c = carteParId(a.carte);
+      if (!c) return Promise.resolve('carte introuvable : ' + a.carte);
+      d = { card: c, cache: {},
+            origin: a.de === 'main' ? { type: 'hand' } : { type: 'set', setId: a.de.slice(4) } };
+      t = { kind: a.cible.kind, index: a.cible.index, zone: a.cible.zone };
+      if (a.cible.cartes) {
+        var vise = null;
+        for (var q = 0; q < game.board.length; q++) {
+          if (game.board[q].cards.map(function (x) { return x.id; }).join(',') === a.cible.cartes) {
+            vise = game.board[q]; break;
+          }
+        }
+        if (!vise) return Promise.resolve('combinaison visée introuvable : ' + a.cible.cartes);
+        t.setId = vise.id;
+      }
+      if (t.kind === 'rearrange' && a.sets) {
+        t.sets = a.sets.map(function (ids) { return ids.map(carteParId); });
+        for (var k = 0; k < t.sets.length; k++) {
+          for (var j = 0; j < t.sets[k].length; j++) {
+            if (!t.sets[k][j]) return Promise.resolve('réorganisation : carte introuvable');
+          }
+        }
+      }
+      applyDrop(d, t);
+      return Promise.resolve(null);
+    }
+    if (a.a === 'reprise') {
+      c = carteParId(a.carte);
+      if (!c) return Promise.resolve('carte introuvable : ' + a.carte);
+      applyDrop({ card: c, cache: {}, origin: { type: 'set', setId: '' } }, { kind: 'hand' });
+      return Promise.resolve(null);
+    }
+    var boutons = { suivant: doCommit, pioche: doDraw, annule: doUndo,
+                    magique: doAuto, tri: doSort, refaire: doRewind };
+    if (boutons[a.a]) { boutons[a.a](); return attendreHumain().then(function () { return null; }); }
+    return Promise.resolve(null);      // 'ia' : rejoué par la phase des joueurs virtuels
+  }
+
+  /* Rejoue un journal et signale le premier écart avec ce qui avait été
+     enregistré. Sans écart, la séquence est reproduite à l'identique. */
+  function rejouerJournal(txt) {
+    var j = typeof txt === 'string' ? JSON.parse(txt) : txt;
+    if (j.reglages) {
+      prefs.tri = j.reglages.tri;
+      prefs.keepPlaces = j.reglages.keepPlaces;
+      prefs.autoArrange = j.reglages.autoArrange;
+      prefs.niveau = j.reglages.niveau;
+      prefs.manches = j.reglages.manches;
+      prefs.sensSuites = j.reglages.sensSuites;
+      E.options.sort = prefs.tri;
+      E.options.keepPlaces = prefs.keepPlaces;
+      E.options.difficulty = prefs.niveau;
+    }
+    rejeuEnCours = true;
+    var garde = prefs.debug;
+    prefs.debug = false;               // on ne reecrit pas le journal en le rejouant
+    newGame(j.donne);
+    var rapport = [], i = 0;
+    function suite() {
+      if (i >= j.actes.length || rapport.length) {
+        rejeuEnCours = false;
+        prefs.debug = garde;
+        savePrefs();          // newGame a pu enregistrer le drapeau baissé
+        return { actes: j.actes.length, rejoues: i, divergences: rapport };
+      }
+      var a = j.actes[i];
+      if (a.a === 'ia') { i++; return suite(); }   // rejoué par la phase virtuelle
+      var sig = jrnSignature();
+      if (a.table !== undefined && a.table !== sig) {
+        rapport.push({ no: i, acte: a.a, tableAttendue: a.table, tableObtenue: sig });
+        return suite();
+      }
+      return rejouerActe(a).then(function (err) {
+        if (err) rapport.push({ no: i, acte: a.a, probleme: err });
+        i++;
+        return suite();
+      });
+    }
+    return attendreHumain().then(suite);
   }
 
   /* ================= Branchements ================================= */
@@ -2111,6 +2327,9 @@
   /* Point d'acces utilise par les tests automatises. */
   window.RC = {
     get game() { return game; },
+    journal: function () { return journal; },
+    rejouer: rejouerJournal,
+    showJournal: showJournal,
     set game(g) { game = g; },
     render: render,
     updateBar: updateBar,
