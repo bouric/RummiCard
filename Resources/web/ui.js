@@ -1229,9 +1229,13 @@
       for (var k = 0; k < shown; k++) fan += '<i></i>';
       d.innerHTML =
         '<div class="av">' + (p.human ? '★' : echapper(p.name.charAt(0))) + '</div>' +
+        /* La pastille ne dit plus « a pose » ou « reste a poser » : c'etait le
+           vocabulaire du rami classique, ou l'on ne touche pas a la table
+           avant d'avoir ouvert soi-meme. Ici la seule contrainte porte sur la
+           table vide, et elle s'impose a qui joue a ce moment-la. Les mots
+           annoncaient donc une regle que le jeu n'applique pas. */
         '<div class="who"><div class="nm">' + echapper(p.name) + '</div><div class="sub">' +
-        p.hand.length + ' ' + NC(p.hand.length) + ' · ' +
-        TR(p.melded ? 'hud.enJeu' : 'hud.aPoser') +
+        p.hand.length + ' ' + NC(p.hand.length) +
         '</div></div><div class="fan">' + fan + '</div>';
       box.appendChild(d);
     }

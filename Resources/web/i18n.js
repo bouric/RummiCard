@@ -70,7 +70,6 @@
     'hud.vous': 'vous',
     'hud.pts': 'pts',
     'hud.carte': 'carte', 'hud.cartes': 'cartes',
-    'hud.enJeu': 'en jeu', 'hud.aPoser': 'à poser',
 
     'zone.suites': 'Suites', 'zone.groupes': 'Brelans et carrés',
     'zone.nouvelle': 'Nouvelle<br>combinaison',
@@ -228,7 +227,6 @@
     'hud.vous': 'you',
     'hud.pts': 'pts',
     'hud.carte': 'card', 'hud.cartes': 'cards',
-    'hud.enJeu': 'in play', 'hud.aPoser': 'yet to lay',
 
     'zone.suites': 'Runs', 'zone.groupes': 'Sets',
     'zone.nouvelle': 'New<br>combination',
@@ -384,7 +382,6 @@
     'hud.vous': 'Sie',
     'hud.pts': 'Pkt.',
     'hud.carte': 'Karte', 'hud.cartes': 'Karten',
-    'hud.enJeu': 'im Spiel', 'hud.aPoser': 'noch nicht gelegt',
 
     'zone.suites': 'Folgen', 'zone.groupes': 'Sätze',
     'zone.nouvelle': 'Neue<br>Kombination',
@@ -540,7 +537,6 @@
     'hud.vous': 'lei',
     'hud.pts': 'pt',
     'hud.carte': 'carta', 'hud.cartes': 'carte',
-    'hud.enJeu': 'in gioco', 'hud.aPoser': 'da calare',
 
     'zone.suites': 'Scale', 'zone.groupes': 'Tris e poker',
     'zone.nouvelle': 'Nuova<br>combinazione',
@@ -696,7 +692,6 @@
     'hud.vous': 'u',
     'hud.pts': 'ptn',
     'hud.carte': 'kaart', 'hud.cartes': 'kaarten',
-    'hud.enJeu': 'in het spel', 'hud.aPoser': 'nog te leggen',
 
     'zone.suites': 'Reeksen', 'zone.groupes': 'Groepen',
     'zone.nouvelle': 'Nieuwe<br>combinatie',
@@ -852,7 +847,6 @@
     'hud.vous': 'usted',
     'hud.pts': 'pts',
     'hud.carte': 'carta', 'hud.cartes': 'cartas',
-    'hud.enJeu': 'en juego', 'hud.aPoser': 'sin bajar',
 
     'zone.suites': 'Escaleras', 'zone.groupes': 'Tríos y cuartos',
     'zone.nouvelle': 'Combinación<br>nueva',
