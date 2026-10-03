@@ -163,6 +163,10 @@
   var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
   var turnStack = [];        // états successifs pendant le tour en cours
   var piochee = null;        // la dernière carte piochée, signalée en bleu dans la main
+  /* Le coup que « Magique » met en lumière, sans jamais le jouer :
+     { ids: cartes de la main a poser, sets: combinaisons a remanier,
+       n: combien de cartes, neuves: combinaisons a creer de toutes pieces } */
+  var solution = null;
 
   /* ================= Accueil ====================================== */
 
@@ -241,6 +245,7 @@
     piochee = null;
     dernierMessage = '';     // la consigne d'ouverture se redit a chaque partie
     astuceRefaire = 0;
+    solution = null;
     jrnNouvelle();
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
@@ -581,7 +586,8 @@
     var vertical = isRunLayout(full);
     var el = document.createElement('div');
     el.className = 'set' + (vertical ? ' run' : (full.length >= 2 ? ' group' : '')) +
-      (E.isValidSet(full) ? '' : ' bad') + (s.slot >= 0 ? ' target' : '');
+      (E.isValidSet(full) ? '' : ' bad') + (s.slot >= 0 ? ' target' : '') +
+      (solution && solution.sets[s.id] ? ' montree' : '');
     el.dataset.set = s.id;
     var elems = [];
     for (var k = 0; k <= s.cards.length; k++) {
@@ -1227,6 +1233,7 @@
       var el = cardEl(hand[i], { pickable: isHumanTurn(), voile: voile });
       if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
       if (piochee === hand[i].id) el.classList.add('piochee');
+      if (solution && solution.ids[hand[i].id]) el.classList.add('montree');
       if (chevauche && i) el.style.marginLeft = chevauche + 'px';
       rack.appendChild(el);
     }
@@ -1458,6 +1465,13 @@
        joueur en cours et les points de suspension apres son nom disent deja
        qui joue, et le tapis s'assombrit derriere ce qu'il vient de poser. */
     if (!human) return { cls: '', html: '' };
+    /* Le coup montre passe avant tout le reste : c'est une reponse a une
+       question qu'on vient de poser. */
+    if (solution) {
+      return { cls: 'good', bulle: true,
+        html: TR(solution.vises ? 'bar.magiqueTable' : 'bar.magique',
+          { n: solution.n, cartes: NC(solution.n) }) };
+    }
     var staged = game.stagedCards().length;
     var check = game.checkCommit();
     /* « bulle » distingue l'avertissement — ce qu'on ne peut pas deviner en
@@ -2100,6 +2114,7 @@
     history = [game.captureState()];
     turnStack = [];
     aiJustPlayed = {};
+    solution = null;
     $('#menu').classList.add('hidden');
     $('#game').classList.remove('hidden');
     $('#overlay').classList.add('hidden');
@@ -2118,6 +2133,7 @@
   function doRewind() {
     if (!canRewind()) return;
     jrn('refaire');
+    eteindreSolution(true);
     history.pop();
     game.applyState(history[history.length - 1]);
     turnStack = [];
@@ -2129,6 +2145,7 @@
   function doCommit() {
     if (!isHumanTurn()) return;
     jrn('suivant');
+    eteindreSolution(true);
     var res = game.commit();
     if (!res.ok) { toast(res.reason); return; }
     var n = game.stagedCards().length;
@@ -2142,6 +2159,9 @@
   /* Mémorise l'état avant chaque mouvement, pour les défaire un par un. */
   function pushTurnState() {
     aiJustPlayed = {};         // votre premier geste efface le surlignage
+    /* Le coup montre valait pour la table d'avant : des qu'elle bouge, il
+       designerait des combinaisons qui ne sont plus les memes. */
+    eteindreSolution(true);
     /* Sans cartes en lumiere, le projecteur n'eclairerait plus rien : il
        assombrirait toute la table. Votre premier geste l'eteint. */
     eteindreProjecteur(true);
@@ -2152,6 +2172,7 @@
   function doUndo() {
     if (!isHumanTurn() || !turnStack.length) return;
     jrn('annule');
+    eteindreSolution(true);
     restoreState(turnStack.pop());
     render(); updateBar(); sndLift();
   }
@@ -2159,6 +2180,7 @@
   function doDraw() {
     if (!isHumanTurn()) return;
     if (game.stagedCards().length) return;   // meme barriere pour la touche P
+    eteindreSolution(true);
     jrn('pioche');
     var card = game.draw();
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
@@ -2181,27 +2203,86 @@
     aiPhase();
   }
 
+  /* « Magique » montre le coup, il ne le joue pas : on vient le consulter
+     quand on ne trouve pas, et jouer a votre place ne vous apprend rien. Les
+     cartes a poser s'allument dans la main, les combinaisons a remanier
+     s'eclairent sur la table, et rien ne bouge. Un second appui eteint tout.
+
+     Le coup est cherche depuis la table telle qu'elle est — vos poses du tour
+     comprises — et non depuis le debut du tour : une proposition qui
+     contredirait ce qu'on a sous les yeux ne montrerait rien du tout. Pour la
+     meilleure solution d'ensemble, il suffit de reprendre ses cartes. */
   function doAuto() {
     if (!isHumanTurn()) return;
     jrn('magique');
-    var before = cloneState();
-    pushTurnState();
-    game.restoreTurn();
-    var p = game.human();
-    var play = chrono('magique', function () {
-      return AI.findBestPlay(game, p, null, 'difficile');
+    if (solution) { eteindreSolution(); return; }
+    var board = game.boardCards();
+    var best = chrono('magique', function () {
+      return AI.bestPartition(board, game.human().hand, null, tourDOuverture());
     });
-    if (!play) {
-      restoreState(before);
-      turnStack.pop();
-      render();
+    if (!best || !best.count) {
       /* Sur une table vierge, « aucun coup » veut dire « aucune suite » :
          le dire, sinon le joueur qui tient un beau brelan ne comprend pas. */
       toast(TR(tourDOuverture() ? 'toast.rienOuvrir' : 'toast.rienAJouer'));
       return;
     }
-    AI.applyPlay(game, p, play);
-    render(); sndMagic(); updateBar();
+    solution = analyserSolution(best);
+    sndMagic();
+    render();
+    updateBar();
+  }
+
+  function eteindreSolution(sansRedessiner) {
+    if (!solution) return;
+    solution = null;
+    if (!sansRedessiner) { render(); updateBar(); }
+  }
+
+  /* Traduit la partition rendue par le solveur en deux listes a eclairer :
+     les cartes de la main qu'elle emploie, et les combinaisons posees dont le
+     contenu change. Chaque nouvelle combinaison est rapprochee de l'ancienne
+     avec laquelle elle partage le plus de cartes — meme appariement que celui
+     qui garde les combinaisons a leur place sur la table. */
+  function analyserSolution(best) {
+    var anciens = game.board, i, j, k;
+    var mainIds = {}, h = game.human().hand;
+    for (i = 0; i < h.length; i++) mainIds[h[i].id] = true;
+    var ids = {}, n = 0;
+    for (i = 0; i < best.played.length; i++) {
+      if (mainIds[best.played[i].id] && !ids[best.played[i].id]) {
+        ids[best.played[i].id] = true; n++;
+      }
+    }
+    var scores = [];
+    for (i = 0; i < anciens.length; i++) {
+      var dedans = {};
+      for (k = 0; k < anciens[i].cards.length; k++) dedans[anciens[i].cards[k].id] = true;
+      for (j = 0; j < best.sets.length; j++) {
+        var partagees = 0;
+        for (k = 0; k < best.sets[j].length; k++) if (dedans[best.sets[j][k].id]) partagees++;
+        if (partagees) scores.push({ o: i, n: j, s: partagees });
+      }
+    }
+    scores.sort(function (a, b) { return b.s - a.s; });
+    var prisO = {}, prisN = {}, paires = {};
+    for (i = 0; i < scores.length; i++) {
+      if (prisO[scores[i].o] || prisN[scores[i].n]) continue;
+      prisO[scores[i].o] = true; prisN[scores[i].n] = true;
+      paires[scores[i].o] = scores[i].n;
+    }
+    function signature(cartes) {
+      return cartes.map(function (c) { return c.id; }).sort().join(',');
+    }
+    var sets = {}, vises = 0;
+    for (i = 0; i < anciens.length; i++) {
+      var apres = paires[i] !== undefined ? best.sets[paires[i]] : null;
+      if (!apres || signature(apres) !== signature(anciens[i].cards)) {
+        sets[anciens[i].id] = true; vises++;
+      }
+    }
+    var neuves = 0;
+    for (j = 0; j < best.sets.length; j++) if (!prisN[j]) neuves++;
+    return { ids: ids, sets: sets, n: n, vises: vises, neuves: neuves };
   }
 
   /* Le bouton bascule entre les deux rangements. Trier tout court n'aurait

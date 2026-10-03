@@ -217,6 +217,13 @@ header .brand span { color: var(--gold); }
 .zone.grid .set.bad > .card {
   box-shadow: 0 0 0 2px #e24a4a, 0 0 10px rgba(226, 74, 74, .45), 0 2px 5px rgba(0, 0, 0, .34);
 }
+/* Table rangée : les combinaisons n'ont pas de cadre — chacune n'est qu'une
+   colonne ou une ligne de cartes. Celle que « Magique » désigne se marque
+   donc sur ses cartes, comme le fait l'anneau rouge d'une combinaison
+   invalide. */
+.zone.grid .set.montree > .card {
+  box-shadow: 0 0 0 2px #8676ff, 0 0 10px rgba(134, 118, 255, .45), 0 2px 5px rgba(0, 0, 0, .34);
+}
 .zone.grid .set.target > .card, .zone.grid .set.target > .slot { z-index: 2; }
 .zone.grid .newzone.tall {
   position: absolute; writing-mode: vertical-rl; text-orientation: mixed;
@@ -257,6 +264,15 @@ header .brand span { color: var(--gold); }
 }
 .set.bad { border-color: rgba(226, 74, 74, .6); background: rgba(226, 74, 74, .12); }
 .set.target { border-color: rgba(255, 255, 255, .6); box-shadow: 0 0 0 2px rgba(255, 255, 255, .22), 0 6px 20px rgba(0, 0, 0, .3); }
+/* Combinaison que « Magique » désigne : son contenu change dans la solution
+   montrée. Le violet est celui de son bouton — on reconnaît d'où vient la
+   lumière. La couleur reste à l'intérieur du cadre de la combinaison, elle ne
+   déborde donc sur aucune voisine. */
+.set.montree {
+  border-color: rgba(149, 134, 255, .75);
+  background: rgba(101, 89, 214, .17);
+  box-shadow: 0 0 0 2px rgba(101, 89, 214, .3);
+}
 .set.fresh { animation: pop .34s cubic-bezier(.2, .9, .3, 1.2); }
 @keyframes pop { from { transform: scale(.9); opacity: .4; } }
 
@@ -428,6 +444,21 @@ header .brand span { color: var(--gold); }
   box-shadow: inset 0 0 0 2px #5bc8ff;
 }
 #rack .card.playable.piochee::after { inset: 3px; border-radius: calc(var(--radius) - 2px); }
+
+/* Cartes que « Magique » désigne. Même violet que son bouton, et même
+   précaution que pour les anneaux vert et bleu : l'anneau reste dans le plan
+   de sa carte, pour qu'aucun contour ne flotte au-dessus des voisines dans
+   une main resserrée. Il se glisse en dedans quand un autre anneau occupe
+   déjà le bord. */
+#rack .card.montree { box-shadow: 0 0 12px rgba(134, 118, 255, .65), 0 2px 5px rgba(0, 0, 0, .34); }
+#rack .card.montree::after {
+  content: ''; position: absolute; inset: 0; border-radius: var(--radius);
+  box-shadow: inset 0 0 0 2px #8676ff;
+}
+#rack .card.playable.montree::after { inset: 3px; border-radius: calc(var(--radius) - 2px); }
+/* Carte à la fois piochée et désignée : le violet prend le bord et le bleu
+   cède la place. Les deux anneaux se disputent le même pseudo-élément, et
+   entre « vous venez de la prendre » et « jouez-la », le second l'emporte. */
 
 #msg {
   font-size: 12.5px; color: var(--dim); flex: 1; min-width: 0;
