@@ -1566,8 +1566,8 @@
     placeHint(e.clientX, e.clientY);
   }
 
-  function setTarget(x, y, force) {
-    var t = computeTarget(x, y);
+  function setTarget(x, y, force, auto) {
+    var t = computeTarget(x, y, auto);
     var key = t.kind + ':' + (t.setId || '') + ':' +
       (t.index === undefined ? '' : t.index) + ':' + (t.zone || '');
     if (!force && key === drag.targetKey) return;
@@ -1592,19 +1592,27 @@
     }
   }
 
-  function computeTarget(x, y) {
+  function computeTarget(x, y, auto) {
     var card = drag.card;
-    if (inRect(drag.rects.__rack, x, y, 6)) return { kind: 'hand' };
-    if (!inRect(drag.rects.__board, x, y, 4)) return { kind: 'none' };
-    if (inRect(drag.rects.__new_any, x, y, 4)) return { kind: 'new' };
-    if (inRect(drag.rects.__new_runs, x, y, 4)) return { kind: 'new', zone: 'runs' };
-    if (inRect(drag.rects.__new_groups, x, y, 4)) return { kind: 'new', zone: 'groups' };
+    /* Placement automatique (simple clic) : il n'y a pas de curseur a
+       respecter. On vise le centre du plateau faute de mieux, mais ce centre
+       tombe entre les deux bandes « nouvelle combinaison », et parfois
+       dessus : une carte qui avait sa place partait alors seule dans une
+       combinaison neuve. On saute donc les bandes et le survol, pour aller
+       droit a la meilleure place. */
+    if (!auto) {
+      if (inRect(drag.rects.__rack, x, y, 6)) return { kind: 'hand' };
+      if (!inRect(drag.rects.__board, x, y, 4)) return { kind: 'none' };
+      if (inRect(drag.rects.__new_any, x, y, 4)) return { kind: 'new' };
+      if (inRect(drag.rects.__new_runs, x, y, 4)) return { kind: 'new', zone: 'runs' };
+      if (inRect(drag.rects.__new_groups, x, y, 4)) return { kind: 'new', zone: 'groups' };
+    }
 
     var sets = baseSets(), i;
 
     // 1) la combinaison directement sous le curseur
     var hover = null;
-    for (i = 0; i < sets.length; i++) {
+    if (!auto) for (i = 0; i < sets.length; i++) {
       if (inRect(drag.rects[sets[i].id], x, y, 6)) hover = sets[i];
     }
     if (hover) {
@@ -1760,7 +1768,7 @@
     // Simple clic sans deplacement : placement automatique.
     if (!drag.moved && drag.origin.type === 'hand') {
       var b = drag.rects.__board;
-      setTarget(b.left + b.width / 2, b.top + b.height * .45, true);
+      setTarget(b.left + b.width / 2, b.top + b.height * .45, true, true);
     }
     var d = drag, t = d.target || { kind: 'none' };
     drag = null;
