@@ -1395,10 +1395,13 @@
             mises: TR(hintCache.total > 1 ? 'bar.mises' : 'bar.mise') })
         : tete + ' — ' + TR('bar.ouvertureRien') };
     }
-    calculerCoup();
-    var n = hintCache.total;
-    if (!n) return { cls: 'warn', bulle: true, html: TR('bar.indicesRien') };
+    /* « Aucune carte posable » suppose d'avoir cherche tous les coups : c'est
+       le travail des indices, et on ne le fait pas dans le dos du joueur qui
+       les a eteints. */
     if (prefs.hints) {
+      playableIds();
+      var n = hintCache.total;
+      if (!n) return { cls: 'warn', bulle: true, html: TR('bar.indicesRien') };
       return { cls: 'good', bulle: false, html: TR('bar.indices', { n: n, cartes: NC(n),
         mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') }) };
     }
@@ -1417,15 +1420,7 @@
      à une n'aurait pas de sens : leurs placements s'excluent souvent, et on
      ne pourrait pas les poser ensemble. */
   function playableIds() {
-    if (!prefs.hints) return null;
-    return calculerCoup();
-  }
-
-  /* Le meilleur coup du tour, qu'on affiche ou non les indices : savoir
-     qu'aucune carte n'est posable est un avertissement a part entiere, et le
-     calcul est le meme — il se garde en cache d'un rendu a l'autre. */
-  function calculerCoup() {
-    if (!game || !isHumanTurn()) return null;
+    if (!prefs.hints || !game || !isHumanTurn()) return null;
     var hand = game.human().hand, i;
     var key = game.boardCards().map(function (c) { return c.id; }).sort().join(',') +
       '|' + hand.map(function (c) { return c.id; }).sort().join(',');
