@@ -1332,15 +1332,24 @@
     var msg = $('#msg');
     msg.className = m.cls;
     msg.innerHTML = m.html;
-    /* Hors ordinateur la barre est masquee, et le message ne s'affiche plus
-       nulle part en cours de partie : sur une table vide le tapis le porte,
-       et un geste refuse s'explique de lui-meme en bulle. Le rappeler a
-       chaque tour revenait a faire passer une bulle devant la table pour
-       une phrase qu'on avait deja lue. */
+    /* Hors ordinateur la barre est masquee : les messages qui restent — ce
+       qu'il manque a une combinaison, un tour pret a etre valide, aucune
+       carte posable — passent en bulle, et seulement quand ils changent. Sur
+       une table vide, le tapis les porte deja : pas de bulle alors. */
+    if (getComputedStyle(msg).display === 'none') {
+      var surTapis = !game.boardCards().length;
+      if (m.html && !surTapis && m.html !== dernierMessage &&
+          !$('#toast').classList.contains('show')) toast(m.html);
+      dernierMessage = m.html;
+    } else {
+      dernierMessage = '';
+    }
   }
 
   /* Ou en est le tour, en une phrase : ce que la barre affiche sur un
-     ordinateur, et ce que la table porte quand elle est vide. */
+     ordinateur, ce que la table porte quand elle est vide, et la bulle
+     ailleurs. */
+  var dernierMessage = '';
   function messageContexte() {
     var human = isHumanTurn();
     /* Pendant le tour des autres, la barre se tait : la pastille doree du
@@ -1365,12 +1374,12 @@
             mises: TR(hintCache.total > 1 ? 'bar.mises' : 'bar.mise') })
         : tete + ' — ' + TR('bar.ouvertureRien') };
     }
+    calculerCoup();
+    var n = hintCache.total;
+    if (!n) return { cls: 'warn', html: TR('bar.indicesRien') };
     if (prefs.hints) {
-      playableIds();
-      var n = hintCache.total;
-      return { cls: n ? 'good' : 'warn', html: n
-        ? TR('bar.indices', { n: n, cartes: NC(n), mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') })
-        : TR('bar.indicesRien') };
+      return { cls: 'good', html: TR('bar.indices', { n: n, cartes: NC(n),
+        mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') }) };
     }
     /* Rien de particulier a dire : la barre reste vide. Le rappel « glissez
        une carte sur la table » revenait a chaque tour pour une consigne que
@@ -1387,7 +1396,15 @@
      à une n'aurait pas de sens : leurs placements s'excluent souvent, et on
      ne pourrait pas les poser ensemble. */
   function playableIds() {
-    if (!prefs.hints || !game || !isHumanTurn()) return null;
+    if (!prefs.hints) return null;
+    return calculerCoup();
+  }
+
+  /* Le meilleur coup du tour, qu'on affiche ou non les indices : savoir
+     qu'aucune carte n'est posable est un avertissement a part entiere, et le
+     calcul est le meme — il se garde en cache d'un rendu a l'autre. */
+  function calculerCoup() {
+    if (!game || !isHumanTurn()) return null;
     var hand = game.human().hand, i;
     var key = game.boardCards().map(function (c) { return c.id; }).sort().join(',') +
       '|' + hand.map(function (c) { return c.id; }).sort().join(',');
