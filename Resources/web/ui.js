@@ -116,8 +116,29 @@
       donne: game.deal,
       reglages: { tri: prefs.tri, keepPlaces: prefs.keepPlaces, autoArrange: prefs.autoArrange,
                   niveau: prefs.niveau, manches: prefs.manches, sensSuites: prefs.sensSuites },
+      calculs: { total: 0, pires: [] },
       actes: []
     };
+  }
+
+  /* Duree des recherches du solveur. C'est le seul endroit ou l'ecran se fige
+     — rien ne repond pendant qu'il cherche — et le cout depend de l'appareil.
+     Le journal ne garde que les vingt plus longues : de quoi connaitre le pire
+     cas d'un telephone qu'on n'a pas sous la main, sans grossir le texte a
+     recopier. Hors mise au point, l'appel ne coute rien de plus. */
+  function chrono(quoi, fn) {
+    if (!prefs.debug || !journal || !game) return fn();
+    if (!journal.calculs) journal.calculs = { total: 0, pires: [] };
+    var h = window.performance || Date;
+    var t0 = h.now();
+    var r = fn();
+    var c = journal.calculs;
+    c.total++;
+    c.pires.push({ quoi: quoi, ms: Math.round((h.now() - t0) * 10) / 10,
+                   table: game.boardCards().length, main: game.human().hand.length });
+    c.pires.sort(function (a, b) { return b.ms - a.ms; });
+    if (c.pires.length > 20) c.pires.length = 20;
+    return r;
   }
 
   function jrnEtat() {
@@ -1501,7 +1522,7 @@
     // bestPartition, et non le solveur brut : sur une table vierge la
     // partie doit s'ouvrir par une suite, et un indice qui montrerait un
     // brelan designerait un coup impossible a valider.
-    var best = AI.bestPartition(board, pool);
+    var best = chrono('indices', function () { return AI.bestPartition(board, pool); });
     var ids = {}, n = 0;
     if (best) {
       // Les deux exemplaires d'une carte sont interchangeables : le solveur
@@ -1840,7 +1861,9 @@
     var sets = baseSets(), cards = [];
     for (var i = 0; i < sets.length; i++) cards = cards.concat(sets[i].cards);
     var res = cards.length
-      ? Solver.solve(cards, [drag.card], { objective: 'count', mustUse: [drag.card] })
+      ? chrono('glisser', function () {
+          return Solver.solve(cards, [drag.card], { objective: 'count', mustUse: [drag.card] });
+        })
       : null;
     var out = (res && res.count) ? res.sets : null;
     /* Tour d'ouverture : le solveur ne connaît pas la règle de la suite, et
@@ -2158,7 +2181,9 @@
     pushTurnState();
     game.restoreTurn();
     var p = game.human();
-    var play = AI.findBestPlay(game, p, null, 'difficile');
+    var play = chrono('magique', function () {
+      return AI.findBestPlay(game, p, null, 'difficile');
+    });
     if (!play) {
       restoreState(before);
       turnStack.pop();
@@ -2233,7 +2258,7 @@
       render({ thinking: true });
       await sleep(480 + Math.random() * 320);
       var avantIA = (prefs.debug && journal) ? jrnEtat() : null;
-      var r = AI.playAITurn(game);
+      var r = chrono('virtuel', function () { return AI.playAITurn(game); });
       jrn('ia', { joueur: p.name, genre: r.kind,
         cartes: (r.cards || []).map(function (c) { return c.id; }).join(',') }, avantIA);
       if (r.cards) {
