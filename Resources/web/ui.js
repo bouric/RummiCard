@@ -1025,6 +1025,9 @@
       chevauche = pas - mr.cw - 4;
     }
     rack.style.flexWrap = chevauche ? 'nowrap' : 'wrap';
+    /* Main resserrée : seule la tranche gauche de chaque carte se voit, le
+       symbole de couleur passe donc sous la valeur (voir la feuille de style). */
+    rack.classList.toggle('serre', !!chevauche);
     for (var i = 0; i < hand.length; i++) {
       var el = cardEl(hand[i], { pickable: isHumanTurn() });
       if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
