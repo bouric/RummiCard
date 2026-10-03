@@ -45,7 +45,7 @@
     prefs.felt = (prefs.felt + 1) % FELTS.length;
     applyFelt();
     savePrefs();
-    toast(TR('toast.tapis', { x: TR(FELTS[prefs.felt].cle) }));
+
   }
 
   function loadPrefs() {
@@ -214,7 +214,6 @@
     $('#overlay').classList.add('hidden');
     render();
     updateBar();
-    toast(TR('toast.aVous'));
   }
 
   function isHumanTurn() { return game && !game.finished && game.player().human && !busy; }
@@ -1429,7 +1428,7 @@
     hintCache = { key: '', ids: null };
     render();
     updateBar();
-    toast(TR(prefs.hints ? 'toast.indicesOn' : 'toast.indicesOff'));
+
   }
 
   /* ================= Sons ========================================= */
@@ -1895,7 +1894,7 @@
         piece.zone = 'runs';
         game.board.push(piece);
         sndSnap();
-        toast(TR('toast.coupee'));
+  
       } else {
         game.board.push(game.newSet([card]));
         sndSnap();
@@ -1904,7 +1903,7 @@
       var src = t.sets || (d.cache && d.cache.re);
       game.board = E.alignBoard(game.board, src);
       sndMagic();
-      toast(TR('toast.reorganisee', { x: E.label(card) }));
+
     } else {
       var fresh = game.newSet([card]);
       fresh.zone = t.zone;
@@ -1972,7 +1971,7 @@
     $('#overlay').classList.add('hidden');
     render();
     updateBar();
-    toast(TR('toast.partieReprise'));
+
     if (!game.player().human) aiPhase();
   }
 
@@ -1991,7 +1990,6 @@
     render();
     updateBar();
     sndLift();
-    toast(TR('toast.rembobine'));
   }
 
   function doCommit() {
@@ -2019,13 +2017,11 @@
     jrn('annule');
     restoreState(turnStack.pop());
     render(); updateBar(); sndLift();
-    toast(TR(turnStack.length ? 'toast.annule' : 'toast.annuleDebut'));
   }
 
   function doDraw() {
     if (!isHumanTurn()) return;
     jrn('pioche');
-    var had = game.stagedCards().length;
     var card = game.draw();
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
        ne sait plus laquelle on vient de prendre. Elle reste signalée tant
@@ -2033,8 +2029,7 @@
     if (card) { piochee = card.id; allumerProjecteur('main'); }
     render(); updateBar();
     sndHmm(!card);
-    if (card) toast(TR(had ? 'toast.piochezRetour' : 'toast.piochez', { x: E.label(card) }));
-    else toast(TR('toast.piocheVide'));
+    if (!card) toast(TR('toast.piocheVide'));
     if (game.finished) { gameOver(); return; }
     game.nextPlayer();
     render(); updateBar();
@@ -2060,8 +2055,6 @@
     }
     AI.applyPlay(game, p, play);
     render(); sndMagic(); updateBar();
-    toast(TR('toast.pose', { n: play.played.length, cartes: NC(play.played.length),
-      p: play.points, posees: TR(play.played.length > 1 ? 'bar.posees' : 'bar.posee') }));
   }
 
   /* Le bouton bascule entre les deux rangements. Trier tout court n'aurait
@@ -2075,7 +2068,6 @@
     savePrefs();
     game.sortHand(game.human(), prefs.tri);
     render();
-    toast(TR(prefs.tri === 'suit' ? 'toast.triCouleur' : 'toast.triValeur'));
   }
 
   /* ================= Tours des joueurs virtuels =================== */
@@ -2097,13 +2089,10 @@
       }
       if (r.kind === 'play') {
         allumerProjecteur('table');
-        toast(TR('toast.iaPose', { nom: p.name, n: r.played, cartes: NC(r.played) }));
         sndSnap();
       } else if (r.kind === 'draw') {
-        toast(TR('toast.iaPioche', { nom: p.name }));
         sndHmm(false);
       } else {
-        toast(TR('toast.iaPasse', { nom: p.name }));
         sndHmm(true);
       }
       render();
@@ -2116,7 +2105,7 @@
     render();
     updateBar();
     if (game.finished) gameOver();
-    else if (game.player().human) toast(TR('toast.aVousCourt'));
+
   }
 
   /* ================= Fin de partie ================================ */
