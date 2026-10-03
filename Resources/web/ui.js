@@ -581,6 +581,16 @@
     return runColX(3, nc - 1, m, nc, serre) + m.cw + 4;
   }
 
+  /* Pendant qu'un coup est montre, tout ce qu'il ne touche pas s'efface : les
+     combinaisons designees se detachent alors franchement, au lieu de se
+     chercher parmi quinze autres. Le projecteur des joueurs virtuels obeit au
+     meme principe et cede la place quand les deux se presentent. */
+  function voileCarte(s, carte) {
+    if (solution) return solution.sets[s.id] ? '' : 'eteinte';
+    if (projecteur === 'table' && !aiJustPlayed[carte.id]) return 'eteinte';
+    return '';
+  }
+
   function setEl(s) {
     var full = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
     var vertical = isRunLayout(full);
@@ -596,9 +606,12 @@
       if (k < s.cards.length) {
         elems.push(cardEl(s.cards[k], {
           staged: isStaged(s.cards[k]),
-          fromAI: !!aiJustPlayed[s.cards[k].id],
+          /* Pendant qu'un coup est montre, le bleu « vient d'etre pose par un
+             virtuel » se tait : une seule couleur parle a la fois, sinon les
+             deux se disputent le regard et aucune ne porte. */
+          fromAI: !solution && !!aiJustPlayed[s.cards[k].id],
           pickable: isHumanTurn(),
-          voile: (projecteur === 'table' && !aiJustPlayed[s.cards[k].id]) ? 'eteinte' : ''
+          voile: voileCarte(s, s.cards[k])
         }));
       }
     }
@@ -1429,6 +1442,7 @@
     $('#sort').disabled = !human;
     $('#rewind').disabled = !canRewind();
     $('#hints').classList.toggle('on', !!prefs.hints);
+    $('#auto').classList.toggle('on', !!solution);
 
     var m = messageContexte();
     var msg = $('#msg');

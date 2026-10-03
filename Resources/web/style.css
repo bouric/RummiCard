@@ -401,8 +401,16 @@ header .brand span { color: var(--gold); }
 #game.icones .btn { padding: 9px 12px; }
 .btn.go { background: linear-gradient(180deg, #2f9c76, #1d7a5c); border-color: #3fb68c; color: #fff; }
 .btn.go:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(45, 150, 115, .4); }
-.btn.magic { background: linear-gradient(180deg, #4a3fb6, #352c8c); border-color: #6559d6; color: #fff; }
-.btn.magic:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(80, 65, 200, .42); }
+/* « Magique » porte la couleur de ce qu'il montre, comme « Indices » porte
+   la sienne : éteint il se fond dans la barre avec les autres boutons ;
+   allumé, il prend exactement le violet des cartes qu'il désigne. Le bouton
+   et la lumière sur la table sont alors la même chose, et l'on voit d'un coup
+   d'œil si la solution est affichée. */
+.btn.magic.on {
+  background: linear-gradient(180deg, #7a68f0, #5546c6);
+  border-color: #9586ff; color: #fff;
+}
+.btn.magic.on:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(134, 118, 255, .45); }
 
 .btn.hint.on {
   background: linear-gradient(180deg, #caa02a, #a67d16); border-color: #e3bb49; color: #fff;
