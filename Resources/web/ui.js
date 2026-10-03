@@ -547,10 +547,16 @@
      Chaque valeur a sa ligne, de l'As en haut au Roi en bas, dans les deux
      zones. Une suite occupe donc toujours les lignes de ses valeurs, et un
      brelan la ligne de sa valeur : on sait d'avance où regarder. */
-  function paintGrid(view, board, dens, nc) {
+  function paintGrid(view, board, dens, nc, part) {
     var m = METRICS[dens] || METRICS[''];
     var empile = board.classList.contains('stack');
     nc = nc || 2;
+    /* Partage de la largeur entre les deux moities. Une demie chacune en
+       temps normal ; en portrait, les suites en recoivent davantage, faute
+       de quoi les deux grilles ne tiendraient pas cote a cote. */
+    var totalL = board.clientWidth || 1200;
+    var largeurSuites = empile ? totalL : Math.floor(totalL * (part || 0.5));
+    var largeurGroupes = empile ? totalL : totalL - largeurSuites;
     var avail = board.clientHeight || 520;
     // Les deux parties recoivent exactement la meme hauteur : toute la
     // hauteur du plateau cote a cote, la moitie chacune quand elles sont
@@ -645,8 +651,7 @@
     // frontiere, a la meme distance d'elle. Cette distance est celle que la
     // moitie gauche peut offrir : 6 px quand la place le permet, moins si
     // les colonnes des suites vont presque jusqu'au bord.
-    var largeurMoitie = empile ? (board.clientWidth || 1200)
-      : Math.floor((board.clientWidth || 1200) / 2);
+    var largeurMoitie = largeurSuites;
     var finColonnes = extra.length ? extraColX(extra.length, m, nc) : runsWidth(m, nc);
     var LN = largeurNeuve(m);
     var ecartBord = Math.max(0, Math.min(6, largeurMoitie - MARGE_L - finColonnes - LN));
@@ -671,8 +676,8 @@
     // si les deux parties sont empilees, ce que les suites laissent sinon.
     // Les deux moities font exactement la meme largeur : la frontiere tombe
     // au milieu du plateau.
-    var largeurG = (empile ? (board.clientWidth || 1200) - MARGE_L
-      : Math.max(160, Math.floor((board.clientWidth || 1200) / 2) - MARGE_L)) - NEUVE_W;
+    var largeurG = (empile ? totalL - MARGE_L
+      : Math.max(160, largeurGroupes - MARGE_L)) - NEUVE_W;
     var lignesMax = Math.max(1, Math.floor(hauteur / (m.ch + 6)));
     var colsVoulues = Math.min(14, Math.ceil(14 / lignesMax));
     // Une colonne de plus, c'est deux lignes de moins : quand il s'en faut
@@ -759,14 +764,15 @@
     spacer(zRuns, gridH + GRID_TOP + BAS_ZONE);
     spacer(zGroups, groupsH + GRID_TOP + BAS_ZONE);
 
-    if (empile) {
-      // L'une au-dessus de l'autre, a parts egales.
+    if (empile || largeurSuites === largeurGroupes) {
+      // L'une au-dessus de l'autre, ou cote a cote : a parts egales.
       zRuns.style.flex = '1 1 0';
       zGroups.style.flex = '1 1 0';
     } else {
-      // Cote a cote, a parts egales elles aussi.
-      zRuns.style.flex = '1 1 0';
-      zGroups.style.flex = '1 1 0';
+      // Cote a cote sur un ecran etroit : chacune sa part, celle qu'il lui
+      // faut. Ni l'une ni l'autre ne s'etire, sinon le partage se perdrait.
+      zRuns.style.flex = '0 0 ' + largeurSuites + 'px';
+      zGroups.style.flex = '0 0 ' + largeurGroupes + 'px';
     }
   }
 
@@ -873,14 +879,15 @@
      pas d'empiler ; un etranglement horizontal, lui, rend la table
      illisible. La hauteur ne tranche donc qu'entre deux dispositions deja
      acceptables en largeur. */
-  function pickLayout(view, width, height) {
-    var d, m;
+  function pickLayout(view, width, height, densMin) {
+    var d, m, d0 = DENSITIES.indexOf(densMin || '');
+    if (d0 < 0) d0 = 0;
 
     // 1) cote a cote : la plus grande taille de carte qui tienne en largeur
     //    comme en hauteur. On ne reserve plus de colonnes d'appoint : elles
     //    sont rares, et les reserver coutait une taille de carte a tout le
     //    monde, tout le temps.
-    for (d = 0; d < DENSITIES.length; d++) {
+    for (d = d0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
       if (2 * Math.max(minSuites(m, 2), minGroupes(m)) <= width &&
           Math.max(hautSuites(m), hautGroupes(m, width / 2)) <= height) {
@@ -888,19 +895,32 @@
       }
     }
     // 2) la meme chose, en acceptant de defiler verticalement.
-    for (d = 0; d < DENSITIES.length; d++) {
+    for (d = d0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
       if (2 * Math.max(minSuites(m, 2), minGroupes(m)) <= width) {
         return { dens: DENSITIES[d], stack: false, nc: 2 };
       }
     }
-    // 3) la largeur ne suffit plus pour deux grilles : on les empile,
-    //    chacune disposant alors de toute la largeur et de la moitie de la
-    //    hauteur — la meme pour les deux, d'ou le facteur 2 sur la plus
-    //    exigeante.
-    for (d = 0; d < DENSITIES.length; d++) {
+    // 3) la largeur ne suffit plus pour deux moities egales. Reste a choisir,
+    //    pour chaque taille de carte et dans cet ordre, entre un partage
+    //    inegal et l'empilement — jamais de carte rapetissee pour obtenir
+    //    l'un ou l'autre, puisque les tailles sont essayees de la plus
+    //    grande a la plus petite.
+    //    Le partage inegal vaut mieux quand il tient : en portrait, les deux
+    //    grilles n'ont pas les memes besoins — les suites se lisent en
+    //    hauteur et reclament des colonnes, les valeurs des groupes se
+    //    contentent de deux colonnes et de beaucoup de lignes. Empilee, une
+    //    suite ne montre qu'un quart de chaque carte ; cote a cote, les
+    //    trois quarts.
+    for (d = d0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
-      if (Math.max(minSuites(m, 2), minGroupes(m)) <= width &&
+      var bs = minSuites(m, 2), bg = minGroupes(m);
+      if (bs + bg <= width && hautSuites(m) <= height && hautGroupes(m, bg) <= height) {
+        /* Le rab va aux suites : c'est la qu'une colonne de plus evite un
+           ascenseur, quand deux suites d'une meme couleur se chevauchent. */
+        return { dens: DENSITIES[d], stack: false, nc: 2, part: (width - bg) / width };
+      }
+      if (Math.max(bs, minGroupes(m)) <= width &&
           2 * Math.max(hautSuites(m), hautGroupes(m, width)) <= height) {
         return { dens: DENSITIES[d], stack: true, nc: 2 };
       }
@@ -920,14 +940,14 @@
     var total = game.boardCards().length;
     var split = !!E.options.keepPlaces;
     var dens = total > 70 ? 'denser' : (total > 42 ? 'dense' : '');
-    var stack = false, nc = 2;
+    var stack = false, nc = 2, part = 0.5;
     if (split) {
-      var fit = pickLayout(view, board.clientWidth || 1200, board.clientHeight || 520);
+      var fit = pickLayout(view, board.clientWidth || 1200, board.clientHeight || 520, dens);
       if (fit.flow) {
         split = false;                  // trop etroit pour la table rangee
       } else {
         if (DENSITIES.indexOf(fit.dens) > DENSITIES.indexOf(dens)) dens = fit.dens;
-        stack = fit.stack; nc = fit.nc || 2;
+        stack = fit.stack; nc = fit.nc || 2; part = fit.part || 0.5;
       }
     }
     function poser(d) {
@@ -938,7 +958,7 @@
       board.style.setProperty('--step', runStep((METRICS[d] || METRICS['']).ch) + 'px');
       board.style.setProperty('--gstep', groupStep((METRICS[d] || METRICS['']).cw) + 'px');
       board.innerHTML = '';
-      if (split) paintGrid(view, board, d, nc);
+      if (split) paintGrid(view, board, d, nc, part);
       else paintFlow(view, board);
     }
     poser(dens);
