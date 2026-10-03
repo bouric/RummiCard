@@ -136,6 +136,7 @@
   var aiJustPlayed = {};     // cartes ajoutées par les joueurs virtuels depuis votre tour
   var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
   var turnStack = [];        // états successifs pendant le tour en cours
+  var piochee = null;        // la dernière carte piochée, signalée en bleu dans la main
 
   /* ================= Accueil ====================================== */
 
@@ -205,6 +206,7 @@
     savePrefs();
     history = [game.captureState()];
     turnStack = [];
+    piochee = null;
     jrnNouvelle();
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
@@ -1026,6 +1028,7 @@
     for (var i = 0; i < hand.length; i++) {
       var el = cardEl(hand[i], { pickable: isHumanTurn() });
       if (hints) el.classList.add(hints[hand[i].id] ? 'playable' : 'idle');
+      if (piochee === hand[i].id) el.classList.add('piochee');
       if (chevauche && i) el.style.marginLeft = chevauche + 'px';
       rack.appendChild(el);
     }
@@ -1831,6 +1834,10 @@
     jrn('pioche');
     var had = game.stagedCards().length;
     var card = game.draw();
+    /* La carte piochée se range aussitôt parmi les autres : sans repère, on
+       ne sait plus laquelle on vient de prendre. Elle reste signalée tant
+       qu'on ne l'a pas posée ni remplacée par une nouvelle pioche. */
+    if (card) piochee = card.id;
     render(); updateBar();
     sndHmm(!card);
     if (card) toast(TR(had ? 'toast.piochezRetour' : 'toast.piochez', { x: E.label(card) }));
