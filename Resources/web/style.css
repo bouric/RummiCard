@@ -162,7 +162,7 @@ header .brand span { color: var(--gold); }
 
 /* Zones de la table : à gauche les suites, à droite les brelans et carrés. */
 .zone {
-  flex: 1 1 50%; min-width: 0; padding: 13px; overflow-y: auto; overflow-x: hidden;
+  flex: 1 1 50%; min-width: 0; padding: 8px; overflow-y: auto; overflow-x: hidden;
   display: flex; flex-wrap: wrap; align-content: flex-start; align-items: flex-start;
   gap: 11px;
 }
@@ -172,7 +172,7 @@ header .brand span { color: var(--gold); }
 .zone.grid { display: block; position: relative; overflow-x: auto; }
 /* Décalé de l'angle : le tapis a un rayon de 16 px qui mangeait le « S »
    de « Suites ». */
-.zone.grid .zonehead { position: absolute; top: 3px; left: 15px; margin: 0; width: auto; }
+.zone.grid .zonehead { position: absolute; top: 2px; left: 15px; margin: 0; width: auto; }
 .zone.grid .set {
   position: absolute; padding: 0; background: none; border: 0; border-radius: 0;
 }
@@ -204,14 +204,6 @@ header .brand span { color: var(--gold); }
   font-weight: 700; color: rgba(255, 255, 255, .34);
 }
 
-.zone .suitmark {
-  position: absolute; top: 16px; text-align: center; font-size: 13px; line-height: 1;
-  opacity: .5; pointer-events: none;
-}
-.zone .suitmark.s0 { color: #cfd6e6; }
-.zone .suitmark.s1 { color: #ff8a93; }
-.zone .suitmark.s2 { color: #7fb4ff; }
-.zone .suitmark.s3 { color: #6fdcae; }
 #board.split .zone + .zone { border-left: 1px dashed rgba(255, 255, 255, .16); }
 .zonehead {
   width: 100%; margin-bottom: -4px; font-size: 10px; font-weight: 600;

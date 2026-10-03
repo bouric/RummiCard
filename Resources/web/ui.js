@@ -198,7 +198,7 @@
       (opts.pickable ? ' pickable' : '');
     d.dataset.id = card.id;
     d.innerHTML =
-      '<div class="corner"><span class="rank">' + E.RANK_LABEL[card.rank] +
+      '<div class="corner"><span class="rank">' + E.rankLabel(card.rank) +
       '</span><span class="cs">' + E.SUIT_GLYPH[card.suit] + '</span></div>' +
       '<div class="mid">' + E.SUIT_GLYPH[card.suit] + '</div>' +
       '<div class="suit">' + E.SUIT_GLYPH[card.suit] + '</div>';
@@ -405,11 +405,22 @@
   }
 
   var FOLD_H = 48;       // hauteur de la bande d'une moitié repliée
-  var GRID_TOP = 34;     // sous l'intitulé de la zone et les repères de couleur
-  var RULER_W = 22;      // colonne des valeurs, côté suites
-  var GROUP_X = 6;       // marge gauche côté brelans et carrés
-  var SUIT_GAP = 16;     // écart entre deux couleurs
-  var RUN_GAP = 8;       // écart entre les deux colonnes d'une couleur
+  /* Marges de la table, serrées au plus juste : chaque pixel rendu ici
+     permet au calcul de densité de choisir des cartes plus grandes. */
+  var PAD_ZONE = 8;      // rembourrage d'une zone (doit suivre style.css)
+  var BAS_ZONE = 10;     // respiration sous la grille
+  var GRID_TOP = 20;     // sous l'intitulé de la zone
+  var RULER_W = 16;      // colonne des valeurs, côté suites
+  var GROUP_X = 4;       // marge gauche côté brelans et carrés
+  var SUIT_GAP = 8;      // écart entre deux couleurs
+  var RUN_GAP = 5;       // écart entre les deux colonnes d'une couleur
+  /* Les zones « nouvelle combinaison » sont de simples bandes : leur
+     libellé s'y écrit à la verticale, une largeur de carte serait du
+     gaspillage sur un écran étroit. */
+  function largeurNeuve(m) { return Math.max(18, Math.round(m.cw * 0.45)); }
+  /* Hauteur et largeur perdues en marges, de part et d'autre d'une zone. */
+  var MARGE_H = 2 * PAD_ZONE + BAS_ZONE;
+  var MARGE_L = 2 * PAD_ZONE;
 
   /* Colonnes fixes par couleur. Deux en temps normal : chaque valeur
      n'existant qu'en deux exemplaires, jamais plus de deux suites d'une même
@@ -420,7 +431,7 @@
      garder qu'une colonne par couleur — chaque pixel gagne la y est une
      colonne d'appoint de plus qui tient a l'ecran. */
   function ecarts(nc) {
-    return nc === 1 ? { rg: 4, sg: 10 } : { rg: RUN_GAP, sg: SUIT_GAP };
+    return nc === 1 ? { rg: 4, sg: 8 } : { rg: RUN_GAP, sg: SUIT_GAP };
   }
   function runColX(suit, k, m, nc) {
     var g = ecarts(nc);
@@ -435,7 +446,9 @@
     return runsWidth(m, nc) + e * (m.cw + g.rg);
   }
   function runsWidth(m, nc) {
-    return runColX(3, nc - 1, m, nc) + m.cw + 10;
+    /* Bord droit de la dernière colonne : la marge qui la sépare de la bande
+       « Nouvelle suite » est comptée avec celle-ci, pas deux fois. */
+    return runColX(3, nc - 1, m, nc) + m.cw + 4;
   }
 
   function setEl(s) {
@@ -493,7 +506,7 @@
     // 34 px d'intitule et de reperes, 26 px de rembourrage de la zone,
     // 12 px de respiration en bas : ce qui reste est pour la grille.
     var hDispo = solo ? avail - FOLD_H : (empile ? Math.floor(avail / 2) - 1 : avail);
-    var hauteur = Math.max(60, hDispo - GRID_TOP - 38);
+    var hauteur = Math.max(60, hDispo - GRID_TOP - MARGE_H);
     board.dataset.avail = avail;      // pour detecter un plateau redimensionne
     var step = Math.max(minRunStep(m.ch), Math.min(m.ch, Math.floor((hauteur - m.ch) / 13)));
     var gstep = groupStep(m.cw);
@@ -574,7 +587,6 @@
         place(zRuns, r.el, extraColX(e, m, nc), ideal);
       }
     }
-    addSuitMarks(zRuns, m, nc);
     // Les deux zones « nouvelle combinaison » se rangent contre la
     // frontiere, a la meme distance d'elle. Cette distance est celle que la
     // moitie gauche peut offrir : 6 px quand la place le permet, moins si
@@ -582,9 +594,10 @@
     var largeurMoitie = empile ? (board.clientWidth || 1200)
       : Math.floor((board.clientWidth || 1200) / 2);
     var finColonnes = extra.length ? extraColX(extra.length, m, nc) : runsWidth(m, nc);
-    var ecartBord = Math.max(0, Math.min(6, largeurMoitie - finColonnes - m.cw));
-    var newRunsX = Math.max(finColonnes, largeurMoitie - ecartBord - m.cw);
-    var apresSuites = newRunsX + m.cw + 10;
+    var LN = largeurNeuve(m);
+    var ecartBord = Math.max(0, Math.min(6, largeurMoitie - MARGE_L - finColonnes - LN));
+    var newRunsX = Math.max(finColonnes, largeurMoitie - MARGE_L - ecartBord - LN);
+    var apresSuites = newRunsX + LN + 8;
 
     // Groupes : une case fixe par valeur, As à Roi — 7 lignes puis la colonne
     // suivante. Une valeur est donc toujours au même endroit, qu'elle soit
@@ -593,7 +606,7 @@
     var groupW = largeurGroupe(m);
     // La zone « Nouveau groupe » occupe le bord gauche : elle se retrouve
     // ainsi juste a cote de « Nouvelle suite », qui borde la zone de gauche.
-    var NEUVE_W = m.cw + 10;
+    var NEUVE_W = largeurNeuve(m) + 8;
     /* Cote a cote, « Nouveau groupe » borde la frontiere, donc le bord
        gauche de sa moitie, pour faire face a « Nouvelle suite ». Empilees,
        il n'y a plus de frontiere entre elles : la zone passe a droite, juste
@@ -604,8 +617,8 @@
     // si les deux parties sont empilees, ce que les suites laissent sinon.
     // Les deux moities font exactement la meme largeur : la frontiere tombe
     // au milieu du plateau.
-    var largeurG = (empile ? (board.clientWidth || 1200) - 26
-      : Math.max(160, Math.floor((board.clientWidth || 1200) / 2) - 26)) - NEUVE_W;
+    var largeurG = (empile ? (board.clientWidth || 1200) - MARGE_L
+      : Math.max(160, Math.floor((board.clientWidth || 1200) / 2) - MARGE_L)) - NEUVE_W;
     var lignesMax = Math.max(1, Math.floor(hauteur / (m.ch + 6)));
     var colsVoulues = Math.min(14, Math.ceil(14 / lignesMax));
     // Une colonne de plus, c'est deux lignes de moins : quand il s'en faut
@@ -637,13 +650,13 @@
     // la largeur des zones, et toute la table sautait d'un tour a l'autre.
     // Hors de votre tour elles sont seulement estompees.
     // Memes dimensions des deux cotes : elles se font face.
-    placeNewZone(zRuns, newRunsX, GRID_TOP, m.cw, hauteur, 'runs', TR('zone.nouvelleSuite'));
-    placeNewZone(zGroups, empile ? newRunsX : ecartBord, GRID_TOP, m.cw, hauteur,
+    placeNewZone(zRuns, newRunsX, GRID_TOP, LN, hauteur, 'runs', TR('zone.nouvelleSuite'));
+    placeNewZone(zGroups, empile ? newRunsX : ecartBord, GRID_TOP, LN, hauteur,
                  'groups', TR('zone.nouveauGroupe'));
     // Les espaceurs donnent sa hauteur de defilement a chaque grille ; ils
     // doivent etre poses avant qu'une moitie ne soit repliee.
-    spacer(zRuns, gridH + GRID_TOP + 12);
-    spacer(zGroups, groupsH + GRID_TOP + 12);
+    spacer(zRuns, gridH + GRID_TOP + BAS_ZONE);
+    spacer(zGroups, groupsH + GRID_TOP + BAS_ZONE);
 
     if (solo) {
       // Telephone : une moitie depliee en pleine hauteur, l'autre reduite a
@@ -710,20 +723,8 @@
       cell.style.top = (GRID_TOP + valueRow(v, rows) * rowH) + 'px';
       cell.style.width = (groupW - 10) + 'px';
       cell.style.height = m.ch + 'px';
-      cell.innerHTML = '<i>' + E.RANK_LABEL[v] + '</i>';
+      cell.innerHTML = '<i>' + E.rankLabel(v) + '</i>';
       zone.appendChild(cell);
-    }
-  }
-
-  /* Repère de couleur au-dessus de chaque paire de colonnes. */
-  function addSuitMarks(zone, m, nc) {
-    for (var s = 0; s < 4; s++) {
-      var d = document.createElement('div');
-      d.className = 'suitmark s' + s;
-      d.textContent = E.SUIT_GLYPH[s];
-      d.style.left = runColX(s, 0, m, nc) + 'px';
-      d.style.width = (nc * m.cw + (nc - 1) * ecarts(nc).rg) + 'px';
-      zone.appendChild(d);
     }
   }
 
@@ -737,7 +738,7 @@
       line.style.top = (GRID_TOP + rowOfValue(v) * step) + 'px';
       r.appendChild(line);
       var lab = document.createElement('i');
-      lab.textContent = v === 14 ? 'A' : E.RANK_LABEL[v];
+      lab.textContent = v === 14 ? 'A' : E.rankLabel(v);
       if (v === 14) lab.className = 'acehigh';
       lab.style.top = (GRID_TOP + rowOfValue(v) * step) + 'px';
       r.appendChild(lab);
@@ -780,43 +781,25 @@
   /* Taille des cartes : assez petite pour que toutes les colonnes tiennent. */
   /* Place demandee par chaque zone, separement : c'est ce qui permet de
      decider entre les deux cote a cote et l'une au-dessus de l'autre. */
-  function besoinSuites(m, nc) { return runsWidth(m, nc) + 2 * (m.cw + ecarts(nc).rg) + 12; }
-  function besoinGroupes(m, nCols) {
-    return GROUP_X + (2 + (nCols > 1 ? 1 : 0)) * largeurGroupe(m) + (m.cw + 10) + 24;
-  }
   /* Hauteurs minimales : les deux grilles se compriment, l'une en resserrant
      sa graduation, l'autre en repartissant ses valeurs sur plus de colonnes. */
-  function hautSuites(m) { return GRID_TOP + 13 * minRunStep(m.ch) + m.ch + 38; }
+  function hautSuites(m) { return GRID_TOP + 13 * minRunStep(m.ch) + m.ch + MARGE_H; }
   /* Hauteur de la grille des valeurs : elle depend de la largeur, puisque
      c'est le nombre de colonnes qui fixe le nombre de lignes. Sans ce
      calcul, on choisissait des cartes trop grandes et la grille debordait. */
   function hautGroupes(m, largeur) {
-    var w = Math.max(60, largeur - (m.cw + 10));      // moins « Nouveau groupe »
+    var w = Math.max(60, largeur - largeurNeuve(m) - 8);   // moins « Nouveau groupe »
     var colsFit = Math.max(1, Math.min(14, Math.floor((w - GROUP_X) / largeurGroupe(m))));
-    return GRID_TOP + Math.ceil(14 / colsFit) * (m.ch + 6) + 38;
+    return GRID_TOP + Math.ceil(14 / colsFit) * (m.ch + 6) + MARGE_H;
   }
 
-  /* Combien de groupes d'une meme valeur cohabitent : une colonne d'appoint
-     est alors necessaire cote groupes. */
-  function largeurGroupes(view) {
-    var ranks = {}, nCols = 1, i;
-    for (i = 0; i < view.sets.length; i++) {
-      var s = view.sets[i];
-      var cards = s.slot >= 0 ? s.cards.concat([drag.card]) : s.cards;
-      if (zoneOf(s, cards) === 'runs') continue;
-      var r = cards.length ? cards[0].rank : 0;
-      ranks[r] = (ranks[r] || 0) + 1;
-      if (ranks[r] > nCols) nCols = ranks[r];
-    }
-    return nCols;
-  }
 
   /* Largeur en-dessous de laquelle une grille cesse d'etre lisible : ses
      colonnes fixes, sans les colonnes d'appoint qui, elles, peuvent
      defiler. C'est ce minimum qui decide de l'empilement, pas la place
      ideale — sinon on empilerait des que la table est chargee. */
-  function minSuites(m, nc) { return runsWidth(m, nc) + 12; }
-  function minGroupes(m) { return GROUP_X + 2 * largeurGroupe(m) + (m.cw + 10) + 24; }
+  function minSuites(m, nc) { return runsWidth(m, nc) + largeurNeuve(m) + 8; }
+  function minGroupes(m) { return GROUP_X + 2 * largeurGroupe(m) + largeurNeuve(m) + 16; }
 
   /* Choisit la taille des cartes ET la disposition des deux zones.
      Un debordement vertical se rattrape en faisant defiler, et ne justifie
@@ -824,18 +807,20 @@
      illisible. La hauteur ne tranche donc qu'entre deux dispositions deja
      acceptables en largeur. */
   function pickLayout(view, width, height) {
-    var nCols = largeurGroupes(view), d, m;
+    var d, m;
 
-    // 1) tout tient cote a cote, hauteur comprise : le cas confortable.
+    // 1) cote a cote : la plus grande taille de carte qui tienne en largeur
+    //    comme en hauteur. On ne reserve plus de colonnes d'appoint : elles
+    //    sont rares, et les reserver coutait une taille de carte a tout le
+    //    monde, tout le temps.
     for (d = 0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
-      if (2 * Math.max(besoinSuites(m, 2), besoinGroupes(m, nCols)) <= width &&
+      if (2 * Math.max(minSuites(m, 2), minGroupes(m)) <= width &&
           Math.max(hautSuites(m), hautGroupes(m, width / 2)) <= height) {
         return { dens: DENSITIES[d], stack: false, nc: 2 };
       }
     }
-    // 2) cote a cote reste lisible : chaque grille garde ses colonnes
-    //    fixes, quitte a defiler verticalement.
+    // 2) la meme chose, en acceptant de defiler verticalement.
     for (d = 0; d < DENSITIES.length; d++) {
       m = METRICS[DENSITIES[d]];
       if (2 * Math.max(minSuites(m, 2), minGroupes(m)) <= width) {
