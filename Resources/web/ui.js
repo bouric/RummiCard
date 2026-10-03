@@ -1324,22 +1324,15 @@
     var msg = $('#msg');
     msg.className = m.cls;
     msg.innerHTML = m.html;
-    /* Barre masquee — tout sauf l'ordinateur : le message passe en bulle, et
-       seulement quand il change, pour ne pas repeter la meme phrase a chaque
-       redessin. Une bulle deja affichee garde la main : elle annonce un geste
-       qu'on vient de faire, plus pressant qu'un rappel de situation. */
-    if (getComputedStyle(msg).display === 'none') {
-      if (m.html && m.html !== dernierMessage && !$('#toast').classList.contains('show')) toast(m.html);
-      dernierMessage = m.html;
-    } else {
-      dernierMessage = '';
-    }
+    /* Hors ordinateur la barre est masquee, et le message ne s'affiche plus
+       nulle part en cours de partie : sur une table vide le tapis le porte,
+       et un geste refuse s'explique de lui-meme en bulle. Le rappeler a
+       chaque tour revenait a faire passer une bulle devant la table pour
+       une phrase qu'on avait deja lue. */
   }
 
   /* Ou en est le tour, en une phrase : ce que la barre affiche sur un
-     ordinateur, ce que la table porte quand elle est vide, et ce que la
-     bulle annonce ailleurs. */
-  var dernierMessage = '';
+     ordinateur, et ce que la table porte quand elle est vide. */
   function messageContexte() {
     var human = isHumanTurn();
     if (!human) return { cls: '', html: game.finished ? '' : TR('hud.reflechissent') };
