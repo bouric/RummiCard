@@ -499,6 +499,11 @@ header .brand span { color: var(--gold); }
   #hints .lbl, #auto .lbl, #sort .lbl, #rewind .lbl { display: none; }
   .btn { padding: 8px 11px; font-size: 14px; }
   #bar { gap: 6px; }
+  /* Table pleine : chaque combinaison paie son rembourrage et l'écart qui la
+     sépare de la suivante. Sur un téléphone, ces quelques pixels par rangée
+     sont ce qui sépare une table entière d'une table qui défile. */
+  .zone { gap: 6px; }
+  .set { padding: 3px; gap: 2px; }
   #msg { height: 4.2em; }
   /* Sur téléphone, le message garde sa propre ligne même quand la barre est
      resserrée : sur la rangée des boutons il serait coupé. */
