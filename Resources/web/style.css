@@ -204,9 +204,12 @@ header .brand span { color: var(--gold); }
 #board.dense { --cw: 48px; --ch: 68px; }
 #board.denser { --cw: 40px; --ch: 57px; }
 #board .empty {
-  margin: auto; text-align: center; color: rgba(255, 255, 255, .42); font-size: 14px; line-height: 1.7;
+  margin: auto; text-align: center; color: rgba(255, 255, 255, .42); font-size: 14px; line-height: 1.6;
+  max-width: 36ch; padding: 0 8px;
 }
-#board .empty b { color: rgba(255, 255, 255, .72); display: block; font-size: 16px; margin-bottom: 4px; }
+/* Le gras est au fil de la phrase — « ouvrez la partie par une suite » —
+   et non plus un titre en tête : c'est un message, pas un panneau. */
+#board .empty b { color: var(--gold); font-weight: 650; }
 
 .set {
   display: flex; gap: 3px; padding: 6px; border-radius: 12px;
@@ -472,11 +475,17 @@ header .brand span { color: var(--gold); }
   border-left: 0; border-top: 1px dashed rgba(255, 255, 255, .16);
 }
 
-/* Le message cesse d'être tronqué : il prend sa propre ligne. */
+/* Hors ordinateur, la barre du bas perd son message : il passe en bulle
+   temporaire, et sur une table vide il s'inscrit sur le tapis. Ces deux ou
+   trois lignes rendues au plateau, ce sont des cartes plus grandes. */
 @media (max-width: 1040px) {
   #bar { flex-wrap: wrap; }
-  #msg { flex: 1 0 100%; order: 2; white-space: normal; height: 2.8em; }
+  #msg { display: none; }
 }
+/* Le message du moment, inscrit sur une table vide : il garde les couleurs
+   de la barre — doré pour un avertissement, vert quand le tour est bon. */
+#board .empty.warn { color: #ffcf6b; }
+#board .empty.good { color: #6fdcae; }
 
 /* Tablette en portrait. */
 @media (max-width: 820px) {
@@ -504,10 +513,6 @@ header .brand span { color: var(--gold); }
      sont ce qui sépare une table entière d'une table qui défile. */
   .zone { gap: 6px; }
   .set { padding: 3px; gap: 2px; }
-  #msg { height: 4.2em; }
-  /* Sur téléphone, le message garde sa propre ligne même quand la barre est
-     resserrée : sur la rangée des boutons il serait coupé. */
-  #game.compact #msg { flex: 1 0 100%; order: 2; white-space: normal; height: 4.2em; }
   /* Des pastilles plus étroites : quatre joueurs tiennent sur une rangée,
      et au-delà le retour à la ligne reste possible. */
   /* Pendant la partie, le haut de l'écran disparaît : ni pastilles de score

@@ -831,9 +831,12 @@
     var zone = makeZone('full', '');
     board.appendChild(zone);
     if (!view.sets.length && !view.newSlot) {
+      /* Table vide : c'est elle qui porte le message du moment, a la place
+         d'un texte d'accueil qui ne disait rien de la partie en cours. */
+      var m = messageContexte();
       var empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.innerHTML = TR('board.vide');
+      empty.className = 'empty' + (m.cls ? ' ' + m.cls : '');
+      empty.innerHTML = m.html || TR('board.vide');
       zone.appendChild(empty);
       if (isHumanTurn()) zone.appendChild(newZone('any', TR('zone.nouvelle')));
       return;
@@ -920,7 +923,17 @@
            ascenseur, quand deux suites d'une meme couleur se chevauchent. */
         return { dens: DENSITIES[d], stack: false, nc: 2, part: (width - bg) / width };
       }
-      if (Math.max(bs, minGroupes(m)) <= width &&
+    }
+    /* 4) l'empilement en dernier ressort, meme s'il autorise des cartes plus
+       grandes : il coupe la hauteur en deux, et une suite n'y montre plus
+       qu'un quart de chaque carte contre les trois quarts cote a cote. Le
+       calcul tranche — sur un iPad en portrait, 23 px de carte visible
+       empile contre 58 px cote a cote, pour des cartes a peine plus petites.
+       Et des que la table se garnit, l'empilement rapetisse de toute facon
+       ses cartes a la meme taille : son avantage ne tient qu'a table vide. */
+    for (d = d0; d < DENSITIES.length; d++) {
+      m = METRICS[DENSITIES[d]];
+      if (Math.max(minSuites(m, 2), minGroupes(m)) <= width &&
           2 * Math.max(hautSuites(m), hautGroupes(m, width)) <= height) {
         return { dens: DENSITIES[d], stack: true, nc: 2 };
       }
@@ -1221,40 +1234,55 @@
     $('#rewind').disabled = !canRewind();
     $('#hints').classList.toggle('on', !!prefs.hints);
 
+    var m = messageContexte();
     var msg = $('#msg');
-    msg.className = '';
-    if (!human) { msg.textContent = game.finished ? '' : TR('hud.reflechissent'); return; }
+    msg.className = m.cls;
+    msg.innerHTML = m.html;
+    /* Barre masquee — tout sauf l'ordinateur : le message passe en bulle, et
+       seulement quand il change, pour ne pas repeter la meme phrase a chaque
+       redessin. Une bulle deja affichee garde la main : elle annonce un geste
+       qu'on vient de faire, plus pressant qu'un rappel de situation. */
+    if (getComputedStyle(msg).display === 'none') {
+      if (m.html && m.html !== dernierMessage && !$('#toast').classList.contains('show')) toast(m.html);
+      dernierMessage = m.html;
+    } else {
+      dernierMessage = '';
+    }
+  }
+
+  /* Ou en est le tour, en une phrase : ce que la barre affiche sur un
+     ordinateur, ce que la table porte quand elle est vide, et ce que la
+     bulle annonce ailleurs. */
+  var dernierMessage = '';
+  function messageContexte() {
+    var human = isHumanTurn();
+    if (!human) return { cls: '', html: game.finished ? '' : TR('hud.reflechissent') };
+    var staged = game.stagedCards().length;
+    var check = game.checkCommit();
     if (check.ok) {
-      msg.className = 'good';
-      msg.innerHTML = TR('bar.ok', { n: staged, cartes: NC(staged), p: game.stagedPoints(),
-        posees: TR(staged > 1 ? 'bar.posees' : 'bar.posee') });
-    } else if (staged) {
-      msg.className = 'warn';
-      msg.textContent = check.reason;
-    } else if (ouvertureAttendue()) {
-      msg.className = 'warn';
+      return { cls: 'good', html: TR('bar.ok', { n: staged, cartes: NC(staged), p: game.stagedPoints(),
+        posees: TR(staged > 1 ? 'bar.posees' : 'bar.posee') }) };
+    }
+    if (staged) return { cls: 'warn', html: check.reason };
+    if (ouvertureAttendue()) {
       var tete = TR('bar.ouverture');
-      if (prefs.hints) {
-        /* Les indices ne proposent qu'une ouverture en suite : s'ils ne
-           trouvent rien, aucune n'est possible et il faut piocher. */
-        playableIds();
-        msg.innerHTML = hintCache.total
-          ? tete + ' — ' + TR('bar.ouvertureN', { n: hintCache.total, cartes: NC(hintCache.total),
-              mises: TR(hintCache.total > 1 ? 'bar.mises' : 'bar.mise') })
-          : tete + ' — ' + TR('bar.ouvertureRien');
-      } else {
-        msg.innerHTML = tete;
-      }
-    } else if (prefs.hints) {
+      if (!prefs.hints) return { cls: 'warn', html: tete };
+      /* Les indices ne proposent qu'une ouverture en suite : s'ils ne
+         trouvent rien, aucune n'est possible et il faut piocher. */
+      playableIds();
+      return { cls: 'warn', html: hintCache.total
+        ? tete + ' — ' + TR('bar.ouvertureN', { n: hintCache.total, cartes: NC(hintCache.total),
+            mises: TR(hintCache.total > 1 ? 'bar.mises' : 'bar.mise') })
+        : tete + ' — ' + TR('bar.ouvertureRien') };
+    }
+    if (prefs.hints) {
       playableIds();
       var n = hintCache.total;
-      msg.className = n ? 'good' : 'warn';
-      msg.innerHTML = n
+      return { cls: n ? 'good' : 'warn', html: n
         ? TR('bar.indices', { n: n, cartes: NC(n), mises: TR(n > 1 ? 'bar.mises' : 'bar.mise') })
-        : TR('bar.indicesRien');
-    } else {
-      msg.innerHTML = TR('bar.glisser');
+        : TR('bar.indicesRien') };
     }
+    return { cls: '', html: TR('bar.glisser') };
   }
 
   /* ================= Aide : cartes posables ======================= */
