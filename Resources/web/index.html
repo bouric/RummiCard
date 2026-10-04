@@ -89,7 +89,10 @@
   </div>
 
   <div id="bar">
-    <button class="btn go" id="commit">&#10003;<span class="lbl" data-i18n="btn.suivant"></span></button>
+    <!-- Le symbole « retour » d'Unicode, celui des claviers : c'est Entree qui
+         mene au suivant. Avec le retour arriere d'« Annuler », les deux
+         premiers boutons portent chacun sa touche. -->
+    <button class="btn go" id="commit">&#9166;<span class="lbl" data-i18n="btn.suivant"></span></button>
     <!-- Le caractere de la touche retour arriere, qui est justement le
          raccourci d'« Annuler » : le pictogramme enseigne la touche. Le ↩
          d'avant etait celui de la touche Retour, attribuee a « Au suivant ». -->
