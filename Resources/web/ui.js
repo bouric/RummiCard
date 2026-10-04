@@ -23,7 +23,7 @@
   var prefs = { langue: null, debug: false,
                 tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
                 niveau: 'normal', manches: 3, sensSuites: 'asc',
-                parties: 0, sansRappel: false,
+                parties: 0, sansRappel: false, magicienVu: false,
                 lastDeal: null, saved: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
@@ -76,6 +76,7 @@
         prefs.parties = Math.min(Math.floor(p.parties), 99999);
       }
       if (typeof p.sansRappel === 'boolean') prefs.sansRappel = p.sansRappel;
+      if (typeof p.magicienVu === 'boolean') prefs.magicienVu = p.magicienVu;
     }
     E.options.keepPlaces = prefs.keepPlaces;
     E.options.difficulty = prefs.niveau;
@@ -2880,6 +2881,63 @@
     }
   }
 
+  /* ================= Le magicien, explique ========================
+     Deux usages pour un seul geste : la barre n'a pas la place de les dire
+     sans deborder — mesure faite, la phrase complete demandait 684 px dans
+     un emplacement de 612 a la taille de la fenetre de l'app. Elle se
+     contente donc du geste, et ce panneau porte le reste, une fois pour
+     toutes.
+     Les deux saynetes sont animees en CSS, et non par element.animate() :
+     c'est la seule facon que « prefers-reduced-motion » les arrete. Leur
+     derniere image est l'image utile, de sorte qu'arretees elles montrent
+     encore ce qu'il faut voir. */
+  function carteDemo(rang, enseigne, rouge, classes) {
+    return '<span class="dc' + (rouge ? ' rouge' : '') + (classes ? ' ' + classes : '') +
+      '">' + rang + enseigne + '</span>';
+  }
+
+  function sayneteMain() {
+    return '<div class="demo">' +
+      carteDemo('7', '&hearts;', 1, '') +
+      carteDemo('8', '&hearts;', 1, '') +
+      carteDemo('9', '&hearts;', 1, '') +
+      '<span class="ecart"></span>' +
+      carteDemo('10', '&hearts;', 1, 'visee') +
+      carteDemo('3', '&spades;', 0, 'sombre') +
+      '<span class="doigt versMain"></span></div>';
+  }
+
+  function sayneteTapis() {
+    return '<div class="demo">' +
+      carteDemo('8', '&clubs;', 0, 'casse') +
+      carteDemo('9', '&clubs;', 0, 'casse') +
+      carteDemo('10', '&clubs;', 0, 'arrive') +
+      '<span class="ecart"></span>' +
+      carteDemo('10', '&spades;', 0, '') +
+      carteDemo('10', '&hearts;', 1, '') +
+      '<span class="ecart"></span>' +
+      carteDemo('V', '&spades;', 0, 'sombre') +
+      carteDemo('V', '&hearts;', 1, 'sombre') +
+      carteDemo('V', '&diams;', 1, 'sombre') +
+      '<span class="doigt versTapis"></span></div>';
+  }
+
+  function montrerMagicien(retour) {
+    var ov = $('#overlay');
+    ov.innerHTML = '<div class="panel"><h2>&#10024; ' + TR('mag.titre') + '</h2>' +
+      '<p>' + TR('mag.geste') + '</p>' +
+      '<h3>' + TR('mag.mainTitre') + '</h3>' + sayneteMain() +
+      '<p>' + TR('mag.mainTexte') + '</p>' +
+      '<h3>' + TR('mag.tapisTitre') + '</h3>' + sayneteTapis() +
+      '<p>' + TR('mag.tapisTexte') + '</p>' +
+      '<div class="row"><button class="cta" id="magferme" style="flex:1">' +
+      TR('btn.fermer') + '</button></div></div>';
+    ov.classList.remove('hidden');
+    $('#magferme').onclick = function () {
+      if (retour) retour(); else ov.classList.add('hidden');
+    };
+  }
+
   /* ================= Soutien ======================================
      Le jeu reste entier et gratuit : rien n'est ferme, aucune limite, aucun
      compte. Ce panneau ne fait qu'indiquer ou remercier.
@@ -3169,6 +3227,15 @@
     btn.addEventListener('pointerdown', function (e) {
       if (btn.disabled) return;
       e.preventDefault();
+      /* La toute premiere fois, on explique avant de laisser jouer : le geste
+         ne se devine pas — on tient le bouton, on ne l'appuie pas — et ses
+         deux usages encore moins. Une fois lue, la lecon ne revient plus. */
+      if (!prefs.magicienVu) {
+        prefs.magicienVu = true;
+        savePrefs();
+        montrerMagicien();
+        return;
+      }
       allumerMagicien();
     });
     /* Relacher sur une combinaison a reparer, c'est l'accepter : la phrase
@@ -3216,7 +3283,10 @@
     Enter: function () { doCommit(); },
     Backspace: function () { doUndo(); },
     p: function () { doDraw(); },
-    m: function () { allumerMagicien(); },
+    m: function () {
+      if (!prefs.magicienVu) { prefs.magicienVu = true; savePrefs(); montrerMagicien(); return; }
+      allumerMagicien();
+    },
     t: function () { doSort(); },
     r: function () { doRewind(); },
     i: function () { toggleHints(); }
@@ -3346,6 +3416,7 @@
     showRules: showRules,
     showOptions: showOptions,
     showSoutien: montrerSoutien,
+    showMagicien: montrerMagicien,
     prefs: function () { return prefs; },
     rewind: doRewind,
     showMenu: function () {

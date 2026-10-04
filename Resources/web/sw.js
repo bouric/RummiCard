@@ -7,7 +7,7 @@
    premier : la partie se lançait instantanément, mais avec la version
    d'avant, et il fallait recharger deux fois pour voir une nouveauté.
    ===================================================================== */
-var CACHE = 'rummicard-5';
+var CACHE = 'rummicard-6';
 var ATTENTE = 3000;          // au-delà, on n'attend plus le serveur
 var SHELL = [
   './', 'index.html', 'style.css',
