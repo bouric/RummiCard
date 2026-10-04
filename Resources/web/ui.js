@@ -1175,7 +1175,10 @@
      l'etat courant, sinon le resserrement se jugerait sur son propre effet
      et la barre clignoterait d'un rendu a l'autre. */
   function majBoutonsIcones() {
-    var jeu = $('#game'), btns = document.querySelectorAll('#bar .btn');
+    /* Le bouton de fin de tour en cache un autre au meme emplacement : un
+       bouton masque a un offsetTop de zero, qu'on prendrait pour un retour a
+       la ligne. On ne mesure que ce qui s'affiche. */
+    var jeu = $('#game'), btns = document.querySelectorAll('#bar .btn:not(.hidden)');
     if (btns.length < 2) return;
     var compact = jeu.classList.contains('compact'), i;
     jeu.classList.remove('icones');
@@ -1482,15 +1485,19 @@
     var human = isHumanTurn();
     var staged = game.stagedCards().length;
     var check = human ? game.checkCommit() : { ok: false, reason: '' };
+    /* Soit on dit au suivant, soit on pioche : les deux ferment le tour et
+       jamais au meme moment. Ils partagent donc un seul emplacement, le
+       premier de la rangee, et c'est ce qu'on a fait qui decide du visage.
+       Tant que rien n'est pose, « Piocher », en neutre : piocher est l'aveu
+       qu'on n'a rien a jouer, pas un but, et le teinter en vert pousserait a
+       le faire. Des la premiere carte posee, « Au suivant », en vert, allume
+       si le tour tient debout. Le bouton ne change jamais sous le doigt : il
+       bascule quand on pose ou reprend une carte, main sur le tapis. */
+    $('#commit').classList.toggle('hidden', !staged);
+    $('#draw').classList.toggle('hidden', !!staged);
     $('#commit').disabled = !human || !check.ok;
     $('#undo').disabled = !human || !turnStack.length;
-    /* Piocher defait les poses du tour et le clot aussitot : offert apres
-       qu'une carte est posee, c'etait un piege — un clic effacait le travail
-       sans rien demander. Le bouton s'eteint donc des la premiere pose, et
-       « Annuler » reprend les cartes pour qui veut piocher malgre tout. */
-    var piocheBloquee = human && !!staged;
-    $('#draw').disabled = !human || piocheBloquee;
-    $('#draw').title = piocheBloquee ? TR('tip.piocheBloquee') : '';
+    $('#draw').disabled = !human;
     $('#auto').disabled = !human;
     $('#sort').disabled = !human;
     $('#rewind').disabled = !canRewind();
@@ -2292,7 +2299,9 @@
 
   function doDraw() {
     if (!isHumanTurn()) return;
-    if (game.stagedCards().length) return;   // meme barriere pour la touche P
+    /* Meme barriere pour la touche P. Le bouton n'etant plus a l'ecran pour
+       expliquer son absence, c'est le message qui le dit. */
+    if (game.stagedCards().length) { info(TR('tip.piocheBloquee')); return; }
     eteindreMagicien(true);
     jrn('pioche');
     var card = game.draw();
