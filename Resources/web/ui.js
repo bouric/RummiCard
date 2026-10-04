@@ -1123,11 +1123,34 @@
     if (vieille) vieille.remove();
     if (!ouvertureAttendue() || !isHumanTurn()) return;
     var d = document.createElement('div');
-    /* La place libre n'est pas la meme d'une disposition a l'autre : haut du
-       tapis sur la table rangee, milieu sur la table libre. */
-    d.className = 'consigne' + ($('#board').querySelector('.zone.grid') ? ' haute' : '');
+    d.className = 'consigne';
     d.innerHTML = '<span>' + TR('bar.ouverture') + '</span>';
     wrap.appendChild(d);
+    rangerConsigne(d, wrap);
+  }
+
+  /* Table rangee : la phrase se loge dans la moitie droite, celle des brelans,
+     a droite de la bande « nouveau groupe ». Elle n'empiete alors sur aucune
+     des deux zones de depot, et laisse la colonne des suites entierement
+     libre. On mesure la bande plutot que de recalculer la geometrie : c'est la
+     meme reponse, et elle suit la disposition quelle qu'elle soit.
+     Si la place manque — table empilee, fenetre etroite, table libre — la
+     phrase revient au milieu du tapis. */
+  function rangerConsigne(d, wrap) {
+    /* Seule la table rangee partage le tapis en deux moities ; la table libre
+       n'a qu'une zone, en haut a gauche, et la phrase y reste au milieu. */
+    if (!$('#board').querySelector('.zone.grid')) return;
+    var zones = $('#board').querySelectorAll('.newzone');
+    if (!zones.length) return;
+    var w = wrap.getBoundingClientRect(), fin = 0, i;
+    for (i = 0; i < zones.length; i++) {
+      var r = zones[i].getBoundingClientRect();
+      if (r.right > fin) fin = r.right;
+    }
+    var gauche = Math.round(fin - w.left + 14);
+    if (w.width - gauche < 190) return;        // pas de quoi ecrire : on reste au milieu
+    d.style.left = gauche + 'px';
+    d.classList.add('droite');
   }
 
   /* Ce que la barre resserree rendrait au tapis : la difference de hauteur
