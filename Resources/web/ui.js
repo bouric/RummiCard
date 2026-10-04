@@ -2606,10 +2606,10 @@
                    : '<td class="n">' + rows[i].enMain + ' ' + TR('hud.pts') + '</td>') +
         '</tr>';
     }
-    html += '</table><div class="row">';
+    html += '</table><div class="row fin">';
     html += (plusieurs && !derniere)
-      ? '<button class="cta" id="next" style="flex:1">' + TR('btn.mancheSuivante') + '</button>'
-      : '<button class="cta" id="again" style="flex:1">' + TR('btn.nouvellePartie') + '</button>' +
+      ? '<button class="cta" id="next">' + TR('btn.mancheSuivante') + '</button>'
+      : '<button class="cta" id="again">' + TR('btn.nouvellePartie') + '</button>' +
         '<button class="btn" id="redeal">\u21ba ' + TR('btn.memeDonne') + '</button>';
     html += '<button class="btn" id="tomenu">' + TR('btn.menu') + '</button></div></div>';
 

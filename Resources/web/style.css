@@ -550,6 +550,9 @@ header .brand span { color: var(--gold); }
 .panel p, .panel li { font-size: 13.5px; line-height: 1.65; color: #c3cde0; }
 .panel ul { padding-left: 18px; }
 .panel .row { display: flex; gap: 10px; margin-top: 18px; }
+/* La rangée de fin de partie : l'action principale prend la place que les
+   boutons secondaires lui laissent. */
+.panel .row.fin .cta { flex: 1; }
 .optrow {
   display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align: left;
   padding: 9px 12px; border-radius: 11px; border: 1px solid var(--stroke);
@@ -670,6 +673,16 @@ header .brand span { color: var(--gold); }
      la hauteur réservée. Elle reste constante, pour ne pas faire osciller
      la taille des cartes. */
   #rack { min-height: 62px; }
+  /* Trois boutons côte à côte ne tiennent pas dans un panneau large de
+     284 pixels : « Nouvelle partie » se brisait en deux lignes et « Menu »
+     sortait du cadre, derrière une barre de défilement. L'action principale
+     prend donc la ligne entière, les deux autres se partagent la suivante.
+     Le retour à la ligne vaut mieux qu'un libellé raccourci : « Gleiche
+     Austeilung » et « Stessa distribuzione » sont plus longs encore que
+     « Même donne ». */
+  .panel .row.fin { flex-wrap: wrap; }
+  .panel .row.fin .cta { flex-basis: 100%; }
+  .panel .row.fin .btn { flex: 1; justify-content: center; }
 }
 
 
