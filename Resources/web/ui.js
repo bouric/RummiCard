@@ -2775,10 +2775,10 @@
      Un lien laisse vide disparait : tant qu'aucun n'est rempli, l'invitation
      ne se montre nulle part. */
   var DONS = [
-    /* Vide = le lien ne s'affiche pas. */
-    { cle: 'don.kofi',    url: 'https://ko-fi.com/bouric' },
-    { cle: 'don.paypal',  url: 'https://paypal.me/RichardBoulais' },
-    { cle: 'don.revolut', url: 'https://revolut.me/richardboulais' }
+    /* Vide = le lien ne s'affiche pas. Ko-fi seul : PayPal et Revolut
+       affichent le vrai nom du destinataire, ce qui n'a rien a faire sur une
+       page publique. */
+    { cle: 'don.kofi', url: 'https://ko-fi.com/bouric' }
   ];
 
   /* L'app macOS se signale elle-meme : c'est ma machine, elle n'a rien a
