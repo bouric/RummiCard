@@ -2781,21 +2781,17 @@
     { cle: 'don.kofi', url: 'https://ko-fi.com/bouric' }
   ];
 
-  /* L'app macOS se signale elle-meme : c'est ma machine, elle n'a rien a
-     demander. L'iPad et le telephone passent par le navigateur, ou « ne plus
-     me le proposer » fait le meme travail en un geste. */
-  function hoteNatif() { return window.RC_HOTE === 'macos'; }
-
   function liensDons() {
     return DONS.filter(function (d) { return !!d.url; });
   }
 
   /* Rien avant la troisieme partie finie — le temps de savoir si le jeu plait.
      Ensuite la ligne reste, a chaque fin de manche comme de partie, jusqu'a ce
-     que « ne plus me le proposer » la fasse taire pour de bon. */
+     que « ne plus me le proposer » la fasse taire pour de bon. Meme regle
+     partout, l'app macOS comprise : un clic suffit a l'eteindre, et c'est la
+     seule facon de voir ce que voient les joueurs. */
   function peutProposerSoutien() {
-    return liensDons().length > 0 && !prefs.sansRappel && !hoteNatif() &&
-           prefs.parties >= 3;
+    return liensDons().length > 0 && !prefs.sansRappel && prefs.parties >= 3;
   }
 
   /**

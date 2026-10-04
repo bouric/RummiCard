@@ -270,8 +270,9 @@ L'invitation ne s'affiche que sur l'**écran de fin** — fin de manche comme fi
 de partie, jamais au lancement — et seulement **à partir de la troisième partie
 terminée** ; ensuite elle y reste à chaque fois. Le compteur ne retient que les
 parties finies, pas les manches intermédiaires. « Ne plus me le proposer » la
-fait taire pour toujours. L'app macOS ne la propose jamais : elle se signale par
-`window.RC_HOTE`. L'entrée dans les options, elle, reste toujours accessible.
+fait taire pour toujours, partout — un seul clic, y compris dans l'app macOS,
+qui suit la même règle que le reste. L'entrée dans les options, elle, reste
+toujours accessible.
 
 Ce sont des **liens nus, sans script tiers** : la politique de sécurité du
 contenu reste stricte — vérifié, un lien externe ne déclenche aucune violation

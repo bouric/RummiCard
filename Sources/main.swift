@@ -61,10 +61,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         let stamp = "window.APP_VERSION=\(jsLiteral(Self.version));" +
                     "window.APP_BUILD=\(jsLiteral(Self.buildDate));" +
                     "window.APP_COPYRIGHT=\(jsLiteral(Self.copyright));" +
-                    // La page sait ainsi qu'elle tourne sur ma machine : elle
-                    // n'y propose pas l'invitation au soutien. La version web
-                    // n'a jamais cette variable.
-                    "window.RC_HOTE='macos';" +
                     "try{window.APP_PREFS=JSON.parse(\(jsLiteral(saved)));}" +
                     "catch(e){window.APP_PREFS=null;}"
         config.userContentController.addUserScript(
