@@ -2877,6 +2877,16 @@
     if (soundOn) sndSnap();
   };
 
+  var RACCOURCIS = {
+    Enter: function () { doCommit(); },
+    Backspace: function () { doUndo(); },
+    p: function () { doDraw(); },
+    m: function () { allumerMagicien(); },
+    t: function () { doSort(); },
+    r: function () { doRewind(); },
+    i: function () { toggleHints(); }
+  };
+
   document.addEventListener('keydown', function (e) {
     if ($('#game').classList.contains('hidden')) return;
     if (!$('#overlay').classList.contains('hidden')) return;
@@ -2885,13 +2895,16 @@
        jeu piochait ou changeait le tri par-dessus — un tour perdu sans
        retour possible pour une frappe qui ne le concernait pas. */
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (e.key === 'Enter') { doCommit(); }
-    else if (e.key === 'Backspace') { e.preventDefault(); doUndo(); }
-    else if (e.key === 'p' || e.key === 'P') { doDraw(); }
-    else if (e.key === 'm' || e.key === 'M') { allumerMagicien(); }
-    else if (e.key === 't' || e.key === 'T') { doSort(); }
-    else if (e.key === 'r' || e.key === 'R') { doRewind(); }
-    else if (e.key === 'i' || e.key === 'I') { toggleHints(); }
+    var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (!RACCOURCIS[k]) return;
+    /* La frappe est consommee, repetition comprise. Sans cela l'hote macOS la
+       voit passer sans destinataire et fait tinter le systeme a chacune :
+       maintenir M, qui tient le magicien, devenait un carillon. */
+    e.preventDefault();
+    /* Maintenir une touche ne rejoue pas l'action : le magicien est deja
+       allume, et il ne faut pas piocher en rafale. */
+    if (e.repeat) return;
+    RACCOURCIS[k]();
   });
 
   /* Maintenue, la touche M fait le meme office que le bouton tenu : la souris
