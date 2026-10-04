@@ -681,6 +681,27 @@ header .brand span { color: var(--gold); }
   font-size: 11.5px; color: rgba(255, 255, 255, .34);
 }
 
+/* ---------- Soutien -------------------------------------------------
+   Des liens, pas des widgets : aucun script tiers n'est chargé, la
+   politique de sécurité du contenu reste donc stricte et personne n'est
+   pisté. Les boutons empilés gardent la même cible du doigt que les
+   pastilles de tapis. */
+.dons { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 2px; }
+.donlien {
+  display: block; padding: 12px 14px; border-radius: 11px; text-align: center;
+  border: 1px solid var(--stroke); background: var(--panel);
+  font-size: 14px; font-weight: 600; color: var(--ink);
+  text-decoration: none; transition: .15s;
+}
+.donlien:hover { border-color: var(--gold); background: rgba(240, 180, 41, .12); }
+.donjamais { margin-top: 12px; text-align: center; }
+/* La ligne de fin de partie : une invitation, pas une réclame. */
+.soutien {
+  margin-top: 16px; text-align: center;
+  font-size: 12.5px; color: rgba(255, 255, 255, .42);
+}
+.soutien .linkbtn { font-size: 12.5px; }
+
 /* ---------- Couleur du tapis, dans les options ----------------------
    Chaque pastille porte la couleur qu'elle propose ; elles sont assez
    grandes pour être visées du doigt. */

@@ -23,6 +23,7 @@
   var prefs = { langue: null, debug: false,
                 tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
                 niveau: 'normal', manches: 3, sensSuites: 'asc',
+                parties: 0, sansRappel: false,
                 lastDeal: null, saved: null };
 
   /* Couleurs de tapis, du plus classique au plus sombre. */
@@ -69,6 +70,12 @@
       if (p.sensSuites === 'asc' || p.sensSuites === 'desc') prefs.sensSuites = p.sensSuites;
       if (typeof p.langue === 'string') prefs.langue = p.langue;
       if (typeof p.debug === 'boolean') prefs.debug = p.debug;
+      /* Le compteur de parties ne sert qu'a retarder l'invitation au soutien :
+         borne haute pour qu'un fichier trafique ne fasse pas deborder. */
+      if (typeof p.parties === 'number' && p.parties >= 0) {
+        prefs.parties = Math.min(Math.floor(p.parties), 99999);
+      }
+      if (typeof p.sansRappel === 'boolean') prefs.sansRappel = p.sansRappel;
     }
     E.options.keepPlaces = prefs.keepPlaces;
     E.options.difficulty = prefs.niveau;
@@ -2553,14 +2560,17 @@
 
   function gameOver() {
     sndWin();
-    prefs.saved = null;
-    savePrefs();
     var w = game.winner;
     var m = match || { total: 1, manche: 1, scores: game.players.map(function () { return 0; }) };
     var r = roundScores();
     for (var s = 0; s < r.pts.length; s++) m.scores[s] += r.pts[s];
     var plusieurs = m.total > 1;
     var derniere = m.manche >= m.total;
+    /* Une partie de plus au compteur — les manches intermediaires ne comptent
+       pas : c'est la partie finie qui dit si le jeu a plu. */
+    prefs.saved = null;
+    if (!plusieurs || derniere) prefs.parties++;
+    savePrefs();
 
     var rows = game.players.map(function (p, i) {
       return { p: p, cartes: p.hand.length, enMain: game.handScore(p),
@@ -2611,20 +2621,34 @@
       ? '<button class="cta" id="next" style="flex:1">' + TR('btn.mancheSuivante') + '</button>'
       : '<button class="cta" id="again" style="flex:1">' + TR('btn.nouvellePartie') + '</button>' +
         '<button class="btn" id="redeal">\u21ba ' + TR('btn.memeDonne') + '</button>';
-    html += '<button class="btn" id="tomenu">' + TR('btn.menu') + '</button></div></div>';
+    html += '<button class="btn" id="tomenu">' + TR('btn.menu') + '</button></div>';
+    /* L'invitation ne s'invite que sur cet ecran — fin de manche comme fin de
+       partie : une ligne sous les boutons, jamais un panneau qui barre la
+       route. Le compteur, lui, ne retient que les parties finies. */
+    if (peutProposerSoutien()) {
+      html += '<p class="soutien">' + TR('don.fin') +
+        ' <button class="linkbtn" id="soutenir">' + TR('don.lien') + '</button></p>';
+    }
+    html += '</div>';
 
     var ov = $('#overlay');
-    ov.innerHTML = html;
-    ov.classList.remove('hidden');
     var donne = game.deal;
-    if ($('#next')) $('#next').onclick = function () { ov.classList.add('hidden'); nextRound(); };
-    if ($('#again')) $('#again').onclick = function () { newGame(); };
-    if ($('#redeal')) $('#redeal').onclick = function () { newGame(donne); };
-    $('#tomenu').onclick = function () {
-      ov.classList.add('hidden');
-      $('#game').classList.add('hidden');
-      $('#menu').classList.remove('hidden');
-    };
+    /* Repose le panneau tel quel : on en sort pour lire le panneau de soutien,
+       et il faut pouvoir y revenir sans recompter les points. */
+    function poser() {
+      ov.innerHTML = html;
+      ov.classList.remove('hidden');
+      if ($('#next')) $('#next').onclick = function () { ov.classList.add('hidden'); nextRound(); };
+      if ($('#again')) $('#again').onclick = function () { newGame(); };
+      if ($('#redeal')) $('#redeal').onclick = function () { newGame(donne); };
+      if ($('#soutenir')) $('#soutenir').onclick = function () { montrerSoutien(poser); };
+      $('#tomenu').onclick = function () {
+        ov.classList.add('hidden');
+        $('#game').classList.add('hidden');
+        $('#menu').classList.remove('hidden');
+      };
+    }
+    poser();
   }
 
   /* ================= Options ====================================== */
@@ -2685,6 +2709,13 @@
         ? '<div class="row"><button class="btn" id="voirjrn" style="flex:1">' +
           TR('btn.journal') + '</button></div>'
         : '') +
+      /* Toujours joignable, jamais dans le chemin — y compris sur mes propres
+         appareils, qui ne voient pas l'invitation de fin de partie. */
+      (liensDons().length
+        ? '<h3>' + TR('don.titre') + '</h3>' +
+          '<div class="row"><button class="btn" id="voirdon" style="flex:1">' +
+          TR('don.entree') + '</button></div>'
+        : '') +
       '<div class="row"><button class="cta" id="closeopts" style="flex:1">' +
       TR('btn.fermer') + '</button></div>' +
       '<p class="versiontxt">' + texteVersion + '<br>' +
@@ -2692,6 +2723,7 @@
     ov.classList.remove('hidden');
     $('#closeopts').onclick = function () { ov.classList.add('hidden'); };
     if ($('#voirjrn')) $('#voirjrn').onclick = showJournal;
+    if ($('#voirdon')) $('#voirdon').onclick = function () { montrerSoutien(showOptions); };
     var dots = ov.querySelectorAll('.feltdot'), d;
     for (d = 0; d < dots.length; d++) {
       dots[d].onclick = function () {
@@ -2730,6 +2762,74 @@
         showOptions();
       };
     }
+  }
+
+  /* ================= Soutien ======================================
+     Le jeu reste entier et gratuit : rien n'est ferme, aucune limite, aucun
+     compte. Ce panneau ne fait qu'indiquer ou remercier.
+     Trois liens nus, sans script tiers : la politique de securite du contenu
+     reste intacte — verifie, un lien externe ne declenche aucune violation
+     malgre « default-src 'none' » — et personne n'est pistee. En revanche
+     l'hote natif doit renvoyer ces liens au navigateur du systeme, sinon la
+     WKWebView quitte le jeu pour la page de paiement (voir main.swift).
+     Un lien laisse vide disparait : tant qu'aucun n'est rempli, l'invitation
+     ne se montre nulle part. */
+  var DONS = [
+    /* A completer avec les adresses reelles ; vide = le lien ne s'affiche pas. */
+    { cle: 'don.kofi',    url: '' },
+    { cle: 'don.paypal',  url: '' },
+    { cle: 'don.revolut', url: '' }
+  ];
+
+  /* L'app macOS se signale elle-meme : c'est ma machine, elle n'a rien a
+     demander. L'iPad et le telephone passent par le navigateur, ou « ne plus
+     me le proposer » fait le meme travail en un geste. */
+  function hoteNatif() { return window.RC_HOTE === 'macos'; }
+
+  function liensDons() {
+    return DONS.filter(function (d) { return !!d.url; });
+  }
+
+  /* Rien avant la troisieme partie finie — le temps de savoir si le jeu plait.
+     Ensuite la ligne reste, a chaque fin de manche comme de partie, jusqu'a ce
+     que « ne plus me le proposer » la fasse taire pour de bon. */
+  function peutProposerSoutien() {
+    return liensDons().length > 0 && !prefs.sansRappel && !hoteNatif() &&
+           prefs.parties >= 3;
+  }
+
+  /**
+   * Panneau de soutien. `retour` est appele a la fermeture : il remet en place
+   * le panneau d'ou l'on vient (fin de partie, options), faute de quoi la
+   * surcouche se refermerait sur rien.
+   */
+  function montrerSoutien(retour) {
+    var ov = $('#overlay');
+    var liens = liensDons(), html = '', i;
+    for (i = 0; i < liens.length; i++) {
+      /* Les adresses sont des constantes du fichier, pas une saisie : rien a
+         echapper. Le libelle, lui, vient des traductions. */
+      html += '<a class="donlien" href="' + liens[i].url +
+        '" target="_blank" rel="noopener noreferrer">' + TR(liens[i].cle) + '</a>';
+    }
+    ov.innerHTML = '<div class="panel"><h2>' + TR('don.titre') + '</h2>' +
+      '<p>' + TR('don.texte') + '</p>' +
+      '<div class="dons">' + html + '</div>' +
+      '<div class="row"><button class="cta" id="donferme" style="flex:1">' +
+      TR('btn.fermer') + '</button></div>' +
+      '<p class="donjamais"><button class="linkbtn" id="donjamais">' +
+      TR('don.jamais') + '</button></p></div>';
+    ov.classList.remove('hidden');
+
+    function fermer() {
+      if (retour) retour(); else ov.classList.add('hidden');
+    }
+    $('#donferme').onclick = fermer;
+    $('#donjamais').onclick = function () {
+      prefs.sansRappel = true;        // tenu pour toujours, sans exception
+      savePrefs();
+      fermer();
+    };
   }
 
   /* ================= Regles ======================================= */
@@ -3125,6 +3225,8 @@
     isTouch: function () { return touchMode; },
     showRules: showRules,
     showOptions: showOptions,
+    showSoutien: montrerSoutien,
+    prefs: function () { return prefs; },
     rewind: doRewind,
     showMenu: function () {
       if (game && !game.finished && !confirmQuit()) return;

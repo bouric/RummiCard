@@ -61,6 +61,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         let stamp = "window.APP_VERSION=\(jsLiteral(Self.version));" +
                     "window.APP_BUILD=\(jsLiteral(Self.buildDate));" +
                     "window.APP_COPYRIGHT=\(jsLiteral(Self.copyright));" +
+                    // La page sait ainsi qu'elle tourne sur ma machine : elle
+                    // n'y propose pas l'invitation au soutien. La version web
+                    // n'a jamais cette variable.
+                    "window.RC_HOTE='macos';" +
                     "try{window.APP_PREFS=JSON.parse(\(jsLiteral(saved)));}" +
                     "catch(e){window.APP_PREFS=null;}"
         config.userContentController.addUserScript(
@@ -314,6 +318,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
             langue = l
             buildMenu()
         }
+    }
+
+    // MARK: - Liens externes
+    //
+    // Sans cette politique, un clic sur un lien de soutien remplacerait le jeu
+    // par la page de paiement, partie en cours comprise : WKWebView accepte
+    // toute navigation par défaut. Mesuré dans une WKWebView chargée en file://
+    // comme celle-ci : la navigation arrive bien ici, en type « linkActivated »,
+    // et « target="_blank" » n'y change rien — il passe par le même chemin, pas
+    // par l'ouverture d'une fenêtre. Les liens http(s) partent donc au
+    // navigateur du système et la vue ne quitte jamais le bundle.
+    func webView(_ webView: WKWebView,
+                 decidePolicyFor action: WKNavigationAction,
+                 decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        guard let url = action.request.url else { decisionHandler(.cancel); return }
+        if url.isFileURL { decisionHandler(.allow); return }
+        if url.scheme == "https" || url.scheme == "http" { NSWorkspace.shared.open(url) }
+        decisionHandler(.cancel)
     }
 
     // MARK: - WKUIDelegate (confirm / alert du jeu)

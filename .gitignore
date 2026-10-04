@@ -4,3 +4,6 @@ RummiCard.app/
 
 # macOS
 .DS_Store
+
+# Verrous LibreOffice sur les documents ouverts
+.~lock.*#

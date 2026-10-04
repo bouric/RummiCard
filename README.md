@@ -250,6 +250,36 @@ le navigateur dans son `localStorage`.
   L'autre réglage, *table libre*, laisse les combinaisons se suivre au fil des
   coups.
 
+## Soutien
+
+Le jeu est gratuit et le reste : **rien n'est verrouillé, aucune limite, aucune
+publicité, aucun compte, aucune donnée qui sorte de l'appareil**. Les indices et
+le magicien sont offerts à tout le monde. Un panneau indique simplement où
+remercier, pour qui en a envie.
+
+Les adresses se remplissent dans `DONS`, en tête de la section *Soutien* de
+`ui.js` — une par ligne, et **un lien laissé vide disparaît**. Tant qu'aucune
+n'est renseignée, le panneau ne se montre nulle part : ni dans les options, ni
+en fin de partie.
+
+L'invitation ne s'affiche que sur l'**écran de fin** — fin de manche comme fin
+de partie, jamais au lancement — et seulement **à partir de la troisième partie
+terminée** ; ensuite elle y reste à chaque fois. Le compteur ne retient que les
+parties finies, pas les manches intermédiaires. « Ne plus me le proposer » la
+fait taire pour toujours. L'app macOS ne la propose jamais : elle se signale par
+`window.RC_HOTE`. L'entrée dans les options, elle, reste toujours accessible.
+
+Ce sont des **liens nus, sans script tiers** : la politique de sécurité du
+contenu reste stricte — vérifié, un lien externe ne déclenche aucune violation
+malgré `default-src 'none'` — et personne n'est pisté. En contrepartie, l'hôte
+natif doit renvoyer ces liens au navigateur du système : sans sa politique de
+navigation, la `WKWebView` quitterait le jeu pour la page de paiement, partie en
+cours comprise.
+
+L'étude qui a conduit à ce choix — comparatif des plateformes, cadre du don et
+analyse de sécurité d'un dépôt public — est dans
+[`docs/dons-2026-10-04.md`](docs/dons-2026-10-04.md).
+
 ## Version
 
 Le numéro de version est l'**horodatage de compilation** : `build.sh` écrit

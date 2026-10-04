@@ -1,0 +1,10 @@
+# Bouton « Sponsor » du dépôt — les mêmes liens que le panneau de soutien du
+# jeu (voir DONS dans Resources/web/ui.js).
+# GitHub accepte un identifiant par plateforme connue et jusqu'à quatre URL
+# libres ; une URL qui contient « : » doit être entre guillemets.
+# Tant que tout est commenté, aucun bouton n'apparaît.
+
+# ko_fi: mon-identifiant-ko-fi
+# custom:
+#   - "https://paypal.me/mon-identifiant"
+#   - "https://revolut.me/mon-identifiant"
