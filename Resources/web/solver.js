@@ -158,7 +158,9 @@
     }
 
     var memo = new Map();
-    function points(n) { return n === 14 ? 1 : n; }
+    /* Le bareme du jeu, demande au moteur : l'As 11, les figures 10. Un As
+       place apres le Roi porte le rang 14 mais vaut toujours 11. */
+    function points(n) { return root.Engine.valeurRang(n === 14 ? 1 : n); }
     function valueOfCard(n) {
       return objective === 'sum' ? points(n) * 1000 + 1 : 1000 + points(n);
     }
@@ -297,7 +299,7 @@
     for (var si = 0; si < sets.length; si++) {
       for (var k2 = 0; k2 < sets[si].length; k2++) {
         var cd = sets[si][k2];
-        if (fromHand[cd.id]) { placed.push(cd); pts += cd.rank; }
+        if (fromHand[cd.id]) { placed.push(cd); pts += root.Engine.valeur(cd); }
       }
     }
     return { sets: sets, played: placed, count: placed.length, points: pts, val: res.val };

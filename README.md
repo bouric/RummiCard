@@ -29,7 +29,12 @@ Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installé
 ## Les règles
 
 - 104 cartes : 4 couleurs (♠ ♥ ♦ ♣) × 13 valeurs × 2 exemplaires.
-  As = 1, Valet = 11, Dame = 12, Roi = 13.
+  Pour l'ordre des suites, As = 1 ou 14, Valet = 11, Dame = 12, Roi = 13.
+- **Points** : l'As vaut **11**, les figures **10**, les autres cartes leur
+  valeur. Le rang ordonne les suites, la valeur compte les points : ce sont deux
+  barèmes distincts. Les points servent au décompte de fin de manche **et** au
+  choix du coup conseillé — mieux vaut poser deux As (22) que trois petites
+  cartes (6).
 - **Groupe** : 3 ou 4 cartes de même valeur, toutes de couleurs différentes.
 - **Suite** : 3 cartes ou plus de même couleur, de valeurs consécutives.
   L'As se place **avant le 2 ou après le Roi** : `A-2-3` et `D-R-A` sont deux

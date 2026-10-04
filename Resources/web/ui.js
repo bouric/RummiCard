@@ -2321,7 +2321,7 @@
 
     var board = game.boardCards();
     var res = chrono('magicien', function () {
-      return Solver.solve(board, game.human().hand, { objective: 'count', mustUse: [carte] });
+      return Solver.solve(board, game.human().hand, { objective: 'sum', mustUse: [carte] });
     });
     var ids = null, i, k;
     if (res) {
@@ -2634,7 +2634,7 @@
     ov.innerHTML = '<div class="panel">' +
       '<h2>' + TR('reg.titre') + '</h2><p>' + TR('reg.intro') + '</p>' +
       '<h3>' + TR('reg.h.comb') + '</h3><ul>' +
-      li('reg.but') + li('reg.as') + '</ul>' +
+      li('reg.but') + li('reg.as') + li('reg.points') + '</ul>' +
       '<h3>' + TR('reg.h.deroul') + '</h3><ul>' +
       li('reg.distribution') + li('reg.remanier') + li('reg.ouverture') +
       li('reg.rienAPoser') + li('reg.gagne') + li('reg.manches') + '</ul>' +

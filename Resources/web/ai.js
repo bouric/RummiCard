@@ -38,17 +38,25 @@
    * respectant la règle d'ouverture — sur une table vide, la partie doit
    * commencer par une suite.
    */
+  function mieux(a, b) {
+    /* Aux points d'abord, au nombre de cartes ensuite : poser deux As rapporte
+       plus que trois petites cartes, et c'est bien ce qu'on cherche. */
+    if (!b) return true;
+    if (a.points !== b.points) return a.points > b.points;
+    return a.count > b.count;
+  }
+
   function bestPartition(board, pool, mustUse, opening) {
     var forced = mustUse || [];
     if (opening === undefined) opening = board.length === 0;
-    var r = Solver.solve(board, pool, { objective: 'count', mustUse: forced });
+    var r = Solver.solve(board, pool, { objective: 'sum', mustUse: forced });
     if (!opening || !r || !r.count || hasRun(r.sets)) return r;
 
     // Le meilleur coup n'ouvre que des groupes : on impose une suite.
     var cands = candidateRuns(pool), best = null;
     for (var i = 0; i < cands.length; i++) {
-      var alt = Solver.solve(board, pool, { objective: 'count', mustUse: forced.concat(cands[i]) });
-      if (alt && alt.count && hasRun(alt.sets) && (!best || alt.count > best.count)) best = alt;
+      var alt = Solver.solve(board, pool, { objective: 'sum', mustUse: forced.concat(cands[i]) });
+      if (alt && alt.count && hasRun(alt.sets) && mieux(alt, best)) best = alt;
     }
     return best;
   }
@@ -114,7 +122,7 @@
     }
     if (!played.length) return null;
     var pts = 0;
-    for (i = 0; i < played.length; i++) pts += played[i].rank;
+    for (i = 0; i < played.length; i++) pts += Engine.valeur(played[i]);
     return { sets: board, played: played, points: pts, rebuild: true };
   }
 

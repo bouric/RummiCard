@@ -28,6 +28,18 @@
   }
   var HAND_SIZE = 14;
 
+  /* ---- Ce que vaut une carte -------------------------------------
+     L'As compte 11, les figures 10, les autres leur valeur. C'est le bareme
+     du decompte en fin de manche, et aussi celui qui guide le choix du coup :
+     mieux vaut poser deux As que trois petites cartes. Attention, ce n'est
+     pas le rang : le rang ordonne les suites (l'As y vaut 1 ou 14), la valeur
+     compte les points. */
+  function valeurRang(rank) {
+    if (rank === 1) return 11;
+    return rank >= 11 ? 10 : rank;
+  }
+  function valeur(card) { return valeurRang(card.rank); }
+
   /* Réglages partagés avec l'interface. */
   var options = { keepPlaces: true, sort: 'suit', difficulty: 'normal' };
 
@@ -438,7 +450,7 @@
 
   Game.prototype.stagedPoints = function () {
     var s = this.stagedCards(), t = 0;
-    for (var i = 0; i < s.length; i++) t += s[i].rank;
+    for (var i = 0; i < s.length; i++) t += valeur(s[i]);
     return t;
   };
 
@@ -598,7 +610,7 @@
 
   Game.prototype.handScore = function (p) {
     var t = 0;
-    for (var i = 0; i < p.hand.length; i++) t += p.hand[i].rank;
+    for (var i = 0; i < p.hand.length; i++) t += valeur(p.hand[i]);
     return t;
   };
 
@@ -616,6 +628,8 @@
     RANK_LABEL: RANK_LABEL,
     rankLabel: rankLabel,
     HAND_SIZE: HAND_SIZE,
+    valeur: valeur,
+    valeurRang: valeurRang,
     options: options,
     alignBoard: alignBoard,
     donneValide: donneValide,
