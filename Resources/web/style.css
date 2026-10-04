@@ -402,6 +402,13 @@ header .brand span { color: var(--gold); }
 }
 .btn:hover:not(:disabled) { background: rgba(255, 255, 255, .13); transform: translateY(-1px); }
 .btn:disabled { opacity: .34; }
+/* Deux pictogrammes trop discrets pour ce qu'ils font : celui de « Refaire »
+   passe au double, celui de « Quitter » à une fois et demie. Le libellé garde
+   sa taille, et l'interligne est bridé pour que la rangée ne grandisse pas —
+   ce serait de la hauteur prise au tapis. */
+#rewind { font-size: 26px; line-height: 17px; }
+#rewind .lbl { font-size: 13px; line-height: normal; }
+#restart { font-size: 21px; }
 /* Quand la table ne tient plus et doit défiler, les boutons se réduisent à
    leur pictogramme : une rangée de moins, autant de tapis gagné. */
 #game.compact .btn .lbl { display: none; }
