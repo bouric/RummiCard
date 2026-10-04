@@ -91,7 +91,8 @@
     'opt.tapis': 'Couleur du tapis', 'tip.options': 'Options', 'tip.son': 'Son',
     'tip.regles': 'Règles', 'tip.quitter': 'Quitter la partie',
 
-    'bar.magicienMode': '✨ Pointez une carte de votre main, sans lâcher.',
+    'bar.magicienDoigt': '✨ Gardez ce doigt posé et pointez une carte de votre main avec un autre doigt.',
+    'bar.magicienSouris': '✨ Sans lâcher, glissez sur une carte de votre main — ou maintenez M et survolez-la.',
     'bar.magicienCarte': '✨ {c} : sa combinaison complète, {n} {cartes}, reste en lumière.',
     'bar.magicienSeule': '✨ {c} ne forme encore aucune combinaison.',
     'bar.ok': '✓ {n} {cartes} {posees} ({p} pts) — au suivant !',
@@ -251,7 +252,8 @@
     'opt.tapis': 'Felt colour', 'tip.options': 'Options', 'tip.son': 'Sound',
     'tip.regles': 'Rules', 'tip.quitter': 'Leave the game',
 
-    'bar.magicienMode': '✨ Point at a card in your hand, without letting go.',
+    'bar.magicienDoigt': '✨ Keep this finger down and point at a card in your hand with another finger.',
+    'bar.magicienSouris': '✨ Without letting go, slide onto a card in your hand — or hold M and hover over it.',
     'bar.magicienCarte': '✨ {c}: its full combination, {n} {cartes}, stays lit.',
     'bar.magicienSeule': '✨ {c} does not form a combination yet.',
     'bar.ok': '✓ {n} {cartes} laid ({p} pts) — next player!',
@@ -409,7 +411,8 @@
     'opt.tapis': 'Farbe des Tisches', 'tip.options': 'Einstellungen', 'tip.son': 'Ton',
     'tip.regles': 'Regeln', 'tip.quitter': 'Spiel verlassen',
 
-    'bar.magicienMode': '✨ Zeigen Sie auf eine Karte Ihrer Hand, ohne loszulassen.',
+    'bar.magicienDoigt': '✨ Lassen Sie diesen Finger liegen und zeigen Sie mit einem anderen auf eine Karte Ihrer Hand.',
+    'bar.magicienSouris': '✨ Ohne loszulassen auf eine Karte Ihrer Hand ziehen — oder M halten und darüberfahren.',
     'bar.magicienCarte': '✨ {c}: Die vollständige Kombination, {n} {cartes}, bleibt hell.',
     'bar.magicienSeule': '✨ {c} bildet noch keine Kombination.',
     'bar.ok': '✓ {n} {cartes} gelegt ({p} Pkt.) — weiter!',
@@ -567,7 +570,8 @@
     'opt.tapis': 'Colore del tavolo', 'tip.options': 'Opzioni', 'tip.son': 'Suono',
     'tip.regles': 'Regole', 'tip.quitter': 'Esci dalla partita',
 
-    'bar.magicienMode': '✨ Indichi una carta della sua mano, senza lasciare.',
+    'bar.magicienDoigt': '✨ Tenga questo dito premuto e indichi una carta della sua mano con un altro dito.',
+    'bar.magicienSouris': '✨ Senza lasciare, scivoli su una carta della sua mano — oppure tenga M e ci passi sopra.',
     'bar.magicienCarte': '✨ {c}: la combinazione completa, {n} {cartes}, resta illuminata.',
     'bar.magicienSeule': '✨ {c} non forma ancora alcuna combinazione.',
     'bar.ok': '✓ {n} {cartes} calate ({p} pt) — al prossimo!',
@@ -725,7 +729,8 @@
     'opt.tapis': 'Kleur van het tafellaken', 'tip.options': 'Instellingen', 'tip.son': 'Geluid',
     'tip.regles': 'Regels', 'tip.quitter': 'Spel verlaten',
 
-    'bar.magicienMode': '✨ Wijs een kaart in uw hand aan, zonder los te laten.',
+    'bar.magicienDoigt': '✨ Houd deze vinger op de knop en wijs met een andere vinger een kaart in uw hand aan.',
+    'bar.magicienSouris': '✨ Schuif zonder los te laten naar een kaart in uw hand — of houd M vast en ga eroverheen.',
     'bar.magicienCarte': '✨ {c}: de volledige combinatie, {n} {cartes}, blijft verlicht.',
     'bar.magicienSeule': '✨ {c} vormt nog geen combinatie.',
     'bar.ok': '✓ {n} {cartes} gelegd ({p} ptn) — volgende!',
@@ -883,7 +888,8 @@
     'opt.tapis': 'Color del tapete', 'tip.options': 'Opciones', 'tip.son': 'Sonido',
     'tip.regles': 'Reglas', 'tip.quitter': 'Salir de la partida',
 
-    'bar.magicienMode': '✨ Señale una carta de su mano, sin soltar.',
+    'bar.magicienDoigt': '✨ Mantenga este dedo apoyado y señale una carta de su mano con otro dedo.',
+    'bar.magicienSouris': '✨ Sin soltar, deslice hasta una carta de su mano — o mantenga M y pásele por encima.',
     'bar.magicienCarte': '✨ {c}: su combinación completa, {n} {cartes}, sigue iluminada.',
     'bar.magicienSeule': '✨ {c} no forma ninguna combinación todavía.',
     'bar.ok': '✓ {n} {cartes} bajadas ({p} pts) — ¡al siguiente!',

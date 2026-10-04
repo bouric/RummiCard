@@ -1504,7 +1504,16 @@
        barre suffit la ou elle existe ; ailleurs, l'assombrissement parle
        seul — c'est bien ce qu'on est venu voir. */
     if (magique) {
-      if (!refCarte) return { cls: 'good', bulle: false, html: TR('bar.magicienMode') };
+      /* La consigne d'emploi, et elle seule, passe en bulle : sur un ecran
+         tactile la barre n'existe pas, et c'est au moment ou l'on pose le
+         doigt sur le bouton qu'il faut dire comment s'en servir. Le geste
+         n'est pas le meme au doigt qu'a la souris, le texte non plus. Les
+         messages suivants, eux, restent muets : on balaie sa main et une
+         bulle par carte ferait un clignotement de phrases. */
+      if (!refCarte) {
+        return { cls: 'good', bulle: true, forcer: true,
+          html: TR(touchMode ? 'bar.magicienDoigt' : 'bar.magicienSouris') };
+      }
       if (lumiere && lumiere.__seule) {
         return { cls: 'warn', bulle: false,
           html: TR('bar.magicienSeule', { c: E.label(refCarte) }) };
