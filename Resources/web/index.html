@@ -90,7 +90,10 @@
 
   <div id="bar">
     <button class="btn go" id="commit">&#10003;<span class="lbl" data-i18n="btn.suivant"></span></button>
-    <button class="btn" id="undo" data-i18n-title="tip.annuler">&#8617;<span class="lbl" data-i18n="btn.annuler"></span></button>
+    <!-- Le caractere de la touche retour arriere, qui est justement le
+         raccourci d'« Annuler » : le pictogramme enseigne la touche. Le ↩
+         d'avant etait celui de la touche Retour, attribuee a « Au suivant ». -->
+    <button class="btn" id="undo" data-i18n-title="tip.annuler">&#9003;<span class="lbl" data-i18n="btn.annuler"></span></button>
     <button class="btn" id="draw">&#127183;<span class="lbl" data-i18n="btn.piocher"></span></button>
     <button class="btn magic" id="auto">&#10024;<span class="lbl" data-i18n="btn.magique"></span></button>
     <button class="btn" id="sort"
