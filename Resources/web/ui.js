@@ -2396,21 +2396,54 @@
     var res = chrono('magicien', function () {
       return Solver.solve(board, game.human().hand, { objective: 'sum', mustUse: [carte] });
     });
-    var ids = null, i, k;
-    if (res) {
-      for (i = 0; i < res.sets.length && !ids; i++) {
-        for (k = 0; k < res.sets[i].length; k++) {
-          if (res.sets[i][k].id !== carte.id) continue;
-          ids = {};
-          for (var m = 0; m < res.sets[i].length; m++) ids[res.sets[i][m].id] = true;
-          break;
-        }
-      }
-    }
+    var ids = ensembleMontre(res, carte);
     /* Aucune combinaison possible : la carte reste seule en lumiere, et son
        isolement dit mieux qu'une phrase qu'elle n'a pas encore sa place. */
     if (!ids) { ids = {}; ids[carte.id] = true; ids.__seule = true; }
     cacheLumiere.par[carte.id] = ids;
+    return ids;
+  }
+
+  /* Quelle combinaison de la solution repond a « ou va MA carte ? »
+     Le jeu compte deux exemplaires de chaque carte, parfaitement
+     interchangeables pour le solveur : il range l'un ou l'autre indifferemment.
+     Chercher par identifiant designait donc parfois le carre qui contenait
+     deja un valet de coeur, pendant que le votre partait dans la suite — vrai
+     pour le solveur, inutile pour le joueur, et meme trompeur.
+     On cherche donc par valeur, et parmi les combinaisons qui l'emploient on
+     retient celle qui change : les autres existaient deja telles quelles sur
+     la table et n'apprennent rien. */
+  function ensembleMontre(res, carte) {
+    if (!res) return null;
+    function signature(cartes) {
+      return cartes.map(function (c) { return c.suit + '-' + c.rank; }).sort().join(',');
+    }
+    var posees = game.board.map(function (s) { return signature(s.cards); });
+    var candidats = [], i, k;
+    for (i = 0; i < res.sets.length; i++) {
+      for (k = 0; k < res.sets[i].length; k++) {
+        if (res.sets[i][k].suit === carte.suit && res.sets[i][k].rank === carte.rank) {
+          candidats.push(res.sets[i]);
+          break;
+        }
+      }
+    }
+    var choisi = null;
+    for (i = 0; i < candidats.length && !choisi; i++) {
+      var deja = posees.indexOf(signature(candidats[i]));
+      if (deja < 0) choisi = candidats[i];
+      else posees.splice(deja, 1);
+    }
+    if (!choisi) choisi = candidats[0] || null;
+    if (!choisi) return null;
+    /* Dans la combinaison retenue, la carte qui porte votre valeur, c'est la
+       votre : on lui rend son identifiant. Sans cela on eclairerait sur la
+       table l'exemplaire jumeau, qui se trouve ailleurs. */
+    var ids = {};
+    for (k = 0; k < choisi.length; k++) {
+      var c = choisi[k];
+      ids[(c.suit === carte.suit && c.rank === carte.rank) ? carte.id : c.id] = true;
+    }
     return ids;
   }
 
