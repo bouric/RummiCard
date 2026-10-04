@@ -214,9 +214,12 @@
     if (reprise) {
       reprise.classList.toggle('hidden', !sv);
       if (sv) {
+        /* Le nombre de cartes en main ne disait rien d'utile pour decider :
+           on reprend sa partie parce que c'est la sienne, pas parce qu'il y
+           reste sept cartes. Les deux lignes se contentent donc du nombre de
+           joueurs, et partagent la meme clef. */
         reprise.innerHTML = '\u25b6 ' + TR('accueil.reprendre') + ' ' +
-          TR('accueil.reprendreDetail', { n: sv.n, c: sv.hands[0].length,
-            cartes: NC(sv.hands[0].length), adv: virtuels(sv.n) });
+          TR('accueil.detailJoueurs', { n: sv.n, adv: virtuels(sv.n) });
       }
     }
     var replay = $('#replay');
@@ -224,7 +227,7 @@
       replay.classList.toggle('hidden', !d);
       if (d) {
         replay.innerHTML = '\u21ba ' + TR('accueil.redonne') + ' ' +
-          TR('accueil.redonneDetail', { n: d.n, adv: virtuels(d.n) });
+          TR('accueil.detailJoueurs', { n: d.n, adv: virtuels(d.n) });
       }
     }
     /* Sous le bouton qui commence : une porte ouverte, pas une demande. Elle
