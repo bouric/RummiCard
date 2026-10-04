@@ -54,9 +54,13 @@
   <p class="tag" data-i18n="accueil.desc"></p>
   <h2 data-i18n="accueil.joueurs"></h2>
   <div class="choices" id="choices"></div>
+  <!-- Reprendre ou redonner, jamais les deux : ce sont deux façons de ne pas
+       commencer une partie neuve, et elles se placent donc avant le bouton
+       qui, lui, en commence une. buildMenu n'en montre qu'une. -->
   <button class="btn hidden" id="resume"></button>
-  <button class="cta" id="start" data-i18n="accueil.commencer"></button>
   <button class="btn hidden" id="replay"></button>
+  <button class="cta" id="start" data-i18n="accueil.commencer"></button>
+  <button class="linkbtn hidden" id="thanks"></button>
   <div style="display:flex;gap:18px">
     <button class="linkbtn" id="rules-link" data-i18n="accueil.voirRegles"></button>
     <button class="linkbtn" id="menu-options" data-i18n="accueil.options"></button>

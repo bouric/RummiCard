@@ -204,9 +204,14 @@
   }
 
   function buildMenu() {
+    /* Reprendre ou redonner, jamais les deux : proposer a la fois de
+       continuer la partie en cours et d'en recommencer une autre revenait a
+       poser deux fois la meme question, et la partie en cours passe d'abord —
+       c'est la seule des deux qu'on perd en choisissant mal. */
+    var sv = prefs.saved;
+    var d = !sv ? prefs.lastDeal : null;
     var reprise = $('#resume');
     if (reprise) {
-      var sv = prefs.saved;
       reprise.classList.toggle('hidden', !sv);
       if (sv) {
         reprise.innerHTML = '\u25b6 ' + TR('accueil.reprendre') + ' ' +
@@ -216,12 +221,18 @@
     }
     var replay = $('#replay');
     if (replay) {
-      var d = prefs.lastDeal;
       replay.classList.toggle('hidden', !d);
       if (d) {
         replay.innerHTML = '\u21ba ' + TR('accueil.redonne') + ' ' +
           TR('accueil.redonneDetail', { n: d.n, adv: virtuels(d.n) });
       }
+    }
+    /* Sous le bouton qui commence : une porte ouverte, pas une demande. Elle
+       disparait tant qu'aucune adresse n'est renseignee. */
+    var merci = $('#thanks');
+    if (merci) {
+      merci.classList.toggle('hidden', !liensDons().length);
+      merci.textContent = TR('don.lien');
     }
     var lb = $('#langs');
     if (lb) {
@@ -3212,6 +3223,7 @@
 
   $('#start').onclick = function () { newGame(); };
   $('#replay').onclick = replayDeal;
+  $('#thanks').onclick = function () { montrerSoutien(function () { $('#overlay').classList.add('hidden'); }); };
   $('#resume').onclick = resumeGame;
   $('#rules-link').onclick = showRules;
   $('#help').onclick = showRules;
