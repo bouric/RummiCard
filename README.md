@@ -292,6 +292,26 @@ Le numéro de version est l'**horodatage de compilation** : `build.sh` écrit
 `RCBuildDate`. L'hôte natif les injecte dans la page, qui les affiche en bas de
 l'écran d'accueil ; le menu **RummiCard ▸ À propos** les reprend aussi.
 
+## Rester synchrone
+
+Les fichiers de `Resources/web` sont **copiés** dans le bundle de l'app, pas lus
+depuis le dépôt : un commit qui les touche laisse donc l'app de `/Applications`
+en retard, en silence. Le crochet `.githooks/post-commit` reconstruit et
+réinstalle dès qu'un commit touche `Resources/web/`, `Sources/` ou `build.sh` —
+4,6 s. À activer une fois par copie de travail :
+
+```bash
+git config core.hooksPath .githooks
+```
+
+L'app en cours est fermée pendant l'installation ; la partie est enregistrée au
+début de chacun de vos tours, et **« Reprendre la partie »** la retrouve au
+relancement.
+
+Le site et les appareils mobiles n'ont pas ce problème : le service worker
+interroge le réseau d'abord et ne sert son cache qu'au-delà de 3 s, donc une
+poussée suffit — ils sont à jour au lancement suivant dès qu'ils ont du réseau.
+
 ## Développement
 
 Le jeu est du JavaScript sans dépendance : on peut l'ouvrir directement dans un

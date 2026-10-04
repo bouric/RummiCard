@@ -1,0 +1,28 @@
+#!/bin/bash
+# Reconstruit et réinstalle l'app dès qu'un commit touche ce qu'elle embarque.
+#
+# Les fichiers de Resources/web sont *copiés* dans le bundle, pas lus depuis le
+# dépôt : sans ce crochet, l'app de /Applications reste en retard sans le dire,
+# et on croit éprouver une correction qui n'y est pas. C'est arrivé.
+#
+# Le site et les appareils mobiles n'ont pas ce problème : le service worker
+# interroge le réseau d'abord et ne sert son cache qu'au bout de 3 s.
+#
+# À activer une fois par copie de travail :   git config core.hooksPath .githooks
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+# Rien à faire si le commit ne touche pas le bundle.
+if ! git diff-tree --no-commit-id --name-only -r HEAD |
+     grep -qE '^(Resources/web/|Sources/|build\.sh$)'; then
+  exit 0
+fi
+
+echo
+echo "▸ Ce commit part dans l'app : reconstruction"
+# L'app en cours sera fermée par build.sh si elle tourne. La partie est
+# enregistrée au début de chaque tour : « Reprendre la partie » la retrouve.
+if pgrep -f "/Applications/RummiCard.app/Contents/MacOS/RummiCard" >/dev/null; then
+  echo "  (RummiCard tourne : il va être fermé — « Reprendre la partie » au relancement)"
+fi
+./build.sh
