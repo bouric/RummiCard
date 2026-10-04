@@ -249,13 +249,28 @@ header .brand span { color: var(--gold); }
 #board.moyen { --cw: 54px; --ch: 77px; }
 #board.dense { --cw: 48px; --ch: 68px; }
 #board.denser { --cw: 40px; --ch: 57px; }
-#board .empty {
-  margin: auto; text-align: center; color: rgba(255, 255, 255, .42); font-size: 14px; line-height: 1.6;
-  max-width: 36ch; padding: 0 8px;
+/* La consigne d'ouverture, inscrite au milieu du tapis. Elle est posée
+   par-dessus la table plutôt que dans son flux : la table rangée n'a pas
+   d'emplacement vide où l'écrire, et la consigne ne s'affichait donc que sur
+   la table libre. Elle ne prend pas les clics, pour qu'on puisse glisser une
+   carte au travers. */
+.consigne {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  pointer-events: none; padding: 16px; z-index: 1;
+}
+/* Table rangée seulement : la phrase monte dans le haut du tapis. Les deux
+   bandes « nouvelle suite » et « nouveau groupe » y portent leur nom à la
+   verticale, au centre, et la phrase les traversait. Sur la table libre elle
+   reste au milieu : c'est en haut à gauche que s'y trouve la boîte
+   « nouvelle combinaison ». */
+.consigne.haute { place-items: start center; padding-top: 14%; }
+.consigne span {
+  text-align: center; color: rgba(255, 255, 255, .42); font-size: 14px;
+  line-height: 1.6; max-width: 36ch;
 }
 /* Le gras est au fil de la phrase — « ouvrez la partie par une suite » —
    et non plus un titre en tête : c'est un message, pas un panneau. */
-#board .empty b { color: var(--gold); font-weight: 650; }
+.consigne b { color: var(--gold); font-weight: 650; }
 
 .set {
   display: flex; gap: 3px; padding: 6px; border-radius: 12px;
@@ -579,8 +594,7 @@ header .brand span { color: var(--gold); }
 }
 /* Le message du moment, inscrit sur une table vide : il garde les couleurs
    de la barre — doré pour un avertissement, vert quand le tour est bon. */
-#board .empty.warn { color: #ffcf6b; }
-#board .empty.good { color: #6fdcae; }
+
 
 /* Tablette et téléphone : une seule ligne avant la table. Les pastilles et
    la rangée des joueurs laissent la place au bandeau compact, qui dit la

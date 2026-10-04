@@ -254,6 +254,7 @@
     dernierMessage = '';     // la consigne d'ouverture se redit a chaque partie
     astuceRefaire = 0;
     eteindreMagicien(true);
+    fugace = null;
     jrnNouvelle();
     $('#game').classList.remove('compact');
     $('#menu').classList.add('hidden');
@@ -939,13 +940,8 @@
     var zone = makeZone('full', '');
     board.appendChild(zone);
     if (!view.sets.length && !view.newSlot) {
-      /* Table vide : c'est elle qui porte le message du moment, a la place
-         d'un texte d'accueil qui ne disait rien de la partie en cours. */
-      var m = messageContexte();
-      var empty = document.createElement('div');
-      empty.className = 'empty' + (m.cls ? ' ' + m.cls : '');
-      empty.innerHTML = m.tapis || m.html || TR('board.vide');
-      zone.appendChild(empty);
+      /* La consigne d'ouverture ne depend plus de la disposition : elle est
+         posee sur le tapis par paintBoard, table rangee comme table libre. */
       if (isHumanTurn()) zone.appendChild(newZone('any', TR('zone.nouvelle')));
       return;
     }
@@ -1109,8 +1105,29 @@
     while (tableDeborde() && DENSITIES.indexOf(dens) < DENSITIES.length - 1 && essais++ < 3) {
       dessiner(DENSITIES[DENSITIES.indexOf(dens) + 1]);
     }
+    poserConsigne();
     majBoutonsIcones();
     majBarreCompacte();
+  }
+
+  /* « Table vierge : ouvrez la partie par une suite. » Elle s'inscrit au
+     milieu du tapis sur tous les appareils, par-dessus la disposition quelle
+     qu'elle soit — la table rangee n'a pas d'emplacement vide ou l'ecrire, et
+     la consigne n'apparaissait donc que sur la table libre. Elle disparait
+     des qu'une suite est posee : c'est exactement sa raison d'etre.
+     Elle ne prend pas les clics, pour qu'on puisse glisser une carte au
+     travers. */
+  function poserConsigne() {
+    var wrap = $('#boardwrap');
+    var vieille = wrap.querySelector('.consigne');
+    if (vieille) vieille.remove();
+    if (!ouvertureAttendue() || !isHumanTurn()) return;
+    var d = document.createElement('div');
+    /* La place libre n'est pas la meme d'une disposition a l'autre : haut du
+       tapis sur la table rangee, milieu sur la table libre. */
+    d.className = 'consigne' + ($('#board').querySelector('.zone.grid') ? ' haute' : '');
+    d.innerHTML = '<span>' + TR('bar.ouverture') + '</span>';
+    wrap.appendChild(d);
   }
 
   /* Ce que la barre resserree rendrait au tapis : la difference de hauteur
@@ -1457,23 +1474,21 @@
     $('#hints').classList.toggle('on', !!prefs.hints);
     $('#auto').classList.toggle('on', magique);
 
-    var m = messageContexte();
+    var m = fugace ? { cls: fugace.cls, html: fugace.html, bulle: false } : messageContexte();
+    /* Ni la barre ni la bulle ne redisent ce que le tapis porte deja : quand
+       la consigne d'ouverture y est inscrite, il ne reste a dire que ce que
+       les indices y ajoutent. Sans cette regle, la meme phrase paraissait
+       deux fois sur l'ecran d'un ordinateur. */
+    var surTapis = !!$('#boardwrap').querySelector('.consigne');
+    var texte = (surTapis && m.tapis) ? (m.complement || '') : m.html;
     var msg = $('#msg');
     msg.className = m.cls;
-    msg.innerHTML = m.html;
-    /* Hors ordinateur la barre est masquee : seul l'avertissement passe en
-       bulle — aucune carte posable, ou l'ouverture a faire en suite. Ce qui
-       ne fait que commenter un geste qu'on vient de faire reste dans la
-       barre, donc sur ordinateur seulement. Sur une table vide, le tapis
-       porte deja le message : pas de bulle alors. */
-    if (getComputedStyle(msg).display === 'none') {
-      /* La bulle ne redit pas ce que le tapis porte deja — mais seule la
-         table libre du telephone affiche ce message en son milieu : la table
-         rangee, elle, n'a pas de place vide ou l'ecrire, et c'est alors a la
-         bulle de dire la consigne entiere. On regarde donc si elle est bien
-         a l'ecran, plutot que de supposer. */
-      var surTapis = !!document.querySelector('#board .empty');
-      var texte = surTapis ? (m.complement || '') : m.html;
+    msg.innerHTML = texte;
+    /* La barre existe sur ordinateur et sur iPad en paysage : tout s'y
+       affiche, et rien ne passe en bulle. Ailleurs — iPad en portrait,
+       iPhone — la barre n'existe pas et c'est la bulle qui parle. Un seul
+       endroit a la fois, pour que l'oeil sache ou regarder. */
+    if (!barreVisible()) {
       /* Une reponse directe passe devant : en mode loupe, on interroge une
          carte apres l'autre, et la bulle precedente est encore a l'ecran
          quand la suivante arrive. Lui ceder la place ferait repondre la bulle
@@ -1719,6 +1734,28 @@
   /* ================= Bulles / toasts ============================== */
 
   var toastTimer = null;
+  /* ---- Ou parlent les informations ? -----------------------------
+     Un seul chemin, et c'est l'appareil qui decide : la barre du bas quand
+     elle existe — ordinateur, iPad en paysage —, une bulle en haut sinon —
+     iPad en portrait, iPhone. Une bulle par-dessus une barre vide serait deux
+     endroits pour une seule chose, et l'oeil ne saurait plus ou regarder.
+     Dans la barre, le message chasse un instant celui du contexte, puis la
+     barre reprend son propos. */
+  var fugace = null, fugaceTimer = null;
+
+  function barreVisible() {
+    var msg = $('#msg');
+    return !!msg && getComputedStyle(msg).display !== 'none';
+  }
+
+  function info(html, cls) {
+    if (!barreVisible()) { toast(html); return; }
+    fugace = { html: html, cls: cls || 'warn' };
+    clearTimeout(fugaceTimer);
+    fugaceTimer = setTimeout(function () { fugace = null; updateBar(); }, 2600);
+    updateBar();
+  }
+
   function toast(html) {
     var t = $('#toast');
     t.innerHTML = html;
@@ -2048,7 +2085,7 @@
 
     if (t.kind === 'hand') {
       if (d.origin.type === 'hand') { render(); return; }
-      if (!isStaged(card)) { toast(TR('toast.dejaTable')); render(); return; }
+      if (!isStaged(card)) { info(TR('toast.dejaTable')); render(); return; }
       jrn('reprise', { carte: card.id });
       pushTurnState();
       removeFromBoard(card);
@@ -2114,7 +2151,7 @@
     render({ land: card.id });
     updateBar();
     if (ouvertureAttendue() && game.boardCards().length >= 3) {
-      toast(TR('toast.ouvertureBrelan'));
+      info(TR('toast.ouvertureBrelan'));
     }
   }
 
@@ -2199,7 +2236,7 @@
     jrn('suivant');
     eteindreMagicien(true);
     var res = game.commit();
-    if (!res.ok) { toast(res.reason); return; }
+    if (!res.ok) { info(res.reason); return; }
     var n = game.stagedCards().length;
     render(); sndSnap();
     if (game.finished) { gameOver(); return; }
@@ -2249,7 +2286,7 @@
     }
     render(); updateBar();
     sndHmm(!card);
-    if (!card) toast(TR('toast.piocheVide'));
+    if (!card) info(TR('toast.piocheVide'));
     if (game.finished) { gameOver(); return; }
     game.nextPlayer();
     render(); updateBar();
@@ -2273,6 +2310,10 @@
     magique = true;
     refCarte = null;
     lumiere = null;
+    /* La consigne d'emploi doit paraitre tout de suite : un avertissement qui
+       s'attardait dans la barre lui volerait sa place. */
+    fugace = null;
+    clearTimeout(fugaceTimer);
     sndMagic();
     render();
     updateBar();
@@ -2374,7 +2415,7 @@
         game.pass();
         game.nextPlayer();
       }
-      toast(TR('err.interne'));
+      info(TR('err.interne'));
     }
     busy = false;
     pushHistory();
@@ -2393,7 +2434,7 @@
     if (astuceRefaire !== 1 || !canRewind()) return;
     if ($('#toast').classList.contains('show')) return;
     astuceRefaire = 2;
-    toast(TR('toast.refaireAstuce', { b: TR('btn.refaire') }));
+    info(TR('toast.refaireAstuce', { b: TR('btn.refaire') }), 'good');
   }
 
   async function tourDesVirtuels() {
@@ -2786,7 +2827,7 @@
        nom libre entrait dans la page. */
     var donne = E.donneValide(j && j.donne);
     if (!donne || !Array.isArray(j.actes)) {
-      toast(TR('dbg.journalInvalide'));
+      info(TR('dbg.journalInvalide'));
       /* Le rejeu normal rend une promesse : le refus aussi, pour que l'appelant
          n'ait pas deux formes de reponse a distinguer. */
       return Promise.resolve({ actes: 0, rejoues: 0, divergences: [{ no: -1,
