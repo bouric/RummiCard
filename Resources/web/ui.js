@@ -178,6 +178,14 @@
      lumiere = identifiants des cartes qui restent en pleine lumiere. */
   var magique = false;
   var refCarte = null;
+  /* Le magicien ecoute aussi le tapis : la combinaison pointee, et la sortie
+     qu'il a trouvee pour elle si elle est restee incomplete. */
+  var refSet = null;
+  var reparation = null;
+  /* La sortie ne depend que du tapis, et le tapis ne bouge pas tant qu'on
+     tient le bouton : une seule recherche par maintien, meme en glissant
+     d'une combinaison incomplete a l'autre. */
+  var sortieDuTapis;
   var lumiere = null;
   /* Une recherche par carte pointee, gardee tant que la table et la main ne
      bougent pas : on balaie sa main d'avant en arriere sans rien recalculer. */
@@ -1562,9 +1570,24 @@
          n'est pas le meme au doigt qu'a la souris, le texte non plus. Les
          messages suivants, eux, restent muets : on balaie sa main et une
          bulle par carte ferait un clignotement de phrases. */
-      if (!refCarte) {
+      if (!refCarte && !refSet) {
         return { cls: 'good', bulle: true, forcer: true,
           html: TR(touchMode ? 'bar.magicienDoigt' : 'bar.magicienSouris') };
+      }
+      /* Une combinaison du tapis : soit elle est juste, soit on annonce le
+         prix de la sortie — jamais moins de deux combinaisons remaniees,
+         puisque les cartes orphelines doivent bien venir de quelque part. */
+      if (refSet) {
+        if (reparation) {
+          return { cls: 'good', bulle: true, forcer: true,
+            html: TR('bar.sortieExiste', { n: reparation.combien }) };
+        }
+        if (lumiere && lumiere.__seule) {
+          return { cls: 'warn', bulle: true, forcer: true, html: TR('bar.sortieAucune') };
+        }
+        return { cls: '', bulle: false,
+          html: TR('bar.combinaisonJuste', { n: refSet.cards.length,
+            cartes: NC(refSet.cards.length) }) };
       }
       if (lumiere && lumiere.__seule) {
         return { cls: 'warn', bulle: false,
@@ -2348,6 +2371,9 @@
     jrn('magique');
     magique = true;
     refCarte = null;
+    refSet = null;
+    reparation = null;
+    sortieDuTapis = undefined;
     lumiere = null;
     /* La consigne d'emploi doit paraitre tout de suite : un avertissement qui
        s'attardait dans la barre lui volerait sa place. */
@@ -2359,32 +2385,122 @@
   }
 
   function eteindreMagicien(sansRedessiner) {
-    if (!magique) { magique = false; refCarte = null; lumiere = null; return; }
+    if (!magique) {
+      magique = false; refCarte = null; refSet = null; reparation = null; lumiere = null;
+      return;
+    }
     magique = false;
     refCarte = null;
+    refSet = null;
+    reparation = null;
     lumiere = null;
     if (!sansRedessiner) { render(); updateBar(); }
   }
 
   /* Quelle carte de la main se trouve sous le pointeur ? */
-  function cartePointee(x, y) {
+  /* Ce qu'il y a sous le doigt : une carte de la main, ou une carte du tapis
+     avec la combinaison qui la porte. Le magicien ne lisait que la main, et
+     restait donc muet devant une combinaison restee a deux cartes — c'est
+     pourtant la qu'on a le plus besoin de lui. */
+  function pointeeSousLeDoigt(x, y) {
     var el = document.elementFromPoint(x, y);
-    el = el && el.closest ? el.closest('#rack .card[data-id]') : null;
-    if (!el) return null;
-    var h = game.human().hand;
-    for (var i = 0; i < h.length; i++) if (h[i].id === el.dataset.id) return h[i];
+    if (!el || !el.closest) return null;
+    var enMain = el.closest('#rack .card[data-id]');
+    if (enMain) {
+      var h = game.human().hand;
+      for (var i = 0; i < h.length; i++) {
+        if (h[i].id === enMain.dataset.id) return { carte: h[i], set: null };
+      }
+      return null;
+    }
+    var surTapis = el.closest('#board .card[data-id]');
+    if (!surTapis) return null;
+    for (var s = 0; s < game.board.length; s++) {
+      var cs = game.board[s].cards;
+      for (var k = 0; k < cs.length; k++) {
+        if (cs[k].id === surTapis.dataset.id) return { carte: cs[k], set: game.board[s] };
+      }
+    }
     return null;
+  }
+
+  /* Cherche un agencement qui garde toutes les cartes du tapis et les rend
+     toutes valides.
+     Une combinaison restee a deux cartes n'a presque jamais de reparation
+     locale : les cartes qui la completeraient sont elles-memes dans des
+     combinaisons de trois, qui casseraient a leur tour. Mesure sur une vraie
+     partie — 8♣ 9♣ orphelins, 21 combinaisons : les quatre cartes capables de
+     les completer etaient toutes prises, et la seule sortie en remaniait huit.
+     Montrer « les cartes qui pourraient completer celle-ci » mentirait donc ;
+     on montre l'etendue du remaniement, et on l'applique si le doigt se leve
+     la. La main n'entre pas dans le calcul : reparer le tapis ne doit pas
+     depenser vos cartes. */
+  function chercherSortie() {
+    var cartes = game.boardCards();
+    var r = chrono('reparer', function () {
+      return Solver.solve([], cartes, { objective: 'count' });
+    });
+    if (!r || r.count !== cartes.length) return null;
+
+    function signature(cs) {
+      return cs.map(function (c) { return c.suit + '-' + c.rank; }).sort().join(',');
+    }
+    var proposees = r.sets.map(signature), bougent = {}, combien = 0, i, k, j;
+    for (i = 0; i < game.board.length; i++) {
+      j = proposees.indexOf(signature(game.board[i].cards));
+      if (j >= 0) { proposees.splice(j, 1); continue; }
+      combien++;
+      for (k = 0; k < game.board[i].cards.length; k++) {
+        bougent[game.board[i].cards[k].id] = true;
+      }
+    }
+    if (!combien) return null;              // la table est deja juste
+    return { sets: r.sets, combien: combien, ids: bougent };
   }
 
   function pointerMagicien(x, y) {
     if (!magique) return;
-    var carte = cartePointee(x, y);
-    if (!carte) return;                       // hors de la main : on garde la derniere
-    if (refCarte && refCarte.id === carte.id) return;
-    refCarte = carte;
-    lumiere = lumiereDe(carte);
+    var p = pointeeSousLeDoigt(x, y);
+    if (!p) return;                         // entre deux cartes : on garde la derniere
+    if (p.set) {
+      if (refSet && refSet.id === p.set.id) return;
+      refSet = p.set; refCarte = null; reparation = null;
+      lumiere = {};
+      var cs = p.set.cards, i;
+      if (E.isValidSet(cs)) {
+        for (i = 0; i < cs.length; i++) lumiere[cs[i].id] = true;
+      } else {
+        if (sortieDuTapis === undefined) sortieDuTapis = chercherSortie();
+        reparation = sortieDuTapis;
+        if (reparation) {
+          lumiere = reparation.ids;         // ce qui va bouger reste en lumiere
+        } else {
+          for (i = 0; i < cs.length; i++) lumiere[cs[i].id] = true;
+          lumiere.__seule = true;
+        }
+      }
+    } else {
+      if (refCarte && refCarte.id === p.carte.id) return;
+      refCarte = p.carte; refSet = null; reparation = null;
+      lumiere = lumiereDe(p.carte);
+    }
     render();
     updateBar();
+  }
+
+  /* Le doigt s'est leve sur une combinaison a reparer : on joue le
+     remaniement. Le mouvement est l'explication — aucun surlignage ne saurait
+     dire une cascade de huit combinaisons. « Annuler » le defait d'un coup,
+     puisque c'est une seule entree de la pile du tour. */
+  function appliquerReparation(r) {
+    jrn('reparer');
+    pushTurnState();
+    game.board = E.alignBoard(game.board, r.sets);
+    game.compact();
+    sndMagic();
+    render();
+    updateBar();
+    info(TR('toast.remaniee', { n: r.combien }), 'good');
   }
 
   /* La combinaison que cette carte formera, telle que le solveur la voit :
@@ -3055,7 +3171,15 @@
       e.preventDefault();
       allumerMagicien();
     });
-    function fin() { if (magique) eteindreMagicien(); }
+    /* Relacher sur une combinaison a reparer, c'est l'accepter : la phrase
+       l'annonce avant, et le doigt n'a qu'a glisser ailleurs pour s'en
+       dedire. */
+    function fin() {
+      if (!magique) return;
+      var r = reparation;
+      eteindreMagicien(!!r);
+      if (r) appliquerReparation(r);
+    }
     window.addEventListener('pointerup', fin, true);
     window.addEventListener('pointercancel', fin, true);
     /* Le doigt qui pointe n'est pas celui qui tient : on suit toutes les
