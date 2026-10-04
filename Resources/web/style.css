@@ -402,10 +402,14 @@ header .brand span { color: var(--gold); }
 }
 .btn:hover:not(:disabled) { background: rgba(255, 255, 255, .13); transform: translateY(-1px); }
 .btn:disabled { opacity: .34; }
-/* Deux pictogrammes trop discrets pour ce qu'ils font : celui de « Refaire »
-   passe au double, celui de « Quitter » à une fois et demie. Le libellé garde
-   sa taille, et l'interligne est bridé pour que la rangée ne grandisse pas —
-   ce serait de la hauteur prise au tapis. */
+/* Deux pictogrammes trop discrets pour ce qu'ils font. « Refaire » change de
+   caractère : ⟲ était dessiné en trait fin dans une boîte large et vide —
+   l'agrandir n'épaississait pas le trait. ↺ ferme son cercle et porte un trait
+   plus épais à taille égale. Il reste monochrome, donc il prend la couleur du
+   bouton et pâlit avec lui quand l'action n'est pas disponible, ce qu'un emoji
+   en couleur ne ferait pas. « Quitter » gagne la moitié de sa taille.
+   Le libellé garde la sienne, et l'interligne est bridé pour que la rangée ne
+   grandisse pas — ce serait de la hauteur prise au tapis. */
 #rewind { font-size: 26px; line-height: 17px; }
 #rewind .lbl { font-size: 13px; line-height: normal; }
 #restart { font-size: 21px; }
