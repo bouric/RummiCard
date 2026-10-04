@@ -77,7 +77,7 @@
     'zone.votreMain': 'Votre main — {n} {cartes}',
 
     'btn.suivant': 'Au suivant !', 'btn.annuler': 'Annuler', 'btn.piocher': 'Piocher',
-    'btn.indices': 'Indices', 'btn.magique': 'Magique', 'btn.trier': 'Trier',
+    'btn.indices': 'Indices', 'btn.magique': 'Magicien', 'btn.trier': 'Trier',
     'btn.refaire': 'Refaire', 'btn.fermer': 'Fermer', 'btn.menu': 'Menu',
     'toast.refaireAstuce': '\u21ba {b} revient avant votre pioche.',
     'btn.mancheSuivante': 'Manche suivante', 'btn.nouvellePartie': 'Nouvelle partie',
@@ -91,10 +91,9 @@
     'opt.tapis': 'Couleur du tapis', 'tip.options': 'Options', 'tip.son': 'Son',
     'tip.regles': 'Règles', 'tip.quitter': 'Quitter la partie',
 
-    'bar.magiqueMode': '✨ Touchez une carte de votre main : la table montre où elle se pose.',
-    'bar.magiqueCarte': '✨ {c} : les combinaisons éclairées l’accueillent.',
-    'bar.magiqueRemanie': '✨ {c} : la table se remanie — les combinaisons éclairées changent.',
-    'bar.magiqueRien': '✨ {c} ne se pose nulle part sur cette table.',
+    'bar.magicienMode': '✨ Pointez une carte de votre main, sans lâcher.',
+    'bar.magicienCarte': '✨ {c} : sa combinaison complète, {n} {cartes}, reste en lumière.',
+    'bar.magicienSeule': '✨ {c} ne forme encore aucune combinaison.',
     'bar.ok': '✓ {n} {cartes} {posees} ({p} pts) — au suivant !',
     'bar.posee': 'posée', 'bar.posees': 'posées',
     'bar.ouverture': 'Table vierge : ouvrez la partie par une <b>suite</b> — ni brelan ni carré.',
@@ -108,8 +107,6 @@
     'toast.dejaTable': 'Cette carte appartient déjà à la table.',
     'toast.ouvertureBrelan': 'Pour ouvrir une table vierge, il faut une <b>suite</b> — un brelan ne suffit pas.',
     'toast.piocheVide': 'La pioche est vide — vous passez',
-    'toast.rienAJouer': 'Aucun coup possible avec cette main — piochez.',
-    'toast.rienOuvrir': 'Aucune suite possible pour ouvrir la table — piochez.',
     'toast.abandon': 'Abandonner la partie en cours ?',
 
     'err.posezCarte': 'Posez au moins une carte, ou piochez.',
@@ -176,7 +173,7 @@
     'reg.rienAPoser': 'Rien à poser ? Vous piochez et le tour passe.',
     'reg.gagne': 'Le premier à vider sa main gagne la manche. Si la pioche s’épuise, c’est le joueur avec le moins de points en main.',
     'reg.manches': 'En <b>plusieurs manches</b> (option), chacun perd la valeur des cartes restées dans sa main et le gagnant encaisse la somme de ces cartes. Le classement final se fait au cumul.',
-    'reg.magique': '<b>Magique</b> allumé, votre main devient une loupe : touchez une carte et la table éclaire la combinaison qui l’accueille, en effaçant tout le reste. Rien n’est posé — pour poser, glissez la carte comme d’habitude.',
+    'reg.magique': '<b>Magicien</b> se tient : gardez le bouton enfoncé — ou le doigt posé — et pointez une carte de votre main. Tout s’assombrit sauf la combinaison qu’elle formera : les autres cartes de votre main qui s’y joignent, et celles déjà posées sur la table. Relâchez, tout revient.',
     'reg.memeDonne': '<b>↺ Même donne</b> redistribue exactement les mêmes cartes — à vous comme aux joueurs virtuels — pour rejouer la partie autrement.',
     'reg.titre': 'Règles',
     'reg.but': '<b>But</b> : vider sa main. On pose des <b>suites</b> (3 cartes ou plus, même couleur, valeurs qui se suivent) et des <b>groupes</b> (3 ou 4 cartes de même valeur, couleurs différentes).',
@@ -191,7 +188,7 @@
     'reg.indices': '<b>💡 Indices</b> met en avant les cartes du <b>meilleur coup</b> du tour, sans vous dire où les poser : une aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes se posent toutes ensemble ; à mesure que vous en placez, l’indication se met à jour.',
     'reg.annuler': '<b>Annuler</b> défait vos mouvements un par un, dans l’ordre inverse.',
     'reg.refaire': '<b>Refaire</b> ramène la partie au <b>début de votre tour précédent</b> : votre coup est défait, et avec lui les réponses des joueurs virtuels.',
-    'reg.raccourcis': 'Raccourcis — Entrée : au suivant · ⌫ : annuler · P : piocher · M : magique · T : changer le tri · I : indices · R : refaire'
+    'reg.raccourcis': 'Raccourcis — Entrée : au suivant · ⌫ : annuler · P : piocher · M maintenu : magicien · T : changer le tri · I : indices · R : refaire'
   };
 
   T.en = {
@@ -240,7 +237,7 @@
     'zone.votreMain': 'Your hand — {n} {cartes}',
 
     'btn.suivant': 'Next player!', 'btn.annuler': 'Undo', 'btn.piocher': 'Draw',
-    'btn.indices': 'Hints', 'btn.magique': 'Magic', 'btn.trier': 'Sort',
+    'btn.indices': 'Hints', 'btn.magique': 'Wizard', 'btn.trier': 'Sort',
     'btn.refaire': 'Rewind', 'btn.fermer': 'Close', 'btn.menu': 'Menu',
     'toast.refaireAstuce': '\u21ba {b} takes you back to before your draw.',
     'btn.mancheSuivante': 'Next round', 'btn.nouvellePartie': 'New game',
@@ -254,10 +251,9 @@
     'opt.tapis': 'Felt colour', 'tip.options': 'Options', 'tip.son': 'Sound',
     'tip.regles': 'Rules', 'tip.quitter': 'Leave the game',
 
-    'bar.magiqueMode': '✨ Touch a card in your hand: the table shows where it would go.',
-    'bar.magiqueCarte': '✨ {c}: the lit combinations take it in.',
-    'bar.magiqueRemanie': '✨ {c}: the table rearranges — the lit combinations change.',
-    'bar.magiqueRien': '✨ {c} has nowhere to go on this table.',
+    'bar.magicienMode': '✨ Point at a card in your hand, without letting go.',
+    'bar.magicienCarte': '✨ {c}: its full combination, {n} {cartes}, stays lit.',
+    'bar.magicienSeule': '✨ {c} does not form a combination yet.',
     'bar.ok': '✓ {n} {cartes} laid ({p} pts) — next player!',
     'bar.posee': 'laid', 'bar.posees': 'laid',
     'bar.ouverture': 'Empty table: open the game with a <b>run</b> — not a set.',
@@ -271,8 +267,6 @@
     'toast.dejaTable': 'That card already belongs to the table.',
     'toast.ouvertureBrelan': 'To open an empty table you need a <b>run</b> — a set is not enough.',
     'toast.piocheVide': 'The stock is empty — you pass',
-    'toast.rienAJouer': 'No move possible with this hand — draw a card.',
-    'toast.rienOuvrir': 'No run available to open the table — draw a card.',
     'toast.abandon': 'Abandon the game in progress?',
 
     'err.posezCarte': 'Lay at least one card, or draw.',
@@ -337,7 +331,7 @@
     'reg.rienAPoser': 'Nothing to lay? You draw and the turn passes on.',
     'reg.gagne': 'The first to empty their hand wins the round. If the stock runs out, the player with the fewest points in hand wins.',
     'reg.manches': 'Over <b>several rounds</b> (an option), each player loses the value of the cards left in hand and the winner collects the sum of those cards. The final standing is the running total.',
-    'reg.magique': 'With <b>Magic</b> on, your hand becomes a magnifying glass: touch a card and the table lights up the combination that takes it in, dimming everything else. Nothing is played — to play, drag the card as usual.',
+    'reg.magique': '<b>Wizard</b> is held, not pressed: keep the button down — or your finger on it — and point at a card in your hand. Everything dims except the combination it will form: the other cards of your hand that join it, and those already on the table. Let go and everything comes back.',
     'reg.memeDonne': '<b>↺ Same deal</b> deals exactly the same cards again — to you and to the computer players — so you can play the game differently.',
     'reg.titre': 'Rules',
     'reg.but': '<b>Goal</b>: empty your hand. You lay <b>runs</b> (3 or more cards, same suit, consecutive values) and <b>sets</b> (3 or 4 cards of the same value, different suits).',
@@ -352,7 +346,7 @@
     'reg.indices': '<b>💡 Hints</b> highlights the cards of the turn’s <b>best move</b> without telling you where to lay them: a middle ground between working it out alone and letting the machine play. Those cards all go down together, and the highlighting updates as you place them.',
     'reg.annuler': '<b>Undo</b> takes back your moves one at a time, in reverse order.',
     'reg.refaire': '<b>Rewind</b> returns the game to the <b>start of your previous turn</b>: your move is undone, and with it the computer players’ replies.',
-    'reg.raccourcis': 'Shortcuts — Enter: next player · ⌫: undo · P: draw · M: magic · T: change sorting · I: hints · R: rewind'
+    'reg.raccourcis': 'Shortcuts — Enter: next player · ⌫: undo · P: draw · hold M: wizard · T: change sorting · I: hints · R: rewind'
   };
 
   T.de = {
@@ -415,10 +409,9 @@
     'opt.tapis': 'Farbe des Tisches', 'tip.options': 'Einstellungen', 'tip.son': 'Ton',
     'tip.regles': 'Regeln', 'tip.quitter': 'Spiel verlassen',
 
-    'bar.magiqueMode': '✨ Berühren Sie eine Karte Ihrer Hand: Der Tisch zeigt, wohin sie gehört.',
-    'bar.magiqueCarte': '✨ {c}: Die hervorgehobenen Kombinationen nehmen sie auf.',
-    'bar.magiqueRemanie': '✨ {c}: Der Tisch baut sich um — die hervorgehobenen Kombinationen ändern sich.',
-    'bar.magiqueRien': '✨ {c} findet auf diesem Tisch keinen Platz.',
+    'bar.magicienMode': '✨ Zeigen Sie auf eine Karte Ihrer Hand, ohne loszulassen.',
+    'bar.magicienCarte': '✨ {c}: Die vollständige Kombination, {n} {cartes}, bleibt hell.',
+    'bar.magicienSeule': '✨ {c} bildet noch keine Kombination.',
     'bar.ok': '✓ {n} {cartes} gelegt ({p} Pkt.) — weiter!',
     'bar.posee': 'gelegt', 'bar.posees': 'gelegt',
     'bar.ouverture': 'Leerer Tisch: Eröffnen Sie mit einer <b>Folge</b> — nicht mit einem Satz.',
@@ -432,8 +425,6 @@
     'toast.dejaTable': 'Diese Karte gehört bereits zum Tisch.',
     'toast.ouvertureBrelan': 'Um einen leeren Tisch zu eröffnen, braucht es eine <b>Folge</b> — ein Satz genügt nicht.',
     'toast.piocheVide': 'Der Stapel ist leer — Sie setzen aus',
-    'toast.rienAJouer': 'Mit dieser Hand ist kein Zug möglich — ziehen Sie eine Karte.',
-    'toast.rienOuvrir': 'Keine Folge zum Eröffnen vorhanden — ziehen Sie eine Karte.',
     'toast.abandon': 'Laufendes Spiel aufgeben?',
 
     'err.posezCarte': 'Legen Sie mindestens eine Karte, oder ziehen Sie.',
@@ -498,7 +489,7 @@
     'reg.rienAPoser': 'Nichts zu legen? Sie ziehen, und der Zug geht weiter.',
     'reg.gagne': 'Wer zuerst die Hand leert, gewinnt die Runde. Ist der Stapel erschöpft, gewinnt, wer die wenigsten Punkte auf der Hand hat.',
     'reg.manches': 'Über <b>mehrere Runden</b> (Einstellung) verliert jeder den Wert der Karten auf seiner Hand, und der Sieger kassiert die Summe dieser Karten. Die Endwertung ist die Gesamtsumme.',
-    'reg.magique': 'Bei eingeschalteter <b>Magie</b> wird Ihre Hand zur Lupe: Berühren Sie eine Karte, und der Tisch hebt die Kombination hervor, die sie aufnimmt, während alles andere verblasst. Gelegt wird nichts — zum Legen ziehen Sie die Karte wie gewohnt.',
+    'reg.magique': '<b>Magie</b> wird gehalten, nicht gedrückt: Halten Sie die Taste — oder den Finger — und zeigen Sie auf eine Karte Ihrer Hand. Alles verblasst außer der Kombination, die sie bilden wird: die weiteren Handkarten, die dazugehören, und die bereits liegenden. Loslassen, und alles kehrt zurück.',
     'reg.memeDonne': '<b>↺ Gleiche Austeilung</b> verteilt genau dieselben Karten noch einmal — an Sie wie an die Computergegner — um das Spiel anders zu spielen.',
     'reg.titre': 'Regeln',
     'reg.but': '<b>Ziel</b>: die eigene Hand leeren. Gelegt werden <b>Folgen</b> (3 oder mehr Karten derselben Farbe in fortlaufenden Werten) und <b>Sätze</b> (3 oder 4 Karten gleichen Werts in verschiedenen Farben).',
@@ -576,10 +567,9 @@
     'opt.tapis': 'Colore del tavolo', 'tip.options': 'Opzioni', 'tip.son': 'Suono',
     'tip.regles': 'Regole', 'tip.quitter': 'Esci dalla partita',
 
-    'bar.magiqueMode': '✨ Tocchi una carta della sua mano: il tavolo mostra dove si cala.',
-    'bar.magiqueCarte': '✨ {c}: le combinazioni illuminate la accolgono.',
-    'bar.magiqueRemanie': '✨ {c}: il tavolo si rimaneggia — le combinazioni illuminate cambiano.',
-    'bar.magiqueRien': '✨ {c} non trova posto su questo tavolo.',
+    'bar.magicienMode': '✨ Indichi una carta della sua mano, senza lasciare.',
+    'bar.magicienCarte': '✨ {c}: la combinazione completa, {n} {cartes}, resta illuminata.',
+    'bar.magicienSeule': '✨ {c} non forma ancora alcuna combinazione.',
     'bar.ok': '✓ {n} {cartes} calate ({p} pt) — al prossimo!',
     'bar.posee': 'calata', 'bar.posees': 'calate',
     'bar.ouverture': 'Tavolo vuoto: apra la partita con una <b>scala</b> — non con un tris.',
@@ -593,8 +583,6 @@
     'toast.dejaTable': 'Questa carta appartiene già al tavolo.',
     'toast.ouvertureBrelan': 'Per aprire un tavolo vuoto serve una <b>scala</b> — un tris non basta.',
     'toast.piocheVide': 'Il tallone è vuoto — passa',
-    'toast.rienAJouer': 'Nessuna mossa possibile con questa mano — peschi.',
-    'toast.rienOuvrir': 'Nessuna scala per aprire il tavolo — peschi.',
     'toast.abandon': 'Abbandonare la partita in corso?',
 
     'err.posezCarte': 'Cali almeno una carta, oppure peschi.',
@@ -659,7 +647,7 @@
     'reg.rienAPoser': 'Niente da calare? Pesca e il turno passa.',
     'reg.gagne': 'Chi svuota per primo la mano vince la mano. Se il tallone si esaurisce, vince chi ha meno punti in mano.',
     'reg.manches': 'Su <b>più mani</b> (opzione), ciascuno perde il valore delle carte rimaste in mano e il vincitore incassa la somma di quelle carte. La classifica finale è il cumulo.',
-    'reg.magique': 'Con <b>Magia</b> accesa, la sua mano diventa una lente: tocchi una carta e il tavolo illumina la combinazione che la accoglie, spegnendo tutto il resto. Non viene calato nulla — per calare, trascini la carta come al solito.',
+    'reg.magique': '<b>Magia</b> si tiene premuto: mantenga il pulsante — o il dito — e indichi una carta della sua mano. Tutto si spegne tranne la combinazione che formerà: le altre carte della sua mano che vi si uniscono, e quelle già sul tavolo. Lasci, e tutto ritorna.',
     'reg.memeDonne': '<b>↺ Stessa distribuzione</b> ridistribuisce esattamente le stesse carte — a lei come ai giocatori virtuali — per rigiocare la partita in altro modo.',
     'reg.titre': 'Regole',
     'reg.but': '<b>Scopo</b>: svuotare la propria mano. Si calano <b>scale</b> (3 o più carte dello stesso seme, con valori consecutivi) e <b>tris</b> (3 o 4 carte dello stesso valore, di semi diversi).',
@@ -737,10 +725,9 @@
     'opt.tapis': 'Kleur van het tafellaken', 'tip.options': 'Instellingen', 'tip.son': 'Geluid',
     'tip.regles': 'Regels', 'tip.quitter': 'Spel verlaten',
 
-    'bar.magiqueMode': '✨ Raak een kaart in uw hand aan: de tafel toont waar ze past.',
-    'bar.magiqueCarte': '✨ {c}: de opgelichte combinaties nemen haar op.',
-    'bar.magiqueRemanie': '✨ {c}: de tafel verschikt zich — de opgelichte combinaties veranderen.',
-    'bar.magiqueRien': '✨ {c} past nergens op deze tafel.',
+    'bar.magicienMode': '✨ Wijs een kaart in uw hand aan, zonder los te laten.',
+    'bar.magicienCarte': '✨ {c}: de volledige combinatie, {n} {cartes}, blijft verlicht.',
+    'bar.magicienSeule': '✨ {c} vormt nog geen combinatie.',
     'bar.ok': '✓ {n} {cartes} gelegd ({p} ptn) — volgende!',
     'bar.posee': 'gelegd', 'bar.posees': 'gelegd',
     'bar.ouverture': 'Lege tafel: open het spel met een <b>reeks</b> — geen groep.',
@@ -754,8 +741,6 @@
     'toast.dejaTable': 'Die kaart hoort al bij de tafel.',
     'toast.ouvertureBrelan': 'Om een lege tafel te openen is een <b>reeks</b> nodig — een groep volstaat niet.',
     'toast.piocheVide': 'De stapel is leeg — u slaat over',
-    'toast.rienAJouer': 'Met deze hand is geen zet mogelijk — trek een kaart.',
-    'toast.rienOuvrir': 'Geen reeks om de tafel te openen — trek een kaart.',
     'toast.abandon': 'Het lopende spel opgeven?',
 
     'err.posezCarte': 'Leg ten minste één kaart, of trek er een.',
@@ -820,7 +805,7 @@
     'reg.rienAPoser': 'Niets te leggen? U trekt en de beurt gaat door.',
     'reg.gagne': 'Wie als eerste zijn hand leegt, wint de ronde. Raakt de stapel op, dan wint wie de minste punten in de hand heeft.',
     'reg.manches': 'Over <b>meerdere ronden</b> (instelling) verliest ieder de waarde van de kaarten in zijn hand en int de winnaar de som daarvan. De eindstand is het totaal.',
-    'reg.magique': 'Met <b>Magie</b> aan wordt uw hand een vergrootglas: raak een kaart aan en de tafel licht de combinatie op die haar opneemt, de rest dooft. Er wordt niets gelegd — om te leggen sleept u de kaart zoals gewoonlijk.',
+    'reg.magique': '<b>Magie</b> wordt vastgehouden, niet ingedrukt: houd de knop — of uw vinger — vast en wijs een kaart in uw hand aan. Alles dooft behalve de combinatie die ze zal vormen: de andere handkaarten die erbij horen, en die al op tafel liggen. Laat los en alles komt terug.',
     'reg.memeDonne': '<b>↺ Zelfde deling</b> deelt precies dezelfde kaarten opnieuw — aan u en aan de computerspelers — om het spel anders te spelen.',
     'reg.titre': 'Regels',
     'reg.but': '<b>Doel</b>: uw hand leegmaken. U legt <b>reeksen</b> (3 of meer kaarten van dezelfde kleur, met opeenvolgende waarden) en <b>groepen</b> (3 of 4 kaarten van dezelfde waarde, in verschillende kleuren).',
@@ -898,10 +883,9 @@
     'opt.tapis': 'Color del tapete', 'tip.options': 'Opciones', 'tip.son': 'Sonido',
     'tip.regles': 'Reglas', 'tip.quitter': 'Salir de la partida',
 
-    'bar.magiqueMode': '✨ Toque una carta de su mano: la mesa muestra dónde se coloca.',
-    'bar.magiqueCarte': '✨ {c}: las combinaciones iluminadas la acogen.',
-    'bar.magiqueRemanie': '✨ {c}: la mesa se rehace — las combinaciones iluminadas cambian.',
-    'bar.magiqueRien': '✨ {c} no cabe en ninguna parte de esta mesa.',
+    'bar.magicienMode': '✨ Señale una carta de su mano, sin soltar.',
+    'bar.magicienCarte': '✨ {c}: su combinación completa, {n} {cartes}, sigue iluminada.',
+    'bar.magicienSeule': '✨ {c} no forma ninguna combinación todavía.',
     'bar.ok': '✓ {n} {cartes} bajadas ({p} pts) — ¡al siguiente!',
     'bar.posee': 'bajada', 'bar.posees': 'bajadas',
     'bar.ouverture': 'Mesa vacía: abra la partida con una <b>escalera</b> — no con un trío.',
@@ -915,8 +899,6 @@
     'toast.dejaTable': 'Esa carta ya pertenece a la mesa.',
     'toast.ouvertureBrelan': 'Para abrir una mesa vacía hace falta una <b>escalera</b> — un trío no basta.',
     'toast.piocheVide': 'El mazo está vacío — pasa',
-    'toast.rienAJouer': 'Ninguna jugada posible con esta mano — robe.',
-    'toast.rienOuvrir': 'Ninguna escalera para abrir la mesa — robe.',
     'toast.abandon': '¿Abandonar la partida en curso?',
 
     'err.posezCarte': 'Baje al menos una carta, o robe.',
@@ -981,7 +963,7 @@
     'reg.rienAPoser': '¿Nada que bajar? Roba y el turno pasa.',
     'reg.gagne': 'El primero en vaciar su mano gana la manga. Si el mazo se agota, gana quien tenga menos puntos en la mano.',
     'reg.manches': 'A <b>varias mangas</b> (opción), cada uno pierde el valor de las cartas que le quedan en la mano y el ganador cobra la suma de esas cartas. La clasificación final es el acumulado.',
-    'reg.magique': 'Con <b>Magia</b> activada, su mano se vuelve una lupa: toque una carta y la mesa ilumina la combinación que la acoge, apagando todo lo demás. No se baja nada — para bajar, arrastre la carta como de costumbre.',
+    'reg.magique': '<b>Magia</b> se mantiene, no se pulsa: mantenga el botón — o el dedo — y señale una carta de su mano. Todo se oscurece salvo la combinación que formará: las demás cartas de su mano que se le unen, y las ya puestas en la mesa. Suelte y todo vuelve.',
     'reg.memeDonne': '<b>↺ Mismo reparto</b> vuelve a repartir exactamente las mismas cartas — a usted y a los jugadores virtuales — para jugar la partida de otro modo.',
     'reg.titre': 'Reglas',
     'reg.but': '<b>Objetivo</b>: vaciar su mano. Se bajan <b>escaleras</b> (3 cartas o más del mismo palo, con valores consecutivos) y <b>tríos</b> (3 o 4 cartas del mismo valor, de palos distintos).',

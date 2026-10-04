@@ -406,6 +406,9 @@ header .brand span { color: var(--gold); }
    allumé, il prend exactement le violet des cartes qu'il désigne. Le bouton
    et la lumière sur la table sont alors la même chose, et l'on voit d'un coup
    d'œil si la solution est affichée. */
+/* Tenu du doigt, le bouton ne doit ni faire defiler ni ouvrir de menu : le
+   geste lui appartient du debut a la fin. */
+.btn.magic { touch-action: none; }
 .btn.magic.on {
   background: linear-gradient(180deg, #7a68f0, #5546c6);
   border-color: #9586ff; color: #fff;
