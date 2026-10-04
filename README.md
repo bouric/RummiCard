@@ -257,10 +257,12 @@ publicité, aucun compte, aucune donnée qui sorte de l'appareil**. Les indices 
 le magicien sont offerts à tout le monde. Un panneau indique simplement où
 remercier, pour qui en a envie.
 
-Les adresses se remplissent dans `DONS`, en tête de la section *Soutien* de
-`ui.js` — une par ligne, et **un lien laissé vide disparaît**. Tant qu'aucune
-n'est renseignée, le panneau ne se montre nulle part : ni dans les options, ni
-en fin de partie.
+Trois liens : **Ko-fi** (carte bancaire, sans compte à créer), **PayPal.Me** et
+**Revolut.me** (carte ou Apple Pay). Ils se règlent dans `DONS`, en tête de la
+section *Soutien* de `ui.js` — une adresse par ligne, et **un lien laissé vide
+disparaît**. Si aucune n'est renseignée, le panneau ne se montre nulle part :
+ni dans les options, ni en fin de partie. Les mêmes adresses sont reprises dans
+`.github/FUNDING.yml`, qui met un bouton « Sponsor » sur le dépôt.
 
 L'invitation ne s'affiche que sur l'**écran de fin** — fin de manche comme fin
 de partie, jamais au lancement — et seulement **à partir de la troisième partie

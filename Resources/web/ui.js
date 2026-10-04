@@ -2775,10 +2775,10 @@
      Un lien laisse vide disparait : tant qu'aucun n'est rempli, l'invitation
      ne se montre nulle part. */
   var DONS = [
-    /* A completer avec les adresses reelles ; vide = le lien ne s'affiche pas. */
-    { cle: 'don.kofi',    url: '' },
-    { cle: 'don.paypal',  url: '' },
-    { cle: 'don.revolut', url: '' }
+    /* Vide = le lien ne s'affiche pas. */
+    { cle: 'don.kofi',    url: 'https://ko-fi.com/bouric' },
+    { cle: 'don.paypal',  url: 'https://paypal.me/RichardBoulais' },
+    { cle: 'don.revolut', url: 'https://revolut.me/richardboulais' }
   ];
 
   /* L'app macOS se signale elle-meme : c'est ma machine, elle n'a rien a
