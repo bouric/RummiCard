@@ -257,10 +257,12 @@ publicité, aucun compte, aucune donnée qui sorte de l'appareil**. Les indices 
 le magicien sont offerts à tout le monde. Un panneau indique simplement où
 remercier, pour qui en a envie.
 
-Un seul lien, **Ko-fi** — la carte bancaire sans compte à créer, et surtout
-sans afficher de nom réel : PayPal.Me publie le nom complet et la ville du
-destinataire, Revolut.me son prénom, ce qui n'a rien à faire sur une page
-publique. L'adresse se règle dans `DONS`, en tête de la section *Soutien* de
+Deux liens : **Ko-fi** d'abord — la carte bancaire sans compte à créer, la
+commission la plus faible, et un pseudonyme plutôt qu'un nom — puis
+**PayPal.Me**, pour qui préfère PayPal. À savoir : paypal.me publie le nom
+complet et la ville du destinataire ; un compte Professionnel, gratuit,
+permet de choisir ce qui s'affiche. Les adresses se règlent dans `DONS`,
+en tête de la section *Soutien* de
 `ui.js` — une par ligne, et **un lien laissé vide disparaît**. Si aucune n'est
 renseignée, le panneau ne se montre nulle part : ni dans les options, ni en fin
 de partie. La même adresse est reprise dans `.github/FUNDING.yml`, qui met un

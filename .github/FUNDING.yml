@@ -1,4 +1,5 @@
-# Bouton « Sponsor » du dépôt — le même lien que le panneau de soutien du jeu
-# (voir DONS dans Resources/web/ui.js). Ko-fi seul : PayPal et Revolut
-# affichent le vrai nom du destinataire.
+# Bouton « Sponsor » du dépôt — les mêmes liens que le panneau de soutien du
+# jeu (voir DONS dans Resources/web/ui.js).
 ko_fi: bouric
+custom:
+  - "https://paypal.me/RichardBoulais"
