@@ -125,6 +125,7 @@
     'toast.ouvertureBrelan': 'Pour ouvrir une table vierge, il faut une <b>suite</b> — un brelan ne suffit pas.',
     'toast.piocheVide': 'La pioche est vide — vous passez',
     'toast.abandon': 'Abandonner la partie en cours ?',
+    'toast.refaire': 'Défaire tout votre tour précédent, et avec lui les réponses des joueurs virtuels ?',
 
     'err.posezCarte': 'Posez au moins une carte, ou piochez.',
     'err.cartesTable': 'Les cartes de la table ne peuvent pas rejoindre votre main.',
@@ -205,7 +206,7 @@
     'reg.fusion': 'Deux suites de même couleur qui se suivent sont <b>réunies automatiquement</b>. Pour les séparer de nouveau, déposez une carte au milieu de la colonne : la suite est <b>coupée à cet endroit</b>.',
     'reg.indices': '<b>💡 Indices</b> met en avant les cartes du <b>meilleur coup</b> du tour, sans vous dire où les poser : une aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes se posent toutes ensemble ; à mesure que vous en placez, l’indication se met à jour.',
     'reg.annuler': '<b>Annuler</b> défait vos mouvements un par un, dans l’ordre inverse.',
-    'reg.refaire': '<b>Refaire</b> ramène la partie au <b>début de votre tour précédent</b> : votre coup est défait, et avec lui les réponses des joueurs virtuels.',
+    'reg.refaire': '<b>Refaire</b> ramène la partie au <b>début de votre tour précédent</b> : votre coup est défait, et avec lui les réponses des joueurs virtuels. Il prend la place d’<b>Annuler</b> quand il n’y a plus rien à reprendre, et demande confirmation avant d’effacer le tour.',
     'reg.raccourcis': 'Raccourcis — Entrée : au suivant · ⌫ : annuler · P : piocher · M maintenu : magicien · T : changer le tri · I : indices · R : refaire'
   };
 
@@ -303,6 +304,7 @@
     'toast.ouvertureBrelan': 'To open an empty table you need a <b>run</b> — a set is not enough.',
     'toast.piocheVide': 'The stock is empty — you pass',
     'toast.abandon': 'Abandon the game in progress?',
+    'toast.refaire': 'Undo your whole previous turn, and with it the computer players’ replies?',
 
     'err.posezCarte': 'Lay at least one card, or draw.',
     'err.cartesTable': 'Cards on the table cannot go back into your hand.',
@@ -381,7 +383,7 @@
     'reg.fusion': 'Two runs of the same suit that follow on are <b>joined automatically</b>. To split them again, drop a card in the middle of the column: the run is <b>cut at that point</b>.',
     'reg.indices': '<b>💡 Hints</b> highlights the cards of the turn’s <b>best move</b> without telling you where to lay them: a middle ground between working it out alone and letting the machine play. Those cards all go down together, and the highlighting updates as you place them.',
     'reg.annuler': '<b>Undo</b> takes back your moves one at a time, in reverse order.',
-    'reg.refaire': '<b>Rewind</b> returns the game to the <b>start of your previous turn</b>: your move is undone, and with it the computer players’ replies.',
+    'reg.refaire': '<b>Rewind</b> returns the game to the <b>start of your previous turn</b>: your move is undone, and with it the computer players’ replies. It takes the place of <b>Undo</b> once there is nothing left to take back, and asks for confirmation before wiping the turn.',
     'reg.raccourcis': 'Shortcuts — Enter: next player · ⌫: undo · P: draw · hold M: wizard · T: change sorting · I: hints · R: rewind'
   };
 
@@ -479,6 +481,7 @@
     'toast.ouvertureBrelan': 'Um einen leeren Tisch zu eröffnen, braucht es eine <b>Folge</b> — ein Satz genügt nicht.',
     'toast.piocheVide': 'Der Stapel ist leer — Sie setzen aus',
     'toast.abandon': 'Laufendes Spiel aufgeben?',
+    'toast.refaire': 'Ihren gesamten vorigen Zug zurücknehmen, und damit die Antworten der Computergegner?',
 
     'err.posezCarte': 'Legen Sie mindestens eine Karte, oder ziehen Sie.',
     'err.cartesTable': 'Karten vom Tisch dürfen nicht auf Ihre Hand zurück.',
@@ -557,7 +560,7 @@
     'reg.fusion': 'Zwei Folgen derselben Farbe, die aneinander anschließen, werden <b>automatisch vereinigt</b>. Um sie wieder zu trennen, legen Sie eine Karte mitten in die Spalte: die Folge wird <b>an dieser Stelle geschnitten</b>.',
     'reg.indices': '<b>💡 Hinweise</b> hebt die Karten des <b>besten Zuges</b> hervor, ohne zu verraten, wohin sie gehören: ein Mittelweg zwischen selbst suchen und die Maschine spielen lassen. Diese Karten gehören zusammen; während Sie legen, wird die Anzeige fortgeschrieben.',
     'reg.annuler': '<b>Zurück</b> nimmt Ihre Züge einzeln zurück, in umgekehrter Reihenfolge.',
-    'reg.refaire': '<b>Zug zurück</b> bringt das Spiel an den <b>Beginn Ihres vorigen Zuges</b>: Ihr Zug wird rückgängig gemacht, und mit ihm die Antworten der Computergegner.',
+    'reg.refaire': '<b>Zug zurück</b> bringt das Spiel an den <b>Beginn Ihres vorigen Zuges</b>: Ihr Zug wird rückgängig gemacht, und mit ihm die Antworten der Computergegner. Er tritt an die Stelle von <b>Zurücknehmen</b>, sobald nichts mehr zurückzunehmen ist, und fragt nach, bevor er den Zug löscht.',
     'reg.raccourcis': 'Tasten — Eingabe: weiter · ⌫: zurück · P: ziehen · M: Magie · T: Sortierung wechseln · I: Hinweise · R: Zug zurück'
   };
 
@@ -655,6 +658,7 @@
     'toast.ouvertureBrelan': 'Per aprire un tavolo vuoto serve una <b>scala</b> — un tris non basta.',
     'toast.piocheVide': 'Il tallone è vuoto — passa',
     'toast.abandon': 'Abbandonare la partita in corso?',
+    'toast.refaire': 'Disfare tutto il suo turno precedente, e con esso le risposte dei giocatori virtuali?',
 
     'err.posezCarte': 'Cali almeno una carta, oppure peschi.',
     'err.cartesTable': 'Le carte del tavolo non possono tornare in mano.',
@@ -733,7 +737,7 @@
     'reg.fusion': 'Due scale dello stesso seme che si susseguono vengono <b>unite automaticamente</b>. Per separarle di nuovo, lasci cadere una carta in mezzo alla colonna: la scala viene <b>tagliata in quel punto</b>.',
     'reg.indices': '<b>💡 Suggerimenti</b> mette in evidenza le carte della <b>mossa migliore</b> del turno, senza dire dove calarle: una via di mezzo fra cercare da soli e lasciar giocare la macchina. Quelle carte si calano tutte insieme, e l’indicazione si aggiorna man mano.',
     'reg.annuler': '<b>Annulla</b> disfa i suoi movimenti uno alla volta, in ordine inverso.',
-    'reg.refaire': '<b>Rigioca</b> riporta la partita all’<b>inizio del suo turno precedente</b>: la sua mossa è annullata, e con essa le risposte dei giocatori virtuali.',
+    'reg.refaire': '<b>Rigioca</b> riporta la partita all’<b>inizio del suo turno precedente</b>: la sua mossa è annullata, e con essa le risposte dei giocatori virtuali. Prende il posto di <b>Annulla</b> quando non resta più nulla da riprendere, e chiede conferma prima di cancellare il turno.',
     'reg.raccourcis': 'Scorciatoie — Invio: al prossimo · ⌫: annulla · P: pesca · M: magia · T: cambia ordine · I: suggerimenti · R: rigioca'
   };
 
@@ -831,6 +835,7 @@
     'toast.ouvertureBrelan': 'Om een lege tafel te openen is een <b>reeks</b> nodig — een groep volstaat niet.',
     'toast.piocheVide': 'De stapel is leeg — u slaat over',
     'toast.abandon': 'Het lopende spel opgeven?',
+    'toast.refaire': 'Uw hele vorige beurt ongedaan maken, en daarmee de zetten van de computerspelers?',
 
     'err.posezCarte': 'Leg ten minste één kaart, of trek er een.',
     'err.cartesTable': 'Kaarten van de tafel mogen niet terug in uw hand.',
@@ -909,7 +914,7 @@
     'reg.fusion': 'Twee reeksen van dezelfde kleur die op elkaar aansluiten worden <b>automatisch samengevoegd</b>. Om ze weer te splitsen laat u een kaart midden in de kolom vallen: de reeks wordt <b>daar doorgeknipt</b>.',
     'reg.indices': '<b>💡 Tips</b> licht de kaarten van de <b>beste zet</b> van de beurt uit, zonder te verklappen waar ze heen moeten: een middenweg tussen zelf zoeken en de machine laten spelen. Die kaarten horen bij elkaar, en terwijl u legt wordt de aanwijzing bijgewerkt.',
     'reg.annuler': '<b>Ongedaan</b> neemt uw zetten één voor één terug, in omgekeerde volgorde.',
-    'reg.refaire': '<b>Terug</b> brengt het spel naar het <b>begin van uw vorige beurt</b>: uw zet wordt ongedaan gemaakt, en daarmee de antwoorden van de computerspelers.',
+    'reg.refaire': '<b>Terug</b> brengt het spel naar het <b>begin van uw vorige beurt</b>: uw zet wordt ongedaan gemaakt, en daarmee de antwoorden van de computerspelers. Hij neemt de plaats in van <b>Ongedaan maken</b> zodra er niets meer terug te nemen is, en vraagt om bevestiging voordat hij de beurt wist.',
     'reg.raccourcis': 'Sneltoetsen — Enter: volgende · ⌫: ongedaan · P: trekken · M: magie · T: ordening wisselen · I: tips · R: terug'
   };
 
@@ -1007,6 +1012,7 @@
     'toast.ouvertureBrelan': 'Para abrir una mesa vacía hace falta una <b>escalera</b> — un trío no basta.',
     'toast.piocheVide': 'El mazo está vacío — pasa',
     'toast.abandon': '¿Abandonar la partida en curso?',
+    'toast.refaire': '¿Deshacer todo su turno anterior, y con él las respuestas de los jugadores virtuales?',
 
     'err.posezCarte': 'Baje al menos una carta, o robe.',
     'err.cartesTable': 'Las cartas de la mesa no pueden volver a su mano.',
@@ -1085,7 +1091,7 @@
     'reg.fusion': 'Dos escaleras del mismo palo que se suceden se <b>unen automáticamente</b>. Para separarlas de nuevo, suelte una carta en medio de la columna: la escalera queda <b>cortada en ese punto</b>.',
     'reg.indices': '<b>💡 Pistas</b> resalta las cartas de la <b>mejor jugada</b> del turno, sin decirle dónde bajarlas: una ayuda intermedia entre buscar solo y dejar jugar a la máquina. Esas cartas se bajan todas juntas, y la indicación se actualiza a medida que las coloca.',
     'reg.annuler': '<b>Deshacer</b> retira sus movimientos uno a uno, en orden inverso.',
-    'reg.refaire': '<b>Rehacer</b> devuelve la partida al <b>principio de su turno anterior</b>: su jugada queda deshecha, y con ella las respuestas de los jugadores virtuales.',
+    'reg.refaire': '<b>Rehacer</b> devuelve la partida al <b>principio de su turno anterior</b>: su jugada queda deshecha, y con ella las respuestas de los jugadores virtuales. Ocupa el lugar de <b>Deshacer</b> cuando ya no queda nada que retirar, y pide confirmación antes de borrar el turno.',
     'reg.raccourcis': 'Atajos — Intro: al siguiente · ⌫: deshacer · P: robar · M: magia · T: cambiar el orden · I: pistas · R: rehacer'
   };
 

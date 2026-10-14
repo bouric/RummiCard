@@ -1525,8 +1525,16 @@
        bascule quand on pose ou reprend une carte, main sur le tapis. */
     $('#commit').classList.toggle('hidden', !staged);
     $('#draw').classList.toggle('hidden', !!staged);
+    /* Meme principe pour defaire : « Annuler » tant qu'il reste un geste du
+       tour a reprendre, « Refaire » ensuite. Les deux reculent, mais pas de
+       la meme longueur — l'un d'un geste, l'autre de tout un tour — et les
+       montrer cote a cote revenait a demander lequel avant de savoir qu'il y
+       avait un choix. */
+    var peutAnnuler = human && turnStack.length > 0;
+    $('#undo').classList.toggle('hidden', !peutAnnuler);
+    $('#rewind').classList.toggle('hidden', peutAnnuler);
     $('#commit').disabled = !human || !check.ok;
-    $('#undo').disabled = !human || !turnStack.length;
+    $('#undo').disabled = !peutAnnuler;
     $('#draw').disabled = !human;
     $('#auto').disabled = !human;
     $('#sort').disabled = !human;
@@ -2296,6 +2304,11 @@
      votre tour précédent, donc avant leurs réponses. */
   function doRewind() {
     if (!canRewind()) return;
+    /* « Annuler » reprend un geste et se voit : on n'explique pas l'evident.
+       « Refaire » efface un tour entier, le sien et les reponses des
+       virtuels, et rien a l'ecran ne le laisse deviner avant que ce soit
+       fait. Le rejeu d'un journal, lui, ne doit rien demander a personne. */
+    if (!rejeuEnCours && !window.confirm(TR('toast.refaire'))) return;
     jrn('refaire');
     eteindreMagicien(true);
     history.pop();
