@@ -23,9 +23,11 @@
   worker-src 'self';
   base-uri 'none';
   form-action 'none'">
-<!-- Le zoom à deux doigts reste permis : l'interdire ne protégeait de rien
-     que « touch-action: manipulation » n'empêche déjà (le zoom au double-tap),
-     et privait de tout recours qui a besoin d'agrandir. -->
+<!-- Le zoom à deux doigts reste permis : « user-scalable=no » est de toute
+     façon ignoré par Safari depuis iOS 10, et il priverait de tout recours qui
+     a besoin d'agrandir. Le double-tap, lui, est écarté par
+     « touch-action: manipulation » — posé sur chaque élément dans la feuille
+     de style, car cette propriété ne s'hérite pas. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RummiCard</title>
 <meta name="description" content="Un rami de combinaisons joué avec 2 jeux de 52 cartes.">

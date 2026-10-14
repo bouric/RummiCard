@@ -26,13 +26,21 @@
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;          /* pas de menu au doigt long */
   -webkit-tap-highlight-color: transparent;
+  /* Pas de zoom au double-tap. La règle était posée sur « html, body », mais
+     « touch-action » ne s'hérite pas : mesuré, tout ce qui était dedans
+     restait à « auto », et le double-tap zoomait donc partout sauf sur les
+     cartes. Il la faut sur chaque élément.
+     « manipulation » laisse le défilement et le zoom à deux doigts : seul le
+     double-tap tombe. Les règles plus précises gardent le dessus —
+     « .card » et « .btn.magic » restent à « none », le glissement et le
+     magicien s'y réservant le geste entier. */
+  touch-action: manipulation;
 }
 
 html, body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;            /* pas de rebond élastique */
-  touch-action: manipulation;           /* pas de zoom au double-tap */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   color: var(--ink);
   background:
