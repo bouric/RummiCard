@@ -26,15 +26,15 @@
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;          /* pas de menu au doigt long */
   -webkit-tap-highlight-color: transparent;
-  /* Pas de zoom au double-tap. La règle était posée sur « html, body », mais
-     « touch-action » ne s'hérite pas : mesuré, tout ce qui était dedans
-     restait à « auto », et le double-tap zoomait donc partout sauf sur les
-     cartes. Il la faut sur chaque élément.
-     « manipulation » laisse le défilement et le zoom à deux doigts : seul le
-     double-tap tombe. Les règles plus précises gardent le dessus —
-     « .card » et « .btn.magic » restent à « none », le glissement et le
-     magicien s'y réservant le geste entier. */
-  touch-action: manipulation;
+  /* Aucun zoom : ni au double-tap, ni à deux doigts. « manipulation » ne
+     coupait que le premier et le second restait, ce qui n'allait pas pour un
+     jeu de cartes où l'on pose le doigt partout. « none » coupe les deux.
+     Sur chaque élément, car « touch-action » ne s'hérite pas : posée sur
+     « html, body » seulement, la règle laissait tout l'intérieur à « auto » —
+     mesuré. Rien n'y perd ici : aucun ancêtre d'une carte n'est défilable et
+     la page ne défile pas. Seuls les panneaux, eux, ont besoin de défiler :
+     ils reprennent « pan-y » plus bas. */
+  touch-action: none;
 }
 
 html, body {
@@ -312,15 +312,6 @@ header .brand span { color: var(--gold); }
 
 /* ---------- Carte -------------------------------------------------- */
 .card {
-  /* « manipulation » et non « none », alors que « none » est plus restrictif :
-     Safari laisse passer le double-tap sur « none » et l'écarte sur
-     « manipulation » — tout le reste de l'écran a cessé de zoomer le jour où
-     il est passé à cette valeur, les cartes seules continuaient.
-     Ce qu'on perd en théorie — l'interdiction du défilement pendant qu'on
-     glisse une carte — ne coûte rien ici : mesuré, aucun ancêtre d'une carte
-     n'est défilable, « body » est en « overflow: hidden » et la page ne
-     défile pas. Il n'y a rien à faire défiler. */
-  touch-action: manipulation;
   position: relative; width: var(--cw); height: var(--ch); flex: 0 0 auto;
   border-radius: var(--radius); background: linear-gradient(170deg, #fffdf7 0%, #f2ece0 100%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 2px 5px rgba(0, 0, 0, .34);
@@ -446,9 +437,6 @@ header .brand span { color: var(--gold); }
    allumé, il prend exactement le violet des cartes qu'il désigne. Le bouton
    et la lumière sur la table sont alors la même chose, et l'on voit d'un coup
    d'œil si la solution est affichée. */
-/* Tenu du doigt, le bouton ne doit ni faire defiler ni ouvrir de menu : le
-   geste lui appartient du debut a la fin. */
-.btn.magic { touch-action: none; }
 .btn.magic.on {
   background: linear-gradient(180deg, #7a68f0, #5546c6);
   border-color: #9586ff; color: #fff;
@@ -555,6 +543,10 @@ header .brand span { color: var(--gold); }
   background: rgba(6, 10, 18, .72); backdrop-filter: blur(7px); padding: 24px;
 }
 .panel {
+  /* Le seul endroit qui défile vraiment : on lui rend le glissement vertical
+     que « touch-action: none » retire partout ailleurs, sans lui rendre le
+     zoom. Les règles, longues, sont illisibles autrement au doigt. */
+  touch-action: pan-y;
   width: min(560px, 100%); max-height: 100%; overflow-y: auto; border-radius: 18px; padding: 26px 28px;
   background: linear-gradient(180deg, #19233a, #121a2c); border: 1px solid var(--stroke);
   box-shadow: 0 26px 70px rgba(0, 0, 0, .6);
