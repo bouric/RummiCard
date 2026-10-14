@@ -312,9 +312,15 @@ header .brand span { color: var(--gold); }
 
 /* ---------- Carte -------------------------------------------------- */
 .card {
-  /* Au doigt, le glissement d'une carte ne doit jamais faire défiler la
-     page : le navigateur laisse l'événement au jeu. */
-  touch-action: none;
+  /* « manipulation » et non « none », alors que « none » est plus restrictif :
+     Safari laisse passer le double-tap sur « none » et l'écarte sur
+     « manipulation » — tout le reste de l'écran a cessé de zoomer le jour où
+     il est passé à cette valeur, les cartes seules continuaient.
+     Ce qu'on perd en théorie — l'interdiction du défilement pendant qu'on
+     glisse une carte — ne coûte rien ici : mesuré, aucun ancêtre d'une carte
+     n'est défilable, « body » est en « overflow: hidden » et la page ne
+     défile pas. Il n'y a rien à faire défiler. */
+  touch-action: manipulation;
   position: relative; width: var(--cw); height: var(--ch); flex: 0 0 auto;
   border-radius: var(--radius); background: linear-gradient(170deg, #fffdf7 0%, #f2ece0 100%);
   box-shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 2px 5px rgba(0, 0, 0, .34);
