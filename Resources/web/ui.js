@@ -1905,17 +1905,26 @@
      Un appui seul et un glissement ne passent jamais par la. */
   var DOUBLE_MS = 350, DOUBLE_PX = 24;
   var dernierTap = { t: 0, x: 0, y: 0 };
+  var tapAvale = false;
 
-  function tapRapproche(x, y) {
-    return Date.now() - dernierTap.t < DOUBLE_MS &&
-           Math.abs(x - dernierTap.x) < DOUBLE_PX &&
-           Math.abs(y - dernierTap.y) < DOUBLE_PX;
-  }
-
+  /* Le second appui se reconnait au « touchstart », et c'est la aussi qu'on
+     horodate : la version precedente ne notait l'appui qu'au moment de poser
+     une carte de la main, et restait donc aveugle a tout double-tap sur une
+     carte deja sur le tapis — ou sur une carte qui ne se posait pas. */
   document.addEventListener('touchstart', function (e) {
     if (!e.target.closest || !e.target.closest('.card')) return;
     var p = e.touches && e.touches[0];
-    if (p && tapRapproche(p.clientX, p.clientY)) e.preventDefault();
+    if (!p) return;
+    var dt = Date.now() - dernierTap.t;
+    var dx = Math.abs(p.clientX - dernierTap.x), dy = Math.abs(p.clientY - dernierTap.y);
+    tapAvale = dt < DOUBLE_MS && dx < DOUBLE_PX && dy < DOUBLE_PX;
+    if (tapAvale) e.preventDefault();
+    dernierTap = { t: Date.now(), x: p.clientX, y: p.clientY };
+    /* De quoi trancher depuis un vrai telephone si le zoom resiste : le
+       journal dira si le garde-fou a seulement eu l'occasion de se declencher.
+       Muet hors mise au point. */
+    jrn('tap', { avale: tapAvale, dt: dt > 9999 ? -1 : dt, dx: dx, dy: dy,
+                 ou: e.target.closest('#rack') ? 'main' : 'tapis' });
   }, { passive: false });
 
   document.addEventListener('pointerdown', function (e) {
@@ -2197,13 +2206,15 @@
     // Simple clic sans deplacement : placement automatique.
     if (!drag.moved && drag.origin.type === 'hand') {
       /* Sauf s'il s'agit du second appui d'un double-tap : laisser la cible
-         vide fait de ce geste un coup pour rien, ce qu'il est. */
-      if (!tapRapproche(e.clientX, e.clientY)) {
+         vide fait de ce geste un coup pour rien, ce qu'il est. Le drapeau est
+         pose par le « touchstart », qui a deja vu passer cet appui-la ; a la
+         souris il reste baisse, et rien ne change. */
+      if (!tapAvale) {
         var b = drag.rects.__board;
         setTarget(b.left + b.width / 2, b.top + b.height * .45, true, true);
       }
-      dernierTap = { t: Date.now(), x: e.clientX, y: e.clientY };
     }
+    tapAvale = false;
     var d = drag, t = d.target || { kind: 'none' };
     drag = null;
     if (d.ghost) d.ghost.remove();
