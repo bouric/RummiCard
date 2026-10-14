@@ -26,15 +26,18 @@
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;          /* pas de menu au doigt long */
   -webkit-tap-highlight-color: transparent;
-  /* Aucun zoom : ni au double-tap, ni à deux doigts. « manipulation » ne
-     coupait que le premier et le second restait, ce qui n'allait pas pour un
-     jeu de cartes où l'on pose le doigt partout. « none » coupe les deux.
+  /* « manipulation » et non « none », et c'est un choix mesuré sur l'iPhone,
+     le 14 octobre 2026 : « none » a bien supprimé le zoom à deux doigts, mais
+     le double-tap sur une carte zoomait toujours — on se retrouvait agrandi
+     sans aucun moyen de revenir. Le pincement est le seul recours qui
+     fonctionne, il doit donc rester.
      Sur chaque élément, car « touch-action » ne s'hérite pas : posée sur
-     « html, body » seulement, la règle laissait tout l'intérieur à « auto » —
-     mesuré. Rien n'y perd ici : aucun ancêtre d'une carte n'est défilable et
-     la page ne défile pas. Seuls les panneaux, eux, ont besoin de défiler :
-     ils reprennent « pan-y » plus bas. */
-  touch-action: none;
+     « html, body » seulement, la règle laissait tout l'intérieur à « auto ».
+     Safari ignore cette propriété pour le double-tap sur une carte — essayé
+     en « none » comme en « manipulation », avec et sans garde-fou en
+     JavaScript, et avec « maximum-scale », qui l'aggravait. La page ne peut
+     pas l'empêcher. */
+  touch-action: manipulation;
 }
 
 html, body {
@@ -543,10 +546,6 @@ header .brand span { color: var(--gold); }
   background: rgba(6, 10, 18, .72); backdrop-filter: blur(7px); padding: 24px;
 }
 .panel {
-  /* Le seul endroit qui défile vraiment : on lui rend le glissement vertical
-     que « touch-action: none » retire partout ailleurs, sans lui rendre le
-     zoom. Les règles, longues, sont illisibles autrement au doigt. */
-  touch-action: pan-y;
   width: min(560px, 100%); max-height: 100%; overflow-y: auto; border-radius: 18px; padding: 26px 28px;
   background: linear-gradient(180deg, #19233a, #121a2c); border: 1px solid var(--stroke);
   box-shadow: 0 26px 70px rgba(0, 0, 0, .6);
