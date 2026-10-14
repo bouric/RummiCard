@@ -2222,6 +2222,15 @@
     applyDrop(d, t);
   }
 
+  /* Table et main reunies en une empreinte : de quoi reconnaitre un geste qui
+     n'a rien change. */
+  function empreinteJeu() {
+    return game.board.map(function (s) {
+      return s.cards.map(function (c) { return c.id; }).join(',');
+    }).join('|') + ' // ' +
+      game.human().hand.map(function (c) { return c.id; }).join(',');
+  }
+
   function applyDrop(d, t) {
     var card = d.card;
 
@@ -2249,6 +2258,13 @@
                cartes: cibleSet ? cibleSet.cards.map(function (c) { return c.id; }).join(',') : undefined },
       sets: t.kind === 'rearrange' ? (t.sets || (d.cache && d.cache.re) || []).map(function (cs) {
         return cs.map(function (c) { return c.id; }); }) : undefined });
+    /* Un geste qui ne change rien n'est pas un coup. Reposer une carte la ou
+       elle etait empilait un etat identique au precedent, et « Annuler »
+       defaisait ensuite dans le vide : vu quatre fois de suite dans un
+       journal, sur des micro-glissements d'une carte du tapis sur sa propre
+       combinaison — le doigt bouge de trois pixels, c'est un glissement pour
+       le jeu, et un sur-place pour la table. */
+    var avantLeGeste = empreinteJeu();
     pushTurnState();
     // retire la carte de son origine
     if (d.origin.type === 'hand') {
@@ -2292,6 +2308,7 @@
       sndSnap();
     }
     game.compact();
+    if (empreinteJeu() === avantLeGeste) turnStack.pop();
     render({ land: card.id });
     updateBar();
     if (ouvertureAttendue() && game.boardCards().length >= 3) {
