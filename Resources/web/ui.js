@@ -1894,6 +1894,19 @@
     return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
   }
 
+  /* Safari zoome encore au double-tap sur les cartes, alors que tout le reste
+     de l'ecran a cesse depuis que « touch-action: manipulation » est pose sur
+     chaque element. Les cartes, elles, portent « none » — plus restrictif sur
+     le papier, et pourtant le double-tap y passe.
+     On coupe donc le geste a sa source : l'action par defaut d'un « touchend »
+     est ce qui porte le double-tap. Les cartes n'ont pas besoin du clic
+     synthetise qu'elle produit — leur pose se joue sur « pointerup » — alors
+     que les boutons en vivent. D'ou le filtre : les cartes seules, et rien
+     d'autre. */
+  document.addEventListener('touchend', function (e) {
+    if (e.target.closest && e.target.closest('.card')) e.preventDefault();
+  }, { passive: false });
+
   document.addEventListener('pointerdown', function (e) {
     if (!game || !isHumanTurn()) return;
     var el = e.target.closest ? e.target.closest('.card[data-id]') : null;
