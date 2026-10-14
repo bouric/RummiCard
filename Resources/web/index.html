@@ -23,17 +23,16 @@
   worker-src 'self';
   base-uri 'none';
   form-action 'none'">
-<!-- « maximum-scale=1 » est le dernier levier contre le zoom au double-tap,
-     et il se paie : s'il est honoré, le zoom à deux doigts tombe avec lui —
-     on prive donc d'agrandir qui en aurait besoin. Essayé à contrecœur, après
-     que tout le reste a échoué sur l'iPhone : « touch-action » sur chaque
-     élément, en « none » comme en « manipulation », puis trois garde-fous en
-     JavaScript. Le journal de mise au point a fini par dire pourquoi — pas une
-     seule ligne « tap » : les événements tactiles n'arrivent jamais jusqu'à la
-     page, et aucun code ne pouvait donc écarter le geste.
-     « user-scalable=no » n'est pas ajouté : Safari l'ignore depuis iOS 10 et
-     il n'apporterait rien de plus. -->
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<!-- Pas de « maximum-scale », et c'est un résultat mesuré, pas une opinion :
+     essayé sur l'iPhone le 14 octobre 2026, il a fait *revenir* le zoom au
+     double-tap qui venait de cesser. Il coûtait en plus le zoom à deux doigts.
+     Ne pas le remettre.
+     « user-scalable=no » non plus : Safari l'ignore depuis iOS 10.
+     Ce qui a fini par écarter le double-tap, c'est « touch-action:
+     manipulation » posé sur chaque élément dans la feuille de style — cette
+     propriété ne s'hérite pas — et le fait qu'un geste sans effet ne compte
+     plus pour un coup. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RummiCard</title>
 <meta name="description" content="Un rami de combinaisons joué avec 2 jeux de 52 cartes.">
 <meta name="robots" content="noindex, nofollow">
