@@ -1894,6 +1894,30 @@
     return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
   }
 
+  /* Un double-tap sur une carte ne doit rien faire. Il zoomait l'ecran, et
+     pire : ses deux appuis comptaient chacun pour une pose, puisqu'un appui
+     sans deplacement place la carte au mieux. On se retrouvait a annuler dans
+     le vide des coups qu'on n'avait pas voulus.
+     Le second appui rapproche est donc avale — meme endroit, moins de 350 ms,
+     ce qui le distingue de deux poses deliberees sur deux cartes differentes —
+     et son « touchstart » refuse son action par defaut : c'est la que Safari
+     decide du zoom, bien avant le « touchend » qu'on avait essaye en vain.
+     Un appui seul et un glissement ne passent jamais par la. */
+  var DOUBLE_MS = 350, DOUBLE_PX = 24;
+  var dernierTap = { t: 0, x: 0, y: 0 };
+
+  function tapRapproche(x, y) {
+    return Date.now() - dernierTap.t < DOUBLE_MS &&
+           Math.abs(x - dernierTap.x) < DOUBLE_PX &&
+           Math.abs(y - dernierTap.y) < DOUBLE_PX;
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    if (!e.target.closest || !e.target.closest('.card')) return;
+    var p = e.touches && e.touches[0];
+    if (p && tapRapproche(p.clientX, p.clientY)) e.preventDefault();
+  }, { passive: false });
+
   document.addEventListener('pointerdown', function (e) {
     if (!game || !isHumanTurn()) return;
     var el = e.target.closest ? e.target.closest('.card[data-id]') : null;
@@ -2172,8 +2196,13 @@
 
     // Simple clic sans deplacement : placement automatique.
     if (!drag.moved && drag.origin.type === 'hand') {
-      var b = drag.rects.__board;
-      setTarget(b.left + b.width / 2, b.top + b.height * .45, true, true);
+      /* Sauf s'il s'agit du second appui d'un double-tap : laisser la cible
+         vide fait de ce geste un coup pour rien, ce qu'il est. */
+      if (!tapRapproche(e.clientX, e.clientY)) {
+        var b = drag.rects.__board;
+        setTarget(b.left + b.width / 2, b.top + b.height * .45, true, true);
+      }
+      dernierTap = { t: Date.now(), x: e.clientX, y: e.clientY };
     }
     var d = drag, t = d.target || { kind: 'none' };
     drag = null;
