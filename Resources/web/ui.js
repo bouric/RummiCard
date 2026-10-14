@@ -3456,15 +3456,33 @@
        a ui.js passait inapercue : sur l'iPad on croyait tourner sur du neuf
        en lisant une date d'hier. On retient donc la plus recente des dates de
        publication des fichiers du jeu. */
+    /* La date dit ce que le SERVEUR a publie : elle vient de requetes HEAD, que
+       le service worker ne traite pas. Elle pouvait donc annoncer du neuf
+       pendant que l'appareil executait encore l'ancien code — on a passe une
+       soiree a corriger un zoom en eprouvant la mauvaise version.
+       Le numero qui suit, lui, dit ce que CET appareil a reellement installe :
+       c'est le nom du cache du service worker, celui qu'on incremente a chaque
+       publication. Les deux ensemble se lisent d'un coup d'oeil : meme numero
+       que celui annonce, on regarde la bonne version ; numero en retard, le
+       telephone n'a pas encore pris la mise a jour et il faut recharger. */
+    var installe = '';
     function ecrire(d) {
-      ecrireVersion(isNaN(d.getTime())
+      ecrireVersion((isNaN(d.getTime())
         ? TR('accueil.versionDev')
         : TR('accueil.versionDu', { d: ('0' + d.getDate()).slice(-2) + '/' +
             ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear() + ' ' +
-            ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) }));
+            ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) })) +
+        installe);
     }
     var plusRecente = new Date(document.lastModified);
     ecrire(plusRecente);
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (noms) {
+        var v = noms.filter(function (n) { return n.indexOf('rummicard-') === 0; })
+                    .map(function (n) { return n.slice('rummicard-'.length); });
+        if (v.length) { installe = '\u00a0\u00b7\u00a0v' + v.join('+'); ecrire(plusRecente); }
+      }).catch(function () { /* pas de cache : rien a dire */ });
+    }
     if (!window.fetch) return;
     var fichiers = ['index.html', 'i18n.js', 'solver.js', 'engine.js', 'ai.js', 'ui.js', 'style.css'];
     Promise.all(fichiers.map(function (f) {
