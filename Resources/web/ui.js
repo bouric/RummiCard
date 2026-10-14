@@ -1730,10 +1730,34 @@
   /* ================= Sons ========================================= */
 
   var actx = null;
-  function tone(freq, dur, type, vol, delay) {
+
+  /* Un contexte audio se suspend tout seul — une boite de dialogue qui prend la
+     main, un onglet mis de cote, une interruption du systeme — et il ne repart
+     pas sans qu'on le lui demande. Endormi, son horloge se fige : les notes se
+     programment sans lever la moindre erreur et ne s'entendent jamais, le
+     try/catch n'y voit rien, et le son est perdu pour de bon.
+     Seul le « hmm » des virtuels le relancait ; tous les autres sons passent
+     par tone() et ne le faisaient pas. Et il testait « suspended » seul, alors
+     que WebKit emploie aussi « interrupted ».
+     On attend le reveil pour programmer : pendant le sommeil, currentTime ne
+     bouge plus et la note tomberait dans le passe. */
+  function auReveil(jouer) {
     if (!soundOn) return;
     try {
       if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === 'running') { jouer(actx); return; }
+      var p = actx.resume && actx.resume();
+      if (p && p.then) {
+        p.then(function () { try { jouer(actx); } catch (e) { /* audio indisponible */ } },
+               function () { /* audio indisponible */ });
+      } else {
+        jouer(actx);
+      }
+    } catch (e) { /* audio indisponible */ }
+  }
+
+  function tone(freq, dur, type, vol, delay) {
+    auReveil(function (actx) {
       var t0 = actx.currentTime + (delay || 0);
       var o = actx.createOscillator(), g = actx.createGain();
       o.type = type || 'triangle';
@@ -1743,7 +1767,7 @@
       g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
       o.connect(g); g.connect(actx.destination);
       o.start(t0); o.stop(t0 + dur + .02);
-    } catch (e) { /* audio indisponible */ }
+    });
   }
   function sndSnap() { tone(760, .07, 'triangle', .05); tone(1180, .05, 'triangle', .035, .02); }
   function sndLift() { tone(420, .05, 'sine', .035); }
@@ -1752,10 +1776,7 @@
      joueurs. Fondamentale grave, léger vibrato, la hauteur monte puis retombe
      comme une hésitation, et un passe-bas étouffe les aigus. */
   function sndHmm(resigned) {
-    if (!soundOn) return;
-    try {
-      if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-      if (actx.state === 'suspended') actx.resume();
+    auReveil(function (actx) {
       var t0 = actx.currentTime;
       var base = 110;
       var dur = resigned ? 0.55 : 0.46;
@@ -1809,7 +1830,7 @@
 
       osc.start(t0); harm.start(t0); lfo.start(t0);
       osc.stop(t0 + dur + 0.05); harm.stop(t0 + dur + 0.05); lfo.stop(t0 + dur + 0.05);
-    } catch (e) { /* audio indisponible */ }
+    });
   }
 
   function sndWin() { [523, 659, 784, 1046].forEach(function (f, i) { tone(f, .22, 'triangle', .07, i * .11); }); }
