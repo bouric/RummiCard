@@ -1,7 +1,7 @@
 /* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
    ui.js — Interface : rendu, glisser-deposer avec placement automatique,
-   animations FLIP, tours des joueurs virtuels.
+   animations FLIP, tours des adversaires virtuels.
    ===================================================================== */
 (function () {
   'use strict';
@@ -167,7 +167,7 @@
     if (journal.actes.length > 600) journal.actes.shift();
   }
   var history = [];          // état au début de chacun de vos tours
-  var aiJustPlayed = {};     // cartes ajoutées par les joueurs virtuels depuis votre tour
+  var aiJustPlayed = {};     // cartes ajoutées par les adversaires virtuels depuis votre tour
   var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
   var turnStack = [];        // états successifs pendant le tour en cours
   var piochee = null;        // la dernière carte piochée, signalée en bleu dans la main
@@ -198,7 +198,7 @@
     if (prefs.lastDeal) newGame(prefs.lastDeal);
   }
 
-  /* Un nombre de joueurs virtuels, dit comme le titre de la rubrique. */
+  /* Un nombre d'adversaires virtuels, dit comme le titre de la rubrique. */
   function virtuels(n) {
     return TR(n > 1 ? 'accueil.virtuels' : 'accueil.virtuel');
   }
@@ -316,11 +316,11 @@
   }
 
   /* Projecteur : deux secondes durant, la table ou la main s'eteint sauf ce
-     qui vient d'arriver — les cartes qu'un joueur virtuel vient de poser, ou
+     qui vient d'arriver — les cartes qu'un adversaire virtuel vient de poser, ou
      celle qu'on vient de piocher. */
   var projecteur = null, projecteurTimer = null;
   /* Sans duree, le projecteur reste allume jusqu'a ce qu'on l'eteigne : c'est
-     le cas du tour des joueurs virtuels, ou trois poses de suite feraient
+     le cas du tour des adversaires virtuels, ou trois poses de suite feraient
      clignoter la table si chacune rallumait la sienne. Il s'allume a la
      premiere carte posee et ne s'eteint qu'une seconde apres votre retour. */
   function allumerProjecteur(zone, duree) {
@@ -891,7 +891,7 @@
     var groupsH = rows * rowH;
 
     // Les deux zones « nouvelle combinaison » sont toujours posees, meme
-    // pendant le tour des joueurs virtuels : les faire disparaitre changeait
+    // pendant le tour des adversaires virtuels : les faire disparaitre changeait
     // la largeur des zones, et toute la table sautait d'un tour a l'autre.
     // Hors de votre tour elles sont seulement estompees.
     // Memes dimensions des deux cotes : elles se font face.
@@ -1347,7 +1347,7 @@
     $('#racklabel').textContent = TR('zone.votreMain', { n: nmain, cartes: NC(nmain) });
   }
 
-  /* Les noms des joueurs virtuels sont choisis par le jeu — sauf quand une
+  /* Les noms des adversaires virtuels sont choisis par le jeu — sauf quand une
      partie est rejouee depuis un journal, qui peut venir de n'importe ou. Un
      nom est du texte, jamais du balisage : on l'echappe partout ou il entre
      dans la page. */
@@ -2392,7 +2392,7 @@
     return history.length >= 2 && game && !game.finished && game.player().human && !busy;
   }
 
-  /* Annule le dernier coup des joueurs virtuels : on revient au début de
+  /* Annule le dernier coup des adversaires virtuels : on revient au début de
      votre tour précédent, donc avant leurs réponses. */
   function doRewind() {
     if (!canRewind()) return;
@@ -2462,7 +2462,7 @@
       piochee = card.id;
       allumerProjecteur('main', 2000);
       /* On ne la dit pas tout de suite : le bouton reste eteint tant que les
-         joueurs virtuels n'ont pas repondu. Elle attend votre retour, moment
+         adversaires virtuels n'ont pas repondu. Elle attend votre retour, moment
          ou elle devient vraie et ou l'on peut y donner suite. */
       if (astuceRefaire === 0) astuceRefaire = 1;
     }
@@ -2706,7 +2706,7 @@
     render();
   }
 
-  /* ================= Tours des joueurs virtuels =================== */
+  /* ================= Tours des adversaires virtuels =================== */
 
   async function aiPhase() {
     busy = true;
@@ -3267,7 +3267,7 @@
     var boutons = { suivant: doCommit, pioche: doDraw, annule: doUndo,
                     tri: doSort, refaire: doRewind };
     if (boutons[a.a]) { boutons[a.a](); return attendreHumain().then(function () { return null; }); }
-    return Promise.resolve(null);      // 'ia' : rejoué par la phase des joueurs virtuels
+    return Promise.resolve(null);      // 'ia' : rejoué par la phase des adversaires virtuels
   }
 
   /* Rejoue un journal et signale le premier écart avec ce qui avait été

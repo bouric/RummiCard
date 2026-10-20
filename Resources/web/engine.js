@@ -359,7 +359,7 @@
   }
 
   /**
-   * @param {number} nVirtual nombre de joueurs virtuels
+   * @param {number} nVirtual nombre d'adversaires virtuels
    * @param {Object} [deal] donne à rejouer : { order: [identifiants], names: [...] }
    */
   function Game(nVirtual, deal) {

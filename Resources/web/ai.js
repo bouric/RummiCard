@@ -1,6 +1,6 @@
 /* RummiCard — © 2026 Richard Boulais & Claude */
 /* =====================================================================
-   ai.js — Joueurs virtuels + assistance de placement pour le joueur
+   ai.js — Adversaires virtuels + assistance de placement pour le joueur
    Tout repose sur Solver.solve (partition exacte de la table).
    ===================================================================== */
 (function (root) {
@@ -193,7 +193,7 @@
     return { sets: r.sets, played: r.played, points: r.points, rebuild: true };
   }
 
-  /* ---- Niveaux des joueurs virtuels -------------------------------
+  /* ---- Niveaux des adversaires virtuels -------------------------------
      facile    : ne touche jamais à l'agencement de la table ; se contente
                  des ajouts directs et de ses propres combinaisons.
      normal    : joue au plus simple et ne réorganise la table que lorsqu'il
@@ -255,7 +255,7 @@
   }
 
   /**
-   * Tour complet d'un joueur virtuel.
+   * Tour complet d'un adversaire virtuel.
    * @returns {{kind: 'play'|'draw'|'pass', played: number, points: number, drawn: ?Object}}
    */
   function playAITurn(game) {

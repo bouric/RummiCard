@@ -342,7 +342,7 @@ header .brand span { color: var(--gold); }
   content: ''; position: absolute; inset: 0; border-radius: var(--radius);
   box-shadow: inset 0 0 0 2px var(--gold);
 }
-/* Cartes que les joueurs virtuels viennent de poser, le temps d'un tour. */
+/* Cartes que les adversaires virtuels viennent de poser, le temps d'un tour. */
 .card.fromai::after {
   content: ''; position: absolute; inset: 0; border-radius: var(--radius);
   box-shadow: inset 0 0 0 2px #5bc8ff;
@@ -483,12 +483,12 @@ header .brand span { color: var(--gold); }
 /* Projecteur : ce qui n'a pas bougé s'efface deux secondes, le temps qu'on
    voie ce qui vient d'arriver. */
 /* Pas d'animation d'apparition : la table se redessine entierement a chaque
-   coup des joueurs virtuels, et le voile, recree avec elle, rejouait son
+   coup des adversaires virtuels, et le voile, recree avec elle, rejouait son
    fondu a chaque fois — c'est ce qui faisait clignoter l'assombrissement. */
 .card .voile.eteinte { background: rgba(8, 12, 20, .66); }
 
 /* La dernière carte piochée : même bleu que les cartes fraîchement posées
-   par les joueurs virtuels, puisque c'est le même propos — voici ce qui
+   par les adversaires virtuels, puisque c'est le même propos — voici ce qui
    vient d'arriver. Si la carte est aussi jouable, l'anneau vert garde le
    bord et le bleu se glisse en dedans : les deux restent lisibles. */
 /* Comme l'anneau vert, celui-ci reste dans le plan de sa carte : sa tranche

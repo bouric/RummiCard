@@ -1,7 +1,7 @@
 # RummiCard
 
 Un **rami de combinaisons** joué avec **2 jeux de 52 cartes** (104 cartes),
-en application macOS native. Un joueur réel, de 1 à 5 joueurs virtuels.
+en application macOS native. Un joueur réel, de 1 à 5 adversaires virtuels.
 
 <img src="docs/icon.png" width="128" alt="Icône RummiCard : deux cartes sur tapis vert">
 
@@ -42,7 +42,7 @@ Aucune dépendance : seulement les *Command Line Tools* d'Xcode déjà installé
   usages peuvent coexister dans une même couleur, avec les deux exemplaires.
 - 14 cartes distribuées à chacun.
 - **Sur une table vide, la partie s'ouvre par une suite** : ni brelan ni carré
-  en première pose. La règle vaut pour tout le monde, joueurs virtuels compris.
+  en première pose. La règle vaut pour tout le monde, adversaires virtuels compris.
 - À chaque tour, il faut poser **au moins une carte** de sa main — n'importe où,
   y compris sur les combinaisons déjà sur la table. **Pas de minimum de points
   à la première pose** (variante retenue ici ; beaucoup de versions en imposent 30).
@@ -85,14 +85,14 @@ C'est le cœur de l'interface :
 | **💡 Indices** | Met en avant les cartes du **meilleur coup** du tour — celui que « Magique » jouerait — sans dire où les poser. Aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes forment un coup cohérent : elles se posent toutes ensemble, et l'indication se met à jour au fur et à mesure. |
 | **✨ Magique** | Calcule et joue le coup maximal du tour. |
 | **↩ Annuler** | Défait vos mouvements **un par un**, dans l'ordre inverse. |
-| Coups des adversaires | Les cartes que les joueurs virtuels viennent d'ajouter sont **cerclées de bleu** jusqu'à votre premier geste : la table se réorganisant au fil des coups, c'est le seul moyen de voir ce qui a changé. |
+| Coups des adversaires | Les cartes que les adversaires virtuels viennent d'ajouter sont **cerclées de bleu** jusqu'à votre premier geste : la table se réorganisant au fil des coups, c'est le seul moyen de voir ce qui a changé. |
 | **▶ Reprendre la partie** | La partie en cours est enregistrée au début de chacun de vos tours. Si l'app est fermée — ou déchargée de la mémoire par iOS — l'écran d'accueil propose de la reprendre là où elle en était. |
-| **↺ Même donne** | Redistribue exactement les mêmes cartes — à vous comme aux joueurs virtuels, y compris l'ordre de la pioche — pour rejouer la partie autrement. Depuis l'écran de fin ou l'écran d'accueil, où la dernière donne reste mémorisée d'une session à l'autre. |
+| **↺ Même donne** | Redistribue exactement les mêmes cartes — à vous comme aux adversaires virtuels, y compris l'ordre de la pioche — pour rejouer la partie autrement. Depuis l'écran de fin ou l'écran d'accueil, où la dernière donne reste mémorisée d'une session à l'autre. |
 | Suites qui se suivent | Deux suites de même couleur contiguës (…5♠ et 6♠…) sont **réunies automatiquement** : le solveur en produit souvent deux là où une seule suffit. |
 | Suite amputée | Retirer une carte au milieu d'une suite la **scinde en deux** : `A♣…9♣` moins le `6♣` devient `A♣2♣3♣4♣5♣` et `7♣8♣9♣`, deux suites valides, au lieu d'une seule combinaison trouée dont le manque serait invisible. |
 | Couper une suite | Déposez une carte **au milieu d'une colonne** : la suite est coupée à cet endroit et occupe les deux colonnes de sa couleur. Les deux morceaux doivent garder trois cartes. |
 | Soulever une carte | La table **ne se resserre pas** : l'emplacement libéré reste visible, donc ce que vous visiez ne bouge pas sous le curseur. |
-| **↺ Défaire** | Ramène la partie au **début de votre tour précédent**, dans l'état exact (mains, table, pioche) : votre coup est défait, et avec lui les réponses des joueurs virtuels. Plusieurs appuis remontent de tour en tour. |
+| **↺ Défaire** | Ramène la partie au **début de votre tour précédent**, dans l'état exact (mains, table, pioche) : votre coup est défait, et avec lui les réponses des adversaires virtuels. Plusieurs appuis remontent de tour en tour. |
 
 ## Langues
 
@@ -113,7 +113,7 @@ Tools/makeicon.swift      dessin vectoriel de l'icône (toutes les tailles)
 Resources/web/
   solver.js               solveur de combinaisons exact (programmation dynamique)
   engine.js               cartes, combinaisons, règles, déroulement de partie
-  ai.js                   joueurs virtuels + assistance au placement
+  ai.js                   adversaires virtuels + assistance au placement
   ui.js                   rendu, glisser-déposer, animations FLIP
   index.html / style.css
   sw.js                   cache hors ligne (ignoré par l'app macOS)
@@ -145,7 +145,7 @@ suites, nouvelles suites et groupes.
 Mesures : ~6 ms en moyenne sur un tour de fin de partie (70 cartes sur la table,
 14 en main), 18 ms au pire ; 385 ms sur le cas artificiel des 104 cartes
 étalées. C'est ce même solveur qui alimente les
-joueurs virtuels, le bouton « Magique » et la réorganisation automatique
+adversaires virtuels, le bouton « Magique » et la réorganisation automatique
 pendant un glisser-déposer.
 
 ## Son
@@ -212,7 +212,7 @@ le navigateur dans son `localStorage`.
   encaisse la somme de ces cartes — le décompte est donc à somme nulle. Le
   classement final se fait au cumul, et la pastille de l'en-tête suit votre
   score en cours.
-- **Niveau des joueurs virtuels** : *facile* — ils ne réorganisent jamais la
+- **Niveau des adversaires virtuels** : *facile* — ils ne réorganisent jamais la
   table et se contentent des ajouts évidents et de leurs propres
   combinaisons ; *normal* (par défaut) — ils jouent au plus simple et ne
   réorganisent que lorsqu'ils ne trouvent rien autrement ; *impitoyable* — le

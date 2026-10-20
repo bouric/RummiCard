@@ -30,9 +30,9 @@
 
   T.fr = {
     'accueil.desc': 'Les règles du rami, jouées avec 2 jeux de 52 cartes. Faites glisser une carte vers la table : elle se place toute seule au bon endroit.',
-    'accueil.joueurs': 'Joueurs virtuels',
-    'accueil.virtuel': 'joueur virtuel',
-    'accueil.virtuels': 'joueurs virtuels',
+    'accueil.joueurs': 'Adversaires virtuels',
+    'accueil.virtuel': 'adversaire virtuel',
+    'accueil.virtuels': 'adversaires virtuels',
     'accueil.reprendre': 'Reprendre la partie',
     'accueil.commencer': 'Commencer une nouvelle partie',
     'accueil.redonne': 'Rejouer la donne précédente',
@@ -93,7 +93,7 @@
     'tip.indices': 'Mettre en avant les cartes de votre main qui peuvent être posées (I)',
     'tip.trier': 'Changer le rangement de votre main : par valeur dans les couleurs, ou par valeur puis couleur (T)',
     'tip.piocheBloquee': 'Reprenez vos cartes pour pouvoir piocher',
-    'tip.refaire': 'Revenir au début de votre tour précédent : votre coup et les réponses des joueurs virtuels sont défaits (R)',
+    'tip.refaire': 'Revenir au début de votre tour précédent : votre coup et les réponses des adversaires virtuels sont défaits (R)',
     'opt.tapis': 'Couleur du tapis', 'tip.options': 'Options', 'tip.son': 'Son',
     'tip.regles': 'Règles', 'tip.quitter': 'Quitter la partie',
 
@@ -125,7 +125,7 @@
     'toast.ouvertureBrelan': 'Pour ouvrir une table vierge, il faut une <b>suite</b> — un brelan ne suffit pas.',
     'toast.piocheVide': 'La pioche est vide — vous passez',
     'toast.abandon': 'Abandonner la partie en cours ?',
-    'toast.refaire': 'Défaire tout votre tour précédent, et avec lui les réponses des joueurs virtuels ?',
+    'toast.refaire': 'Défaire tout votre tour précédent, et avec lui les réponses des adversaires virtuels ?',
 
     'err.posezCarte': 'Posez au moins une carte, ou piochez.',
     'err.cartesTable': 'Les cartes de la table ne peuvent pas rejoindre votre main.',
@@ -137,7 +137,7 @@
     'err.pasSuite': 'ses valeurs ne se suivent pas',
     'err.manqueValeurs': 'il manque {x} pour que la suite se tienne',
     'err.niNi': 'ni une suite ni un groupe',
-    'err.interne': 'Incident pendant le tour des joueurs virtuels — la main vous revient.',
+    'err.interne': 'Incident pendant le tour des adversaires virtuels — la main vous revient.',
 
     'opt.titre': 'Options',
     'opt.langue': 'Langue',
@@ -150,7 +150,7 @@
     'opt.m1': 'Une manche', 'opt.m1.d': 'la partie s’arrête dès qu’un joueur vide sa main',
     'opt.m3': 'Trois manches', 'opt.m3.d': 'score cumulé : le gagnant encaisse les cartes restées en main',
     'opt.m5': 'Cinq manches', 'opt.m5.d': 'même décompte, partie plus longue',
-    'opt.niveau': 'Niveau des joueurs virtuels',
+    'opt.niveau': 'Niveau des adversaires virtuels',
     'opt.facile': 'Facile', 'opt.facile.d': 'ils ne réorganisent jamais la table',
     'opt.normal': 'Normal', 'opt.normal.d': 'ils réorganisent la table, mais laissent passer des coups',
     'opt.difficile': 'Impitoyable', 'opt.difficile.d': 'ils jouent à chaque tour le coup maximal',
@@ -192,7 +192,7 @@
     'reg.gagne': 'Le premier à vider sa main gagne la manche. Si la pioche s’épuise, c’est le joueur avec le moins de points en main.',
     'reg.manches': 'En <b>plusieurs manches</b> (option), chacun perd la valeur des cartes restées dans sa main et le gagnant encaisse la somme de ces cartes. Le classement final se fait au cumul.',
     'reg.magique': '<b>Magicien</b> se tient : gardez le bouton enfoncé — ou le doigt posé — et pointez une carte de votre main. Tout s’assombrit sauf la combinaison qu’elle formera : les autres cartes de votre main qui s’y joignent, et celles déjà posées sur la table. Relâchez, tout revient. Pointez au contraire une <b>combinaison restée incomplète</b> sur la table, et il cherche un remaniement qui la répare : relâchez dessus pour le jouer, « Annuler » le défait d’un coup.',
-    'reg.memeDonne': '<b>↺ Même donne</b> redistribue exactement les mêmes cartes — à vous comme aux joueurs virtuels — pour rejouer la partie autrement.',
+    'reg.memeDonne': '<b>↺ Même donne</b> redistribue exactement les mêmes cartes — à vous comme aux adversaires virtuels — pour rejouer la partie autrement.',
     'reg.titre': 'Règles',
     'reg.but': '<b>But</b> : vider sa main. On pose des <b>suites</b> (3 cartes ou plus, même couleur, valeurs qui se suivent) et des <b>groupes</b> (3 ou 4 cartes de même valeur, couleurs différentes).',
     'reg.as': 'L’<b>As</b> vaut 1 ou 14 : A 2 3 comme D R A.',
@@ -206,14 +206,14 @@
     'reg.fusion': 'Deux suites de même couleur qui se suivent sont <b>réunies automatiquement</b>. Pour les séparer de nouveau, déposez une carte au milieu de la colonne : la suite est <b>coupée à cet endroit</b>.',
     'reg.indices': '<b>💡 Indices</b> met en avant les cartes du <b>meilleur coup</b> du tour, sans vous dire où les poser : une aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes se posent toutes ensemble ; à mesure que vous en placez, l’indication se met à jour.',
     'reg.annuler': '<b>Annuler</b> défait vos mouvements un par un, dans l’ordre inverse.',
-    'reg.refaire': '<b>Défaire</b> ramène la partie au <b>début de votre tour précédent</b> : votre coup est défait, et avec lui les réponses des joueurs virtuels. Il prend la place d’<b>Annuler</b> quand il n’y a plus rien à reprendre, et demande confirmation avant d’effacer le tour.',
+    'reg.refaire': '<b>Défaire</b> ramène la partie au <b>début de votre tour précédent</b> : votre coup est défait, et avec lui les réponses des adversaires virtuels. Il prend la place d’<b>Annuler</b> quand il n’y a plus rien à reprendre, et demande confirmation avant d’effacer le tour.',
     'reg.raccourcis': 'Raccourcis — Entrée : au suivant · ⌫ : annuler · P : piocher · M maintenu : magicien · T : changer le tri · I : indices · R : refaire'
   };
 
   T.en = {
     'accueil.desc': 'The rules of rummy, played with 2 decks of 52 cards. Drag a card onto the table: it settles into the right place by itself.',
-    'accueil.joueurs': 'Computer players',
-    'accueil.virtuel': 'computer player', 'accueil.virtuels': 'computer players',
+    'accueil.joueurs': 'Computer opponents',
+    'accueil.virtuel': 'computer opponent', 'accueil.virtuels': 'computer opponents',
     'accueil.reprendre': 'Resume game',
     'accueil.commencer': 'Start a new game',
     'accueil.redonne': 'Replay the previous deal',
@@ -272,7 +272,7 @@
     'tip.indices': 'Highlight the cards in your hand that can be laid down (I)',
     'tip.trier': 'Change how your hand is arranged: by value within suits, or by value then suit (T)',
     'tip.piocheBloquee': 'Take your cards back if you want to draw',
-    'tip.refaire': 'Go back to the start of your previous turn: your move and the computer players’ replies are undone (R)',
+    'tip.refaire': 'Go back to the start of your previous turn: your move and the computer opponents’ replies are undone (R)',
     'opt.tapis': 'Felt colour', 'tip.options': 'Options', 'tip.son': 'Sound',
     'tip.regles': 'Rules', 'tip.quitter': 'Leave the game',
 
@@ -304,7 +304,7 @@
     'toast.ouvertureBrelan': 'To open an empty table you need a <b>run</b> — a set is not enough.',
     'toast.piocheVide': 'The stock is empty — you pass',
     'toast.abandon': 'Abandon the game in progress?',
-    'toast.refaire': 'Undo your whole previous turn, and with it the computer players’ replies?',
+    'toast.refaire': 'Undo your whole previous turn, and with it the computer opponents’ replies?',
 
     'err.posezCarte': 'Lay at least one card, or draw.',
     'err.cartesTable': 'Cards on the table cannot go back into your hand.',
@@ -316,7 +316,7 @@
     'err.pasSuite': 'its values are not consecutive',
     'err.manqueValeurs': '{x} missing for the run to hold together',
     'err.niNi': 'neither a run nor a set',
-    'err.interne': 'Something went wrong during the virtual players\u2019 turn \u2014 it is your turn again.',
+    'err.interne': 'Something went wrong during the computer opponents\u2019 turn \u2014 it is your turn again.',
 
     'opt.titre': 'Options', 'opt.langue': 'Language',
     'opt.tri': 'Arranging your hand',
@@ -328,7 +328,7 @@
     'opt.m1': 'One round', 'opt.m1.d': 'the game ends as soon as a player empties their hand',
     'opt.m3': 'Three rounds', 'opt.m3.d': 'running score: the winner collects the cards left in hand',
     'opt.m5': 'Five rounds', 'opt.m5.d': 'same scoring, longer game',
-    'opt.niveau': 'Level of the computer players',
+    'opt.niveau': 'Level of the computer opponents',
     'opt.facile': 'Easy', 'opt.facile.d': 'they never rearrange the table',
     'opt.normal': 'Normal', 'opt.normal.d': 'they rearrange the table, but miss some moves',
     'opt.difficile': 'Merciless', 'opt.difficile.d': 'they play the best possible move every turn',
@@ -369,7 +369,7 @@
     'reg.gagne': 'The first to empty their hand wins the round. If the stock runs out, the player with the fewest points in hand wins.',
     'reg.manches': 'Over <b>several rounds</b> (an option), each player loses the value of the cards left in hand and the winner collects the sum of those cards. The final standing is the running total.',
     'reg.magique': '<b>Wizard</b> is held, not pressed: keep the button down — or your finger on it — and point at a card in your hand. Everything dims except the combination it will form: the other cards of your hand that join it, and those already on the table. Let go and everything comes back. Point instead at an <b>incomplete combination</b> on the table and it looks for a rearrangement that repairs it: let go on it to play that, and “Undo” takes it back in one press.',
-    'reg.memeDonne': '<b>↺ Same deal</b> deals exactly the same cards again — to you and to the computer players — so you can play the game differently.',
+    'reg.memeDonne': '<b>↺ Same deal</b> deals exactly the same cards again — to you and to the computer opponents — so you can play the game differently.',
     'reg.titre': 'Rules',
     'reg.but': '<b>Goal</b>: empty your hand. You lay <b>runs</b> (3 or more cards, same suit, consecutive values) and <b>sets</b> (3 or 4 cards of the same value, different suits).',
     'reg.as': 'The <b>Ace</b> counts as 1 or 14: A 2 3 as well as Q K A.',
@@ -383,7 +383,7 @@
     'reg.fusion': 'Two runs of the same suit that follow on are <b>joined automatically</b>. To split them again, drop a card in the middle of the column: the run is <b>cut at that point</b>.',
     'reg.indices': '<b>💡 Hints</b> highlights the cards of the turn’s <b>best move</b> without telling you where to lay them: a middle ground between working it out alone and letting the machine play. Those cards all go down together, and the highlighting updates as you place them.',
     'reg.annuler': '<b>Undo</b> takes back your moves one at a time, in reverse order.',
-    'reg.refaire': '<b>Rewind</b> returns the game to the <b>start of your previous turn</b>: your move is undone, and with it the computer players’ replies. It takes the place of <b>Undo</b> once there is nothing left to take back, and asks for confirmation before wiping the turn.',
+    'reg.refaire': '<b>Rewind</b> returns the game to the <b>start of your previous turn</b>: your move is undone, and with it the computer opponents’ replies. It takes the place of <b>Undo</b> once there is nothing left to take back, and asks for confirmation before wiping the turn.',
     'reg.raccourcis': 'Shortcuts — Enter: next player · ⌫: undo · P: draw · hold M: wizard · T: change sorting · I: hints · R: rewind'
   };
 
@@ -493,7 +493,7 @@
     'err.pasSuite': 'die Werte folgen nicht aufeinander',
     'err.manqueValeurs': 'es fehlt {x}, damit die Folge zusammenhält',
     'err.niNi': 'weder Folge noch Satz',
-    'err.interne': 'Beim Zug der virtuellen Spieler ist ein Fehler aufgetreten \u2014 Sie sind wieder an der Reihe.',
+    'err.interne': 'Beim Zug der Computergegner ist ein Fehler aufgetreten \u2014 Sie sind wieder an der Reihe.',
 
     'opt.titre': 'Einstellungen', 'opt.langue': 'Sprache',
     'opt.tri': 'Ordnung Ihrer Hand',
@@ -566,8 +566,8 @@
 
   T.it = {
     'accueil.desc': 'Le regole del ramino, giocate con 2 mazzi da 52 carte. Trascini una carta sul tavolo: si sistema da sola al posto giusto.',
-    'accueil.joueurs': 'Giocatori virtuali',
-    'accueil.virtuel': 'giocatore virtuale', 'accueil.virtuels': 'giocatori virtuali',
+    'accueil.joueurs': 'Avversari virtuali',
+    'accueil.virtuel': 'avversario virtuale', 'accueil.virtuels': 'avversari virtuali',
     'accueil.reprendre': 'Riprendi la partita',
     'accueil.commencer': 'Inizia una nuova partita',
     'accueil.redonne': 'Rigioca la stessa distribuzione',
@@ -626,7 +626,7 @@
     'tip.indices': 'Evidenzia le carte della sua mano che possono essere calate (I)',
     'tip.trier': 'Cambia l’ordine della sua mano: per valore dentro i semi, o per valore poi seme (T)',
     'tip.piocheBloquee': 'Riprenda le sue carte per poter pescare',
-    'tip.refaire': 'Torna all’inizio del suo turno precedente: la sua mossa e le risposte dei giocatori virtuali vengono annullate (R)',
+    'tip.refaire': 'Torna all’inizio del suo turno precedente: la sua mossa e le risposte degli avversari virtuali vengono annullate (R)',
     'opt.tapis': 'Colore del tavolo', 'tip.options': 'Opzioni', 'tip.son': 'Suono',
     'tip.regles': 'Regole', 'tip.quitter': 'Esci dalla partita',
 
@@ -658,7 +658,7 @@
     'toast.ouvertureBrelan': 'Per aprire un tavolo vuoto serve una <b>scala</b> — un tris non basta.',
     'toast.piocheVide': 'Il tallone è vuoto — passa',
     'toast.abandon': 'Abbandonare la partita in corso?',
-    'toast.refaire': 'Disfare tutto il suo turno precedente, e con esso le risposte dei giocatori virtuali?',
+    'toast.refaire': 'Disfare tutto il suo turno precedente, e con esso le risposte degli avversari virtuali?',
 
     'err.posezCarte': 'Cali almeno una carta, oppure peschi.',
     'err.cartesTable': 'Le carte del tavolo non possono tornare in mano.',
@@ -670,7 +670,7 @@
     'err.pasSuite': 'i valori non si susseguono',
     'err.manqueValeurs': 'manca {x} perché la scala tenga',
     'err.niNi': 'né una scala né un tris',
-    'err.interne': 'Problema durante il turno dei giocatori virtuali \u2014 tocca di nuovo a lei.',
+    'err.interne': 'Problema durante il turno degli avversari virtuali \u2014 tocca di nuovo a lei.',
 
     'opt.titre': 'Opzioni', 'opt.langue': 'Lingua',
     'opt.tri': 'Ordine della sua mano',
@@ -682,7 +682,7 @@
     'opt.m1': 'Una mano', 'opt.m1.d': 'la partita finisce appena un giocatore svuota la mano',
     'opt.m3': 'Tre mani', 'opt.m3.d': 'punteggio cumulato: il vincitore incassa le carte rimaste in mano',
     'opt.m5': 'Cinque mani', 'opt.m5.d': 'stesso conteggio, partita più lunga',
-    'opt.niveau': 'Livello dei giocatori virtuali',
+    'opt.niveau': 'Livello degli avversari virtuali',
     'opt.facile': 'Facile', 'opt.facile.d': 'non riorganizzano mai il tavolo',
     'opt.normal': 'Normale', 'opt.normal.d': 'riorganizzano il tavolo, ma si lasciano sfuggire delle mosse',
     'opt.difficile': 'Spietato', 'opt.difficile.d': 'giocano a ogni turno la mossa migliore',
@@ -723,7 +723,7 @@
     'reg.gagne': 'Chi svuota per primo la mano vince la mano. Se il tallone si esaurisce, vince chi ha meno punti in mano.',
     'reg.manches': 'Su <b>più mani</b> (opzione), ciascuno perde il valore delle carte rimaste in mano e il vincitore incassa la somma di quelle carte. La classifica finale è il cumulo.',
     'reg.magique': '<b>Magia</b> si tiene premuto: mantenga il pulsante — o il dito — e indichi una carta della sua mano. Tutto si spegne tranne la combinazione che formerà: le altre carte della sua mano che vi si uniscono, e quelle già sul tavolo. Lasci, e tutto ritorna. Indichi invece una <b>combinazione rimasta incompleta</b> sul tavolo, e cerca un rifacimento che la ripari: lasci sopra di essa per giocarlo, « Annulla » lo disfa in un colpo.',
-    'reg.memeDonne': '<b>↺ Stessa distribuzione</b> ridistribuisce esattamente le stesse carte — a lei come ai giocatori virtuali — per rigiocare la partita in altro modo.',
+    'reg.memeDonne': '<b>↺ Stessa distribuzione</b> ridistribuisce esattamente le stesse carte — a lei come agli avversari virtuali — per rigiocare la partita in altro modo.',
     'reg.titre': 'Regole',
     'reg.but': '<b>Scopo</b>: svuotare la propria mano. Si calano <b>scale</b> (3 o più carte dello stesso seme, con valori consecutivi) e <b>tris</b> (3 o 4 carte dello stesso valore, di semi diversi).',
     'reg.as': 'L’<b>asso</b> vale 1 oppure 14: A 2 3 così come Q K A.',
@@ -737,14 +737,14 @@
     'reg.fusion': 'Due scale dello stesso seme che si susseguono vengono <b>unite automaticamente</b>. Per separarle di nuovo, lasci cadere una carta in mezzo alla colonna: la scala viene <b>tagliata in quel punto</b>.',
     'reg.indices': '<b>💡 Suggerimenti</b> mette in evidenza le carte della <b>mossa migliore</b> del turno, senza dire dove calarle: una via di mezzo fra cercare da soli e lasciar giocare la macchina. Quelle carte si calano tutte insieme, e l’indicazione si aggiorna man mano.',
     'reg.annuler': '<b>Annulla</b> disfa i suoi movimenti uno alla volta, in ordine inverso.',
-    'reg.refaire': '<b>Rigioca</b> riporta la partita all’<b>inizio del suo turno precedente</b>: la sua mossa è annullata, e con essa le risposte dei giocatori virtuali. Prende il posto di <b>Annulla</b> quando non resta più nulla da riprendere, e chiede conferma prima di cancellare il turno.',
+    'reg.refaire': '<b>Rigioca</b> riporta la partita all’<b>inizio del suo turno precedente</b>: la sua mossa è annullata, e con essa le risposte degli avversari virtuali. Prende il posto di <b>Annulla</b> quando non resta più nulla da riprendere, e chiede conferma prima di cancellare il turno.',
     'reg.raccourcis': 'Scorciatoie — Invio: al prossimo · ⌫: annulla · P: pesca · M: magia · T: cambia ordine · I: suggerimenti · R: rigioca'
   };
 
   T.nl = {
     'accueil.desc': 'De regels van rummy, gespeeld met 2 spellen van 52 kaarten. Sleep een kaart naar de tafel: ze legt zichzelf op de juiste plaats.',
-    'accueil.joueurs': 'Computerspelers',
-    'accueil.virtuel': 'computerspeler', 'accueil.virtuels': 'computerspelers',
+    'accueil.joueurs': 'Computertegenstanders',
+    'accueil.virtuel': 'computertegenstander', 'accueil.virtuels': 'computertegenstanders',
     'accueil.reprendre': 'Spel hervatten',
     'accueil.commencer': 'Een nieuw spel beginnen',
     'accueil.redonne': 'Dezelfde deling opnieuw',
@@ -803,7 +803,7 @@
     'tip.indices': 'De kaarten in uw hand tonen die gelegd kunnen worden (I)',
     'tip.trier': 'De ordening van uw hand wisselen: op waarde binnen de kleuren, of op waarde en dan kleur (T)',
     'tip.piocheBloquee': 'Neem uw kaarten terug om te kunnen trekken',
-    'tip.refaire': 'Terug naar het begin van uw vorige beurt: uw zet en de antwoorden van de computerspelers worden ongedaan gemaakt (R)',
+    'tip.refaire': 'Terug naar het begin van uw vorige beurt: uw zet en de antwoorden van de computertegenstanders worden ongedaan gemaakt (R)',
     'opt.tapis': 'Kleur van het tafellaken', 'tip.options': 'Instellingen', 'tip.son': 'Geluid',
     'tip.regles': 'Regels', 'tip.quitter': 'Spel verlaten',
 
@@ -835,7 +835,7 @@
     'toast.ouvertureBrelan': 'Om een lege tafel te openen is een <b>reeks</b> nodig — een groep volstaat niet.',
     'toast.piocheVide': 'De stapel is leeg — u slaat over',
     'toast.abandon': 'Het lopende spel opgeven?',
-    'toast.refaire': 'Uw hele vorige beurt ongedaan maken, en daarmee de zetten van de computerspelers?',
+    'toast.refaire': 'Uw hele vorige beurt ongedaan maken, en daarmee de zetten van de computertegenstanders?',
 
     'err.posezCarte': 'Leg ten minste één kaart, of trek er een.',
     'err.cartesTable': 'Kaarten van de tafel mogen niet terug in uw hand.',
@@ -847,7 +847,7 @@
     'err.pasSuite': 'de waarden volgen elkaar niet op',
     'err.manqueValeurs': '{x} ontbreekt om de reeks sluitend te maken',
     'err.niNi': 'geen reeks en geen groep',
-    'err.interne': 'Er ging iets mis tijdens de beurt van de virtuele spelers \u2014 u bent weer aan zet.',
+    'err.interne': 'Er ging iets mis tijdens de beurt van de computertegenstanders \u2014 u bent weer aan zet.',
 
     'opt.titre': 'Instellingen', 'opt.langue': 'Taal',
     'opt.tri': 'Ordening van uw hand',
@@ -859,7 +859,7 @@
     'opt.m1': 'Eén ronde', 'opt.m1.d': 'het spel stopt zodra een speler zijn hand leegt',
     'opt.m3': 'Drie ronden', 'opt.m3.d': 'doorlopende stand: de winnaar int de kaarten die in de handen bleven',
     'opt.m5': 'Vijf ronden', 'opt.m5.d': 'zelfde telling, langer spel',
-    'opt.niveau': 'Niveau van de computerspelers',
+    'opt.niveau': 'Niveau van de computertegenstanders',
     'opt.facile': 'Makkelijk', 'opt.facile.d': 'ze hergeschikken de tafel nooit',
     'opt.normal': 'Normaal', 'opt.normal.d': 'ze hergeschikken de tafel, maar missen zetten',
     'opt.difficile': 'Meedogenloos', 'opt.difficile.d': 'ze spelen elke beurt de best mogelijke zet',
@@ -900,7 +900,7 @@
     'reg.gagne': 'Wie als eerste zijn hand leegt, wint de ronde. Raakt de stapel op, dan wint wie de minste punten in de hand heeft.',
     'reg.manches': 'Over <b>meerdere ronden</b> (instelling) verliest ieder de waarde van de kaarten in zijn hand en int de winnaar de som daarvan. De eindstand is het totaal.',
     'reg.magique': '<b>Magie</b> wordt vastgehouden, niet ingedrukt: houd de knop — of uw vinger — vast en wijs een kaart in uw hand aan. Alles dooft behalve de combinatie die ze zal vormen: de andere handkaarten die erbij horen, en die al op tafel liggen. Laat los en alles komt terug. Wijs in plaats daarvan een <b>onvolledige combinatie</b> op tafel aan, en hij zoekt een herschikking die haar herstelt: laat erop los om die te spelen, “Ongedaan maken” draait haar in één druk terug.',
-    'reg.memeDonne': '<b>↺ Zelfde deling</b> deelt precies dezelfde kaarten opnieuw — aan u en aan de computerspelers — om het spel anders te spelen.',
+    'reg.memeDonne': '<b>↺ Zelfde deling</b> deelt precies dezelfde kaarten opnieuw — aan u en aan de computertegenstanders — om het spel anders te spelen.',
     'reg.titre': 'Regels',
     'reg.but': '<b>Doel</b>: uw hand leegmaken. U legt <b>reeksen</b> (3 of meer kaarten van dezelfde kleur, met opeenvolgende waarden) en <b>groepen</b> (3 of 4 kaarten van dezelfde waarde, in verschillende kleuren).',
     'reg.as': 'De <b>aas</b> telt 1 of 14: A 2 3 net zo goed als V H A.',
@@ -914,14 +914,14 @@
     'reg.fusion': 'Twee reeksen van dezelfde kleur die op elkaar aansluiten worden <b>automatisch samengevoegd</b>. Om ze weer te splitsen laat u een kaart midden in de kolom vallen: de reeks wordt <b>daar doorgeknipt</b>.',
     'reg.indices': '<b>💡 Tips</b> licht de kaarten van de <b>beste zet</b> van de beurt uit, zonder te verklappen waar ze heen moeten: een middenweg tussen zelf zoeken en de machine laten spelen. Die kaarten horen bij elkaar, en terwijl u legt wordt de aanwijzing bijgewerkt.',
     'reg.annuler': '<b>Ongedaan</b> neemt uw zetten één voor één terug, in omgekeerde volgorde.',
-    'reg.refaire': '<b>Terug</b> brengt het spel naar het <b>begin van uw vorige beurt</b>: uw zet wordt ongedaan gemaakt, en daarmee de antwoorden van de computerspelers. Hij neemt de plaats in van <b>Ongedaan maken</b> zodra er niets meer terug te nemen is, en vraagt om bevestiging voordat hij de beurt wist.',
+    'reg.refaire': '<b>Terug</b> brengt het spel naar het <b>begin van uw vorige beurt</b>: uw zet wordt ongedaan gemaakt, en daarmee de antwoorden van de computertegenstanders. Hij neemt de plaats in van <b>Ongedaan maken</b> zodra er niets meer terug te nemen is, en vraagt om bevestiging voordat hij de beurt wist.',
     'reg.raccourcis': 'Sneltoetsen — Enter: volgende · ⌫: ongedaan · P: trekken · M: magie · T: ordening wisselen · I: tips · R: terug'
   };
 
   T.es = {
     'accueil.desc': 'Las reglas del rummy, jugadas con 2 barajas de 52 cartas. Arrastre una carta a la mesa: se coloca sola en el lugar correcto.',
-    'accueil.joueurs': 'Jugadores virtuales',
-    'accueil.virtuel': 'jugador virtual', 'accueil.virtuels': 'jugadores virtuales',
+    'accueil.joueurs': 'Adversarios virtuales',
+    'accueil.virtuel': 'adversario virtual', 'accueil.virtuels': 'adversarios virtuales',
     'accueil.reprendre': 'Reanudar la partida',
     'accueil.commencer': 'Empezar una nueva partida',
     'accueil.redonne': 'Repetir el mismo reparto',
@@ -980,7 +980,7 @@
     'tip.indices': 'Resaltar las cartas de su mano que pueden bajarse (I)',
     'tip.trier': 'Cambiar el orden de su mano: por valor dentro de los palos, o por valor y luego palo (T)',
     'tip.piocheBloquee': 'Recupere sus cartas para poder robar',
-    'tip.refaire': 'Volver al principio de su turno anterior: su jugada y las respuestas de los jugadores virtuales se deshacen (R)',
+    'tip.refaire': 'Volver al principio de su turno anterior: su jugada y las respuestas de los adversarios virtuales se deshacen (R)',
     'opt.tapis': 'Color del tapete', 'tip.options': 'Opciones', 'tip.son': 'Sonido',
     'tip.regles': 'Reglas', 'tip.quitter': 'Salir de la partida',
 
@@ -1012,7 +1012,7 @@
     'toast.ouvertureBrelan': 'Para abrir una mesa vacía hace falta una <b>escalera</b> — un trío no basta.',
     'toast.piocheVide': 'El mazo está vacío — pasa',
     'toast.abandon': '¿Abandonar la partida en curso?',
-    'toast.refaire': '¿Deshacer todo su turno anterior, y con él las respuestas de los jugadores virtuales?',
+    'toast.refaire': '¿Deshacer todo su turno anterior, y con él las respuestas de los adversarios virtuales?',
 
     'err.posezCarte': 'Baje al menos una carta, o robe.',
     'err.cartesTable': 'Las cartas de la mesa no pueden volver a su mano.',
@@ -1024,7 +1024,7 @@
     'err.pasSuite': 'sus valores no son consecutivos',
     'err.manqueValeurs': 'falta {x} para que la escalera se sostenga',
     'err.niNi': 'ni una escalera ni un trío',
-    'err.interne': 'Incidencia durante el turno de los jugadores virtuales \u2014 le toca de nuevo.',
+    'err.interne': 'Incidencia durante el turno de los adversarios virtuales \u2014 le toca de nuevo.',
 
     'opt.titre': 'Opciones', 'opt.langue': 'Idioma',
     'opt.tri': 'Orden de su mano',
@@ -1036,7 +1036,7 @@
     'opt.m1': 'Una manga', 'opt.m1.d': 'la partida acaba en cuanto un jugador vacía su mano',
     'opt.m3': 'Tres mangas', 'opt.m3.d': 'puntuación acumulada: el ganador cobra las cartas que quedan en las manos',
     'opt.m5': 'Cinco mangas', 'opt.m5.d': 'mismo recuento, partida más larga',
-    'opt.niveau': 'Nivel de los jugadores virtuales',
+    'opt.niveau': 'Nivel de los adversarios virtuales',
     'opt.facile': 'Fácil', 'opt.facile.d': 'nunca reorganizan la mesa',
     'opt.normal': 'Normal', 'opt.normal.d': 'reorganizan la mesa, pero dejan escapar jugadas',
     'opt.difficile': 'Despiadado', 'opt.difficile.d': 'juegan en cada turno la mejor jugada',
@@ -1077,7 +1077,7 @@
     'reg.gagne': 'El primero en vaciar su mano gana la manga. Si el mazo se agota, gana quien tenga menos puntos en la mano.',
     'reg.manches': 'A <b>varias mangas</b> (opción), cada uno pierde el valor de las cartas que le quedan en la mano y el ganador cobra la suma de esas cartas. La clasificación final es el acumulado.',
     'reg.magique': '<b>Magia</b> se mantiene, no se pulsa: mantenga el botón — o el dedo — y señale una carta de su mano. Todo se oscurece salvo la combinación que formará: las demás cartas de su mano que se le unen, y las ya puestas en la mesa. Suelte y todo vuelve. Señale en cambio una <b>combinación incompleta</b> de la mesa y busca una reorganización que la repare: suelte sobre ella para jugarla, « Deshacer » la deshace de una vez.',
-    'reg.memeDonne': '<b>↺ Mismo reparto</b> vuelve a repartir exactamente las mismas cartas — a usted y a los jugadores virtuales — para jugar la partida de otro modo.',
+    'reg.memeDonne': '<b>↺ Mismo reparto</b> vuelve a repartir exactamente las mismas cartas — a usted y a los adversarios virtuales — para jugar la partida de otro modo.',
     'reg.titre': 'Reglas',
     'reg.but': '<b>Objetivo</b>: vaciar su mano. Se bajan <b>escaleras</b> (3 cartas o más del mismo palo, con valores consecutivos) y <b>tríos</b> (3 o 4 cartas del mismo valor, de palos distintos).',
     'reg.as': 'El <b>as</b> vale 1 o 14: A 2 3 igual que Q K A.',
@@ -1091,7 +1091,7 @@
     'reg.fusion': 'Dos escaleras del mismo palo que se suceden se <b>unen automáticamente</b>. Para separarlas de nuevo, suelte una carta en medio de la columna: la escalera queda <b>cortada en ese punto</b>.',
     'reg.indices': '<b>💡 Pistas</b> resalta las cartas de la <b>mejor jugada</b> del turno, sin decirle dónde bajarlas: una ayuda intermedia entre buscar solo y dejar jugar a la máquina. Esas cartas se bajan todas juntas, y la indicación se actualiza a medida que las coloca.',
     'reg.annuler': '<b>Deshacer</b> retira sus movimientos uno a uno, en orden inverso.',
-    'reg.refaire': '<b>Rehacer</b> devuelve la partida al <b>principio de su turno anterior</b>: su jugada queda deshecha, y con ella las respuestas de los jugadores virtuales. Ocupa el lugar de <b>Deshacer</b> cuando ya no queda nada que retirar, y pide confirmación antes de borrar el turno.',
+    'reg.refaire': '<b>Rehacer</b> devuelve la partida al <b>principio de su turno anterior</b>: su jugada queda deshecha, y con ella las respuestas de los adversarios virtuales. Ocupa el lugar de <b>Deshacer</b> cuando ya no queda nada que retirar, y pide confirmación antes de borrar el turno.',
     'reg.raccourcis': 'Atajos — Intro: al siguiente · ⌫: deshacer · P: robar · M: magia · T: cambiar el orden · I: pistas · R: rehacer'
   };
 
