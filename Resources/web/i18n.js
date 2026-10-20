@@ -76,7 +76,7 @@
 
     'btn.suivant': 'Au suivant', 'btn.annuler': 'Annuler', 'btn.piocher': 'Piocher',
     'btn.indices': 'Indices', 'btn.magique': 'Magicien', 'btn.trier': 'Trier',
-    'btn.refaire': 'Refaire', 'btn.fermer': 'Fermer', 'btn.menu': 'Menu',
+    'btn.refaire': 'Défaire', 'btn.fermer': 'Fermer', 'btn.menu': 'Menu',
     'toast.refaireAstuce': '\u21ba {b} revient avant votre pioche.',
     'btn.mancheSuivante': 'Manche suivante', 'btn.nouvellePartie': 'Nouvelle partie',
     'btn.memeDonne': 'Même donne',
@@ -206,7 +206,7 @@
     'reg.fusion': 'Deux suites de même couleur qui se suivent sont <b>réunies automatiquement</b>. Pour les séparer de nouveau, déposez une carte au milieu de la colonne : la suite est <b>coupée à cet endroit</b>.',
     'reg.indices': '<b>💡 Indices</b> met en avant les cartes du <b>meilleur coup</b> du tour, sans vous dire où les poser : une aide intermédiaire entre chercher seul et laisser jouer la machine. Ces cartes se posent toutes ensemble ; à mesure que vous en placez, l’indication se met à jour.',
     'reg.annuler': '<b>Annuler</b> défait vos mouvements un par un, dans l’ordre inverse.',
-    'reg.refaire': '<b>Refaire</b> ramène la partie au <b>début de votre tour précédent</b> : votre coup est défait, et avec lui les réponses des joueurs virtuels. Il prend la place d’<b>Annuler</b> quand il n’y a plus rien à reprendre, et demande confirmation avant d’effacer le tour.',
+    'reg.refaire': '<b>Défaire</b> ramène la partie au <b>début de votre tour précédent</b> : votre coup est défait, et avec lui les réponses des joueurs virtuels. Il prend la place d’<b>Annuler</b> quand il n’y a plus rien à reprendre, et demande confirmation avant d’effacer le tour.',
     'reg.raccourcis': 'Raccourcis — Entrée : au suivant · ⌫ : annuler · P : piocher · M maintenu : magicien · T : changer le tri · I : indices · R : refaire'
   };
 

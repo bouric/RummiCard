@@ -102,7 +102,7 @@
     <!-- Le symbole « retour » d'Unicode, celui des claviers : c'est Entree qui
          mene au suivant. Avec le retour arriere d'« Annuler », les deux
          premiers boutons portent chacun sa touche. -->
-    <button class="btn go" id="commit">&#9166;<span class="lbl" data-i18n="btn.suivant"></span></button>
+    <button class="btn go hidden" id="commit">&#9166;<span class="lbl" data-i18n="btn.suivant"></span></button>
     <!-- Le meme emplacement que « Au suivant » : jamais les deux a la fois.
          Soit on dit au suivant, soit on pioche, et c'est la seule facon de
          finir son tour. -->
@@ -110,7 +110,7 @@
     <!-- Le caractere de la touche retour arriere, qui est justement le
          raccourci d'« Annuler » : le pictogramme enseigne la touche. Le ↩
          d'avant etait celui de la touche Retour, attribuee a « Au suivant ». -->
-    <button class="btn" id="undo" data-i18n-title="tip.annuler">&#9003;<span class="lbl" data-i18n="btn.annuler"></span></button>
+    <button class="btn hidden" id="undo" data-i18n-title="tip.annuler">&#9003;<span class="lbl" data-i18n="btn.annuler"></span></button>
     <!-- Le meme emplacement qu'« Annuler » : jamais les deux a la fois. Tant
          qu'il reste un geste a defaire, c'est « Annuler », pas a pas. Quand il
          n'y en a plus, « Refaire » prend sa place — et demande confirmation,

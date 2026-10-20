@@ -1136,7 +1136,6 @@
       dessiner(DENSITIES[DENSITIES.indexOf(dens) + 1]);
     }
     poserConsigne();
-    majBoutonsIcones();
     majBarreCompacte();
   }
 
@@ -1576,6 +1575,13 @@
     } else {
       dernierMessage = '';
     }
+    /* La mesure vient ici, et non dans render() : c'est updateBar qui decide
+       lequel de « Piocher » et « Au suivant », de « Annuler » et « Refaire »
+       s'affiche, et mesurer avant elle revenait a compter les sept boutons
+       alors que cinq seulement seront la. Au tout premier rendu, les doublons
+       n'ayant encore ete masques par personne, la rangee paraissait trop large
+       et perdait ses libelles pour le reste de la partie. */
+    majBoutonsIcones();
   }
 
   /* Ou en est le tour, en une phrase : ce que la barre affiche sur un
