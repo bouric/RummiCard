@@ -1205,18 +1205,21 @@
      l'etat courant, sinon le resserrement se jugerait sur son propre effet
      et la barre clignoterait d'un rendu a l'autre. */
   function majBoutonsIcones() {
-    /* Le bouton de fin de tour en cache un autre au meme emplacement : un
-       bouton masque a un offsetTop de zero, qu'on prendrait pour un retour a
-       la ligne. On ne mesure que ce qui s'affiche. */
-    var jeu = $('#game'), btns = document.querySelectorAll('#bar .btn:not(.hidden)');
+    /* La rangee ne se replie plus : on ne cherche donc plus un retour a la
+       ligne, mais un debordement en largeur. On mesure libelles mis, et on
+       les retire si la rangee est trop large — sauf celui du bouton de fin de
+       tour, que la feuille de style garde en toutes circonstances. */
+    var jeu = $('#game'), bar = $('#bar');
+    var btns = document.querySelectorAll('#bar .btn:not(.hidden)');
     if (btns.length < 2) return;
-    var compact = jeu.classList.contains('compact'), i;
+    var compact = jeu.classList.contains('compact');
     jeu.classList.remove('icones');
     jeu.classList.remove('compact');
-    var y = btns[0].offsetTop, deborde = false;
-    for (i = 1; i < btns.length; i++) {
-      if (btns[i].offsetTop > y + 2) { deborde = true; break; }
-    }
+    /* On laisse le navigateur faire la somme : additionner les boutons a la
+       main obligeait a connaitre l'ecart de la rangee, qui change avec la
+       largeur de l'ecran — et une valeur en dur m'a fait conclure a un
+       debordement qui n'existait pas. */
+    var deborde = bar.scrollWidth > bar.clientWidth + 1;
     if (compact) jeu.classList.add('compact');
     jeu.classList.toggle('icones', deborde);
   }

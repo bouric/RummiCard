@@ -402,8 +402,15 @@ header .brand span { color: var(--gold); }
 @keyframes breathe { 50% { background: rgba(255, 255, 255, .19); } }
 
 /* ---------- Barre d'actions --------------------------------------- */
-#bar { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+/* La rangée ne se replie jamais : deux lignes de boutons mangeraient le tapis
+   et déplaceraient tout sous le doigt. Quand la place manque, ce sont les
+   libellés qui tombent, pas la ligne. */
+#bar { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; flex: 0 0 auto; }
 .btn {
+  /* Et les boutons ne se laissent pas écraser : sans cela ils rétrécissaient
+     sous leur contenu, et leur libellé débordait de sa boîte. C'est une des
+     deux raisons pour lesquelles ils semblaient changer de taille. */
+  flex: 0 0 auto;
   padding: 9px 15px; border-radius: 11px; font-size: 13px; font-weight: 620;
   background: var(--panel); border: 1px solid var(--stroke); transition: .15s;
   display: flex; align-items: center; gap: 6px; white-space: nowrap;
@@ -433,6 +440,12 @@ header .brand span { color: var(--gold); }
    déborder sur une seconde — le cas du téléphone. */
 #game.icones .btn .lbl { display: none; }
 #game.icones .btn { padding: 9px 12px; }
+/* Un seul garde son libellé en toutes circonstances : celui qui finit le
+   tour. C'est le seul dont le sens change selon ce qu'on vient de faire —
+   « Piocher » tant que rien n'est posé, « Au suivant » ensuite — et un
+   pictogramme seul ne dirait pas lequel des deux on s'apprête à faire. */
+#game.compact #commit .lbl, #game.compact #draw .lbl,
+#game.icones #commit .lbl, #game.icones #draw .lbl { display: inline; }
 .btn.go { background: linear-gradient(180deg, #2f9c76, #1d7a5c); border-color: #3fb68c; color: #fff; }
 .btn.go:hover:not(:disabled) { box-shadow: 0 6px 18px rgba(45, 150, 115, .4); }
 /* « Magique » porte la couleur de ce qu'il montre, comme « Indices » porte
@@ -645,6 +658,7 @@ header .brand span { color: var(--gold); }
   .pill { padding: 4px 9px; font-size: 11.5px; }
   .iconbtn { width: 28px; height: 28px; font-size: 13px; }
   #hints .lbl, #auto .lbl, #sort .lbl, #rewind .lbl { display: none; }
+
   .btn { padding: 8px 11px; font-size: 14px; }
   #bar { gap: 6px; }
   /* Table pleine : chaque combinaison paie son rembourrage et l'écart qui la

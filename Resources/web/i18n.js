@@ -74,7 +74,7 @@
     'zone.nouvelleSuite': 'Nouvelle suite', 'zone.nouveauGroupe': 'Nouveau groupe',
     'zone.votreMain': 'Votre main — {n} {cartes}',
 
-    'btn.suivant': 'Au suivant !', 'btn.annuler': 'Annuler', 'btn.piocher': 'Piocher',
+    'btn.suivant': 'Au suivant', 'btn.annuler': 'Annuler', 'btn.piocher': 'Piocher',
     'btn.indices': 'Indices', 'btn.magique': 'Magicien', 'btn.trier': 'Trier',
     'btn.refaire': 'Refaire', 'btn.fermer': 'Fermer', 'btn.menu': 'Menu',
     'toast.refaireAstuce': '\u21ba {b} revient avant votre pioche.',
@@ -253,7 +253,7 @@
     'zone.nouvelleSuite': 'New run', 'zone.nouveauGroupe': 'New set',
     'zone.votreMain': 'Your hand — {n} {cartes}',
 
-    'btn.suivant': 'Next player!', 'btn.annuler': 'Undo', 'btn.piocher': 'Draw',
+    'btn.suivant': 'Next player', 'btn.annuler': 'Undo', 'btn.piocher': 'Draw',
     'btn.indices': 'Hints', 'btn.magique': 'Wizard', 'btn.trier': 'Sort',
     'btn.refaire': 'Rewind', 'btn.fermer': 'Close', 'btn.menu': 'Menu',
     'toast.refaireAstuce': '\u21ba {b} takes you back to before your draw.',
@@ -430,7 +430,7 @@
     'zone.nouvelleSuite': 'Neue Folge', 'zone.nouveauGroupe': 'Neuer Satz',
     'zone.votreMain': 'Ihre Hand — {n} {cartes}',
 
-    'btn.suivant': 'Weiter!', 'btn.annuler': 'Zurück', 'btn.piocher': 'Ziehen',
+    'btn.suivant': 'Weiter', 'btn.annuler': 'Zurück', 'btn.piocher': 'Ziehen',
     'btn.indices': 'Hinweise', 'btn.magique': 'Magie', 'btn.trier': 'Sortieren',
     'btn.refaire': 'Zug zurück', 'btn.fermer': 'Schließen', 'btn.menu': 'Menü',
     'toast.refaireAstuce': '\u21ba {b} bringt Sie vor Ihr Ziehen zurück.',
@@ -607,7 +607,7 @@
     'zone.nouvelleSuite': 'Nuova scala', 'zone.nouveauGroupe': 'Nuovo tris',
     'zone.votreMain': 'La sua mano — {n} {cartes}',
 
-    'btn.suivant': 'Al prossimo!', 'btn.annuler': 'Annulla', 'btn.piocher': 'Pesca',
+    'btn.suivant': 'Al prossimo', 'btn.annuler': 'Annulla', 'btn.piocher': 'Pesca',
     'btn.indices': 'Suggerimenti', 'btn.magique': 'Magia', 'btn.trier': 'Ordina',
     'btn.refaire': 'Rigioca', 'btn.fermer': 'Chiudi', 'btn.menu': 'Menu',
     'toast.refaireAstuce': '\u21ba {b} riporta a prima della pesca.',
@@ -784,7 +784,7 @@
     'zone.nouvelleSuite': 'Nieuwe reeks', 'zone.nouveauGroupe': 'Nieuwe groep',
     'zone.votreMain': 'Uw hand — {n} {cartes}',
 
-    'btn.suivant': 'Volgende!', 'btn.annuler': 'Ongedaan', 'btn.piocher': 'Trekken',
+    'btn.suivant': 'Volgende', 'btn.annuler': 'Ongedaan', 'btn.piocher': 'Trekken',
     'btn.indices': 'Tips', 'btn.magique': 'Magie', 'btn.trier': 'Sorteren',
     'btn.refaire': 'Terug', 'btn.fermer': 'Sluiten', 'btn.menu': 'Menu',
     'toast.refaireAstuce': '\u21ba {b} brengt u tot vóór uw trekbeurt.',
@@ -961,7 +961,7 @@
     'zone.nouvelleSuite': 'Nueva escalera', 'zone.nouveauGroupe': 'Nuevo trío',
     'zone.votreMain': 'Su mano — {n} {cartes}',
 
-    'btn.suivant': '¡Al siguiente!', 'btn.annuler': 'Deshacer', 'btn.piocher': 'Robar',
+    'btn.suivant': 'Al siguiente', 'btn.annuler': 'Deshacer', 'btn.piocher': 'Robar',
     'btn.indices': 'Pistas', 'btn.magique': 'Magia', 'btn.trier': 'Ordenar',
     'btn.refaire': 'Rehacer', 'btn.fermer': 'Cerrar', 'btn.menu': 'Menú',
     'toast.refaireAstuce': '\u21ba {b} vuelve a antes de robar.',
