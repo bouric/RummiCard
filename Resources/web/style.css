@@ -657,10 +657,16 @@ header .brand span { color: var(--gold); }
   header .brand, #meldpill { display: none; }
   .pill { padding: 4px 9px; font-size: 11.5px; }
   .iconbtn { width: 28px; height: 28px; font-size: 13px; }
-  #hints .lbl, #auto .lbl, #sort .lbl, #rewind .lbl { display: none; }
+  /* « Refaire » n'est plus un bouton secondaire : il partage son emplacement
+     avec « Annuler » comme « Au suivant » avec « Piocher », et les deux
+     faces d'un même bouton doivent porter le même genre d'étiquette. */
+  #hints .lbl, #auto .lbl, #sort .lbl { display: none; }
 
   .btn { padding: 8px 11px; font-size: 14px; }
-  #bar { gap: 6px; }
+  /* Un pixel manquait à l'espagnol — « Al siguiente » et « Deshacer » sont
+     les deux plus longs libellés des six langues. Quatre écarts resserrés
+     d'un pixel suffisent, et aucune cible du doigt n'y perd. */
+  #bar { gap: 5px; }
   /* Table pleine : chaque combinaison paie son rembourrage et l'écart qui la
      sépare de la suivante. Sur un téléphone, ces quelques pixels par rangée
      sont ce qui sépare une table entière d'une table qui défile. */
@@ -852,4 +858,22 @@ header .brand span { color: var(--gold); }
   border-radius: 10px; border: 1px solid var(--stroke); background: rgba(0, 0, 0, .3);
   color: var(--dim); font-family: ui-monospace, Menlo, monospace; font-size: 10.5px;
   line-height: 1.45; resize: vertical; -webkit-user-select: text; user-select: text;
+}
+
+/* Sous 380 px, les deux faces du second bouton rendent leur libellé : la
+   rangée n'a plus la place. C'est une règle de largeur et non une mesure —
+   mesurée, la décision aurait changé selon la face affichée, et le libellé
+   serait apparu puis disparu au fil de la partie. Placée en fin de feuille
+   pour l'emporter sur le bloc des 620 px, à spécificité égale.
+   Le premier bouton, lui, garde son libellé à toute largeur. */
+@media (max-width: 380px) {
+  #undo .lbl, #rewind .lbl { display: none; }
+}
+
+/* Et sur les 320 px d'un vieil iPhone, la rangée se resserre encore : même
+   réduite au seul libellé du premier bouton, elle débordait de 4 px en
+   anglais, en italien et en espagnol. */
+@media (max-width: 340px) {
+  .btn { padding: 8px 9px; }
+  #bar { gap: 4px; }
 }

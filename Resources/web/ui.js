@@ -1212,14 +1212,19 @@
     var jeu = $('#game'), bar = $('#bar');
     var btns = document.querySelectorAll('#bar .btn:not(.hidden)');
     if (btns.length < 2) return;
-    var compact = jeu.classList.contains('compact');
+    var compact = jeu.classList.contains('compact'), i;
     jeu.classList.remove('icones');
     jeu.classList.remove('compact');
-    /* On laisse le navigateur faire la somme : additionner les boutons a la
-       main obligeait a connaitre l'ecart de la rangee, qui change avec la
-       largeur de l'ecran — et une valeur en dur m'a fait conclure a un
-       debordement qui n'existait pas. */
-    var deborde = bar.scrollWidth > bar.clientWidth + 1;
+    /* On additionne les boutons, avec l'ecart lu sur la rangee et non ecrit en
+       dur — il change avec la largeur de l'ecran, et une valeur figee m'avait
+       fait conclure a un debordement qui n'existait pas.
+       « scrollWidth » ne convient pas ici : sur une boite qui ne defile pas il
+       rend simplement la largeur visible, et ne voit donc aucun debordement. */
+    var ecart = parseFloat(getComputedStyle(bar).gap) || 0;
+    var large = 0;
+    for (i = 0; i < btns.length; i++) large += btns[i].getBoundingClientRect().width;
+    large += (btns.length - 1) * ecart;
+    var deborde = large > bar.clientWidth + 1;
     if (compact) jeu.classList.add('compact');
     jeu.classList.toggle('icones', deborde);
   }
