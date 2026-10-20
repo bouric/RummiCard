@@ -2637,7 +2637,10 @@
 
     var board = game.boardCards();
     var res = chrono('magicien', function () {
-      return Solver.solve(board, game.human().hand, { objective: 'sum', mustUse: [carte] });
+      /* Main reduite, carte imposee : le doigt est pose, la reponse doit
+         venir tout de suite. */
+      var pool = AI.reduirePool(board, game.human().hand, [carte]);
+      return Solver.solve(board, pool, { objective: 'sum', mustUse: [carte] });
     });
     var ids = ensembleMontre(res, carte);
     /* Aucune combinaison possible : la carte reste seule en lumiere, et son

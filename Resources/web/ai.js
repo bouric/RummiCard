@@ -33,6 +33,115 @@
     return out;
   }
 
+
+  /* ---- Reduction du champ de recherche -----------------------------
+     Le solveur est exact, et son cout grimpe avec le volume de la main :
+     mesure sur une table de 57 cartes, 50 ms pour 20 cartes en main,
+     790 ms pour 34 — et les indices relancent ce calcul a chaque repeint.
+     On ne lui presente donc pas toujours la main entiere.
+
+     Premier tri, qui ne perd rien : toutes les cartes que le solveur peut
+     voir sont la, table et main reunies. Une carte qui n'a ni trois rangs
+     consecutifs disponibles dans sa couleur, ni deux comparses de son rang
+     dans d'autres couleurs, n'entre dans aucune combinaison valide — ni
+     telle quelle, ni apres le plus grand des remaniements. L'ecarter ne
+     change pas le resultat, et fait gagner du temps a chaque appel.
+
+     Second tri, seulement si la main reste trop fournie : on garde les
+     mieux entourees, les plus fortes d'abord. La, l'indice devient moins
+     ambitieux — il reste juste, il n'est plus forcement le meilleur. Mieux
+     vaut un bon coup tout de suite qu'un coup parfait une seconde plus
+     tard. Les cartes imposees par l'appelant ne sont jamais ecartees.
+
+     Le plafond depend aussi de la table, parce que le cout depend des deux.
+     Mesure sur ce Mac, en millisecondes, pour une recherche a l'objectif
+     « points » :
+
+         table \ main      14     18     22     26     30
+              46            3      4      6      8     18
+              50            3      5     15     27    170
+              60           11     23     48    235    339
+
+     D'ou les deux seuils ci-dessous : vingt-deux cartes d'ordinaire,
+     dix-huit quand la table en porte plus de cinquante. En jeu normal la
+     main en compte quatorze et rien n'est ecarte. */
+  var POOL_MAX = 22;
+  var POOL_MAX_DENSE = 18;
+  var TABLE_DENSE = 50;
+
+  function reduirePool(board, pool, mustUse) {
+    var i, j, c;
+
+    /* Combien d'exemplaires de chaque couleur et de chaque rang, table et
+       main confondues. L'As y compte deux fois, en 1 et en 14 : il peut
+       ouvrir une suite comme suivre le Roi. */
+    var vus = [];
+    for (i = 0; i < 4; i++) vus.push([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    function compter(cs) {
+      for (var k = 0; k < cs.length; k++) {
+        vus[cs[k].suit][cs[k].rank]++;
+        if (cs[k].rank === 1) vus[cs[k].suit][14]++;
+      }
+    }
+    compter(board);
+    compter(pool);
+    function dispo(s, n) { return n >= 1 && n <= 14 ? vus[s][n] : 0; }
+
+    /* Une suite de trois rangs consecutifs qui la contienne, ou un groupe
+       de trois couleurs a son rang : faute des deux, la carte est injouable. */
+    function utile(s, p) {
+      var d, comparses = 0, o;
+      for (d = p - 2; d <= p; d++) {
+        if (d < 1 || d + 2 > 14) continue;
+        if (dispo(s, d) && dispo(s, d + 1) && dispo(s, d + 2)) return true;
+      }
+      for (o = 0; o < 4; o++) if (o !== s && dispo(o, p)) comparses++;
+      return comparses >= 2;
+    }
+
+    /* Ses partenaires possibles : les voisines de sa couleur, les comparses
+       de son rang. C'est ce qui departage quand il faut plafonner. */
+    function entourage(s, p) {
+      var n = dispo(s, p - 2) + dispo(s, p - 1) + dispo(s, p + 1) + dispo(s, p + 2);
+      for (var o = 0; o < 4; o++) if (o !== s && dispo(o, p)) n++;
+      return n;
+    }
+
+    var impose = Object.create(null), nImposees = 0;
+    for (i = 0; i < (mustUse || []).length; i++) {
+      if (!impose[mustUse[i].id]) nImposees++;
+      impose[mustUse[i].id] = true;
+    }
+
+    var gardees = [];
+    for (i = 0; i < pool.length; i++) {
+      c = pool[i];
+      var places = c.rank === 1 ? [1, 14] : [c.rank];   // l'As a deux places
+      var forcee = !!impose[c.id], bonne = forcee, mieuxEntouree = -1;
+      for (j = 0; j < places.length; j++) {
+        if (!bonne && utile(c.suit, places[j])) bonne = true;
+        var e = entourage(c.suit, places[j]);
+        if (e > mieuxEntouree) mieuxEntouree = e;
+      }
+      if (bonne) {
+        gardees.push({ carte: c, forcee: forcee, entouree: mieuxEntouree,
+                       points: Engine.valeur(c) });
+      }
+    }
+
+    var plafond = Math.max(board.length > TABLE_DENSE ? POOL_MAX_DENSE : POOL_MAX,
+                           nImposees);
+    if (gardees.length > plafond) {
+      gardees.sort(function (a, b) {
+        if (a.forcee !== b.forcee) return a.forcee ? -1 : 1;
+        if (a.entouree !== b.entouree) return b.entouree - a.entouree;
+        return b.points - a.points;
+      });
+      gardees.length = plafond;
+    }
+    return gardees.map(function (g) { return g.carte; });
+  }
+
   /**
    * Meilleure répartition de la table : le maximum de cartes posées, en
    * respectant la règle d'ouverture — sur une table vide, la partie doit
@@ -49,6 +158,7 @@
   function bestPartition(board, pool, mustUse, opening) {
     var forced = mustUse || [];
     if (opening === undefined) opening = board.length === 0;
+    pool = reduirePool(board, pool, forced);
     var r = Solver.solve(board, pool, { objective: 'sum', mustUse: forced });
     if (!opening || !r || !r.count || hasRun(r.sets)) return r;
 
@@ -180,6 +290,7 @@
 
   root.AI = {
     bestPartition: bestPartition,
+    reduirePool: reduirePool,
     findBestPlay: findBestPlay,
     applyPlay: applyPlay,
     playAITurn: playAITurn,
