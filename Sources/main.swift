@@ -32,6 +32,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
     static let info = Bundle.main.infoDictionary ?? [:]
     static let version = info["CFBundleShortVersionString"] as? String ?? "—"
     static let buildDate = info["RCBuildDate"] as? String ?? "—"
+    // Le numéro de publication du web, posé par build.sh : l'app n'a pas
+    // de service worker pour le lire elle-même.
+    static let cacheVersion = info["RCCacheVersion"] as? String ?? ""
     static let copyright = info["NSHumanReadableCopyright"] as? String ?? ""
     static let prefsKey = "RCPreferences"
     static let fond = NSColor(calibratedRed: 0.04, green: 0.06, blue: 0.09, alpha: 1)
@@ -60,6 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKNavigationDelegate, 
         // réécrire — devenait du code exécuté au chargement de la page.
         let stamp = "window.APP_VERSION=\(jsLiteral(Self.version));" +
                     "window.APP_BUILD=\(jsLiteral(Self.buildDate));" +
+                    "window.APP_CACHE=\(jsLiteral(Self.cacheVersion));" +
                     "window.APP_COPYRIGHT=\(jsLiteral(Self.copyright));" +
                     "try{window.APP_PREFS=JSON.parse(\(jsLiteral(saved)));}" +
                     "catch(e){window.APP_PREFS=null;}"

@@ -14,6 +14,13 @@ BUILD_VERSION="$(date '+%Y.%m.%d.%H%M')"
 BUILD_DATE="$(date '+%d/%m/%Y à %H:%M')"
 # (&amp; : le plist est du XML)
 COPYRIGHT="© $(date '+%Y') Richard Boulais &amp; Claude"
+# Le numéro de publication du service worker, lu dans sw.js. C'est celui que
+# le web affiche en pied de page ; l'app native n'a pas de service worker et
+# ne peut pas le lire elle-même, alors on le lui pose dans le bundle. Les deux
+# appareils montrent dès lors le même numéro, et un coup d'œil suffit à savoir
+# s'ils tournent sur le même code.
+CACHE_VERSION="$(sed -n "s/^var CACHE = 'rummicard-\(.*\)';\$/\1/p" Resources/web/sw.js)"
+[ -n "$CACHE_VERSION" ] || echo "  (numéro de publication introuvable dans sw.js — le pied de page s'en passera)"
 echo "▸ Nettoyage"
 rm -rf "$APP" build/RummiCard.iconset build/icons
 mkdir -p build/icons build/RummiCard.iconset
@@ -56,6 +63,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleShortVersionString</key><string>${BUILD_VERSION}</string>
   <key>CFBundleVersion</key><string>${BUILD_VERSION}</string>
   <key>RCBuildDate</key><string>${BUILD_DATE}</string>
+  <key>RCCacheVersion</key><string>${CACHE_VERSION}</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.card-games</string>
   <key>LSMinimumSystemVersion</key><string>13.0</string>
   <key>NSHighResolutionCapable</key><true/>

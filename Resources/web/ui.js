@@ -3467,7 +3467,14 @@
     var c = $('#copyright');
     if (c) c.textContent = '\u00a0\u00b7\u00a0' + COPYRIGHT;
     if (!v) return;
-    if (window.APP_BUILD) { ecrireVersion(TR('accueil.versionDu', { d: window.APP_BUILD })); return; }
+    if (window.APP_BUILD) {
+      /* L'app native n'a pas de service worker : son numero de publication est
+         pose dans le bundle par build.sh, qui le lit dans sw.js. On l'ecrit
+         comme sur le web — meme numero des deux cotes, comparaison immediate. */
+      var vApp = window.APP_CACHE ? '\u00a0\u00b7\u00a0v' + window.APP_CACHE : '';
+      ecrireVersion(TR('accueil.versionDu', { d: window.APP_BUILD }) + vApp);
+      return;
+    }
     /* Hors de l'app macOS, la date de publication fait l'affaire — mais celle
        de la page ne bouge que si index.html change, et une correction portee
        a ui.js passait inapercue : sur l'iPad on croyait tourner sur du neuf
