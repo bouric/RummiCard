@@ -115,6 +115,12 @@ export class Partie {
         r = salon.rejoindre(m.jeton, m.nom);
         if (!r.ok) return this.envoyer(ws, { t: 'refus', cle: r.cle });
         ws.serializeAttachment({ siege: r.siege, jeton: m.jeton });
+        /* Une relève se dit : sans cela, un adversaire virtuel changerait de
+           nom au milieu d'une partie sans que personne sache pourquoi. */
+        if (r.remplace) {
+          this.avis = { t: 'avis', cle: 'res.aPrisLaPlace',
+                        nom: salon.sieges[r.siege].nom, remplace: r.remplace };
+        }
         break;
 
       case 'demarrer':
@@ -162,6 +168,11 @@ export class Partie {
 
     await this.enregistrer();
     this.diffuser();
+    if (this.avis) {
+      const avis = this.avis;
+      this.avis = null;
+      for (const fil of this.ctx.getWebSockets()) this.envoyer(fil, avis);
+    }
   }
 
   async webSocketClose(ws) {

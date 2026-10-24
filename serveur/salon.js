@@ -71,16 +71,30 @@ export class Salon {
       this.sieges[deja].connecte = true;
       return { ok: true, siege: deja, reprise: true };
     }
-    if (this.commencee) return { ok: false, cle: 'res.partieCommencee' };
     const libre = this.sieges.findIndex((s) => !s.jeton);
     if (libre < 0) return { ok: false, cle: 'res.salonComplet' };
+    if (this.abandon) return { ok: false, cle: 'res.partieAbandonnee' };
+
+    /* Partie déjà commencée : un siège sans jeton est tenu par un adversaire
+       virtuel, et rien n'empêche un ami muni du code de prendre sa place. Il
+       hérite de la main telle qu'elle est — c'est bien une relève, pas une
+       nouvelle donne.
+       C'est sans risque pour le tour en cours : la boucle des virtuels ne
+       s'arrête jamais sur eux, elle les joue tous d'affilée jusqu'à rendre
+       la main à une personne. Au moment où quelqu'un s'assied, ce n'est donc
+       jamais le tour du siège qu'il prend. */
+    const remplace = this.commencee ? this.partie.players[libre].name : null;
     this.sieges[libre] = {
       jeton,
       nom: this.nomPropre(nom, libre),
       humain: true,
       connecte: true
     };
-    return { ok: true, siege: libre, reprise: false };
+    if (this.commencee) {
+      this.partie.players[libre].human = true;
+      this.partie.players[libre].name = this.sieges[libre].nom;
+    }
+    return { ok: true, siege: libre, reprise: false, remplace: remplace };
   }
 
   /* Un nom venu du réseau est une donnée, pas du texte sûr : on le borne

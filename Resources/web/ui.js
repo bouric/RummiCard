@@ -3122,6 +3122,9 @@
     RESEAU.onEtat = appliquerEtat;
     RESEAU.onRefus = refusDuServeur;
     RESEAU.onConnexion = etatConnexion;
+    RESEAU.onAvis = function (m) {
+      info(TR(m.cle, { nom: m.nom || '', remplace: m.remplace || '' }), 'good');
+    };
   }
 
   function rejoindrePartie(code, places) {

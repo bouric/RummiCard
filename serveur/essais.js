@@ -305,9 +305,16 @@ section('4. Reprise');
     'le jeton rend sa place, et son nom', salon.sieges[0].nom);
   verifier(salon.sieges[0].nom === 'Richard', '… sans se laisser renommer');
 
-  const tiers = salon.rejoindre('jeton-C', 'Intrus');
-  verifier(!tiers.ok && tiers.cle === 'res.partieCommencee',
-    'on n’entre pas dans une partie commencée', tiers.cle);
+  /* On entre désormais dans une partie commencée s'il reste un adversaire
+     virtuel à relever — c'est l'objet de la section suivante. Ici le salon
+     compte trois places pour deux humains, donc un virtuel : le tiers s'y
+     assied. Quand il n'en reste plus, la partie est complète. */
+  const tiers = salon.rejoindre('jeton-C', 'Tiers');
+  verifier(tiers.ok && tiers.siege === 2,
+    'un tiers relève le virtuel restant', tiers.ok ? '' : tiers.cle);
+  const quatrieme = salon.rejoindre('jeton-D', 'Quatrième');
+  verifier(!quatrieme.ok && quatrieme.cle === 'res.salonComplet',
+    'mais plus personne ensuite', quatrieme.cle);
 }
 
 /* ---- 4 bis. Un joueur qui s'en va ----------------------------------- */
@@ -428,6 +435,53 @@ section('4 ter. Partir, ce n’est pas se déconnecter');
     const r = salon.partir('jeton-inconnu');
     verifier(!r.ok, 'un jeton inconnu ne peut pas arrêter la partie des autres', r.cle);
   }
+}
+
+/* ---- 4 quater. Relever un adversaire virtuel -------------------------- */
+
+section('4 quater. Un ami prend la place d’un virtuel');
+{
+  const salon = new Salon({ places: 3 });
+  salon.rejoindre('jeton-A', 'Richard');
+  salon.demarrer();
+  verifier(salon.sieges[1].humain === false && salon.sieges[2].humain === false,
+    'deux sièges sont tenus par des virtuels');
+
+  const avant = salon.partie.players[1].name;
+  const mains = salon.partie.players.map((p) => p.hand.length);
+
+  const r = salon.rejoindre('jeton-B', 'Ami');
+  verifier(r.ok && r.siege === 1, 'un ami muni du code s’assied', r.ok ? '' : r.cle);
+  verifier(r.remplace === avant, '… à la place du virtuel, qui est nommé', r.remplace);
+  verifier(salon.sieges[1].humain === true && salon.partie.players[1].human === true,
+    '… et le siège devient humain des deux côtés');
+  verifier(salon.partie.players[1].name === 'Ami', '… sous son propre nom');
+  verifier(salon.partie.players[1].hand.length === mains[1],
+    '… en héritant de la main telle qu’elle est : c’est une relève',
+    salon.partie.players[1].hand.length + ' au lieu de ' + mains[1]);
+
+  /* Et il voit sa main, pas celle d'un autre. */
+  const etat = salon.etatPour(1);
+  verifier(etat.main.length === mains[1], 'il reçoit sa main en entier');
+  const interdites = salon.partie.players[0].hand.map((c) => c.id);
+  const texte = JSON.stringify(etat);
+  verifier(!interdites.some((id) => texte.includes('"' + id + '"')),
+    '… et pas celle des autres');
+
+  /* Le dernier siège reste prenable, puis la partie est complète. */
+  const c = salon.rejoindre('jeton-C', 'Autre');
+  verifier(c.ok && c.siege === 2, 'le dernier virtuel peut être relevé aussi');
+  const d = salon.rejoindre('jeton-D', 'Trop tard');
+  verifier(!d.ok && d.cle === 'res.salonComplet', 'une fois pleine, la partie se ferme', d.cle);
+
+  /* Et l'on ne relève personne dans une partie abandonnée. */
+  const mort = new Salon({ places: 3 });
+  mort.rejoindre('jeton-A', 'Richard');
+  mort.demarrer();
+  mort.partir('jeton-A');
+  const refus = mort.rejoindre('jeton-Z', 'Tard');
+  verifier(!refus.ok && refus.cle === 'res.partieAbandonnee',
+    'on ne s’assied pas dans une partie abandonnée', refus.cle);
 }
 
 /* ---- 5. Mise en veille et réveil -------------------------------------- */

@@ -98,6 +98,9 @@
       try { m = JSON.parse(e.data); } catch (err) { return; }
       if (!m || typeof m.t !== 'string') return;
       if (m.t === 'refus') { if (RESEAU.onRefus) RESEAU.onRefus(m); return; }
+      /* Un avis n'est pas un état : il ne décrit pas la partie, il raconte
+         ce qui vient de s'y passer. Il passe donc à côté. */
+      if (m.t === 'avis') { if (RESEAU.onAvis) RESEAU.onAvis(m); return; }
       if (RESEAU.onEtat) RESEAU.onEtat(m);
     };
 
@@ -122,6 +125,7 @@
   var RESEAU = {
     onEtat: null,       // function (etat)
     onRefus: null,      // function ({cle, cartes})
+    onAvis: null,       // function ({cle, ...}) — ce qui vient d'arriver
     onConnexion: null,  // function (etat, cle)
 
     /** Y a-t-il de quoi jouer en ligne depuis cet appareil ? */

@@ -216,11 +216,20 @@ function traiter(chambre, prise, brut) {
   }
   let r;
   switch (m.t) {
-    case 'rejoindre':
+    case 'rejoindre': {
       r = salon.rejoindre(m.jeton, m.nom);
       if (!r.ok) return envoyer(prise, { t: 'refus', cle: r.cle });
       prise.moi = { siege: r.siege, jeton: m.jeton };
+      if (r.remplace) {
+        retenir();
+        diffuser(chambre);
+        const avis = { t: 'avis', cle: 'res.aPrisLaPlace',
+                       nom: salon.sieges[r.siege].nom, remplace: r.remplace };
+        for (const p2 of chambre.prises) envoyer(p2, avis);
+        return;
+      }
       break;
+    }
     case 'demarrer':
       if (moi.siege !== 0) return envoyer(prise, { t: 'refus', cle: 'res.pasHote' });
       r = salon.demarrer();
