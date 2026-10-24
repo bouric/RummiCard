@@ -1382,7 +1382,12 @@
            avant d'avoir ouvert soi-meme. Ici la seule contrainte porte sur la
            table vide, et elle s'impose a qui joue a ce moment-la. Les mots
            annoncaient donc une regle que le jeu n'applique pas. */
-        '<div class="who"><div class="nm">' + echapper(p.name) + '</div><div class="sub">' +
+        /* En réseau, les noms sont ceux que chacun s'est donné, et rien ne
+           dirait lequel est le vôtre : l'étoile seule ne suffit pas quand on
+           joue sur deux appareils à la fois. On le dit en toutes lettres. */
+        '<div class="who"><div class="nm">' + echapper(p.name) +
+        (reseau && p.human ? ' <span class="moi">(' + TR('joueur.vous') + ')</span>' : '') +
+        '</div><div class="sub">' +
         p.hand.length + ' ' + NC(p.hand.length) +
         '</div></div><div class="fan">' + fan + '</div>';
       box.appendChild(d);
@@ -2808,6 +2813,14 @@
 
     if (neuve) {
       game = new E.Game(joueurs - 1);
+      /* En solo, « vous » est toujours le joueur 0, et Game.prototype.human
+         le dit en dur. En réseau, « vous » est le siège que le serveur a
+         donné — et ce n'est le 0 que pour celui qui a ouvert la partie. Sans
+         cette correction, le second joueur voyait la main du premier, faite
+         de cartes factices : « carte undefined ». Les dix-neuf endroits de
+         ce fichier qui appellent game.human() se trouvent corrigés d'un
+         coup, plutôt qu'un par un. */
+      game.human = function () { return this.players[reseau.siege]; };
       match = null;              // une manche à la fois en réseau
       history = [];
       cartesConnues = {};
@@ -2986,6 +2999,9 @@
     if (!code) {
       /* Pas encore connecté : on choisit d'ouvrir ou de rejoindre. */
       html += '<p>' + TR('res.explique') + '</p>' +
+        '<div class="row"><input id="amisNom" class="codein nomin" maxlength="20" ' +
+        'autocomplete="nickname" spellcheck="false" value="' + echapper(prefs.nom || '') +
+        '" placeholder="' + TR('res.votreNom') + '"></div>' +
         '<div class="row"><button class="cta" id="amisOuvrir" style="flex:1">' +
         TR('res.ouvrir') + '</button></div>' +
         '<p class="resou">' + TR('res.ou') + '</p>' +
@@ -3023,8 +3039,14 @@
     ov.innerHTML = html;
     ov.classList.remove('hidden');
 
+    function retenirNom() {
+      var e = $('#amisNom');
+      prefs.nom = e ? (e.value || '').trim().slice(0, 20) : '';
+      savePrefs();
+    }
     if ($('#amisOuvrir')) {
       $('#amisOuvrir').onclick = function () {
+        retenirNom();
         rejoindrePartie(RESEAU.codeNeuf(), nVirtual + 1);
       };
     }
@@ -3032,6 +3054,7 @@
       $('#amisRejoindre').onclick = function () {
         var v = ($('#amisCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
         if (v.length < 4) { info(TR('res.codeInvalide'), 'bad'); return; }
+        retenirNom();
         rejoindrePartie(v, nVirtual + 1);
       };
     }

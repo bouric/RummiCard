@@ -210,6 +210,7 @@
     'reg.raccourcis': 'Raccourcis — Entrée : au suivant · ⌫ : annuler · P : piocher · M maintenu : magicien · T : changer le tri · I : indices · R : refaire',
 
     /* ---- Jouer en réseau ---- */
+    'res.votreNom': 'Votre nom',
     'res.titre': 'Jouer entre amis',
     'res.explique': 'Ouvrez une partie et envoyez le code à vos amis, ou entrez le code qu’on vous a donné.',
     'res.ouvrir': 'Ouvrir une partie',
@@ -421,6 +422,7 @@
     'reg.raccourcis': 'Shortcuts — Enter: next player · ⌫: undo · P: draw · hold M: wizard · T: change sorting · I: hints · R: rewind',
 
     /* ---- Jouer en réseau ---- */
+    'res.votreNom': 'Your name',
     'res.titre': 'Play with friends',
     'res.explique': 'Open a game and send the code to your friends, or enter the code you were given.',
     'res.ouvrir': 'Open a game',
@@ -632,6 +634,7 @@
     'reg.raccourcis': 'Tasten — Eingabe: weiter · ⌫: zurück · P: ziehen · M: Magie · T: Sortierung wechseln · I: Hinweise · R: Zug zurück',
 
     /* ---- Jouer en réseau ---- */
+    'res.votreNom': 'Ihr Name',
     'res.titre': 'Mit Freunden spielen',
     'res.explique': 'Eröffnen Sie eine Partie und schicken Sie den Code an Ihre Freunde, oder geben Sie den Code ein, den Sie bekommen haben.',
     'res.ouvrir': 'Partie eröffnen',
@@ -843,6 +846,7 @@
     'reg.raccourcis': 'Scorciatoie — Invio: al prossimo · ⌫: annulla · P: pesca · M: magia · T: cambia ordine · I: suggerimenti · R: rigioca',
 
     /* ---- Jouer en réseau ---- */
+    'res.votreNom': 'Il suo nome',
     'res.titre': 'Giocare tra amici',
     'res.explique': 'Apra una partita e mandi il codice ai suoi amici, oppure inserisca il codice che le hanno dato.',
     'res.ouvrir': 'Aprire una partita',
@@ -1054,6 +1058,7 @@
     'reg.raccourcis': 'Sneltoetsen — Enter: volgende · ⌫: ongedaan · P: trekken · M: magie · T: ordening wisselen · I: tips · R: terug',
 
     /* ---- Jouer en réseau ---- */
+    'res.votreNom': 'Uw naam',
     'res.titre': 'Met vrienden spelen',
     'res.explique': 'Open een spel en stuur de code naar uw vrienden, of voer de code in die u hebt gekregen.',
     'res.ouvrir': 'Een spel openen',
@@ -1265,6 +1270,7 @@
     'reg.raccourcis': 'Atajos — Intro: al siguiente · ⌫: deshacer · P: robar · M: magia · T: cambiar el orden · I: pistas · R: rehacer',
 
     /* ---- Jouer en réseau ---- */
+    'res.votreNom': 'Su nombre',
     'res.titre': 'Jugar entre amigos',
     'res.explique': 'Abra una partida y envíe el código a sus amigos, o introduzca el código que le han dado.',
     'res.ouvrir': 'Abrir una partida',

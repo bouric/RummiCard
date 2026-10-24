@@ -922,3 +922,16 @@ header .brand span { color: var(--gold); }
   margin-bottom: 5px;
 }
 .joueursalon .hors { opacity: .55; }
+
+/* Le nom qu'on se donne pour jouer entre amis, et la mention qui dit
+   lequel des joueurs est vous — l'étoile seule ne suffit pas quand on
+   joue sur deux appareils à la fois. */
+.nomin {
+  letter-spacing: normal;
+  text-transform: none;
+  font-family: inherit;
+}
+.opp .moi {
+  opacity: .55;
+  font-weight: 400;
+}
