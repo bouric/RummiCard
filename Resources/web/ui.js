@@ -1371,7 +1371,9 @@
       var p = game.players[i];
       var d = document.createElement('div');
       var active = (i === game.current) && !game.finished;
-      d.className = 'opp' + (active ? ' active' : '') + (active && !p.human && thinking ? ' thinking' : '');
+      d.className = 'opp' + (active ? ' active' : '') +
+        (p.absent ? ' absent' : '') +
+        (active && !p.human && thinking ? ' thinking' : '');
       var fan = '';
       var shown = Math.min(p.hand.length, 6);
       for (var k = 0; k < shown; k++) fan += '<i></i>';
@@ -1383,6 +1385,7 @@
            table vide, et elle s'impose a qui joue a ce moment-la. Les mots
            annoncaient donc une regle que le jeu n'applique pas. */
         '<div class="who"><div class="nm">' + echapper(p.name) + '</div><div class="sub">' +
+        (p.absent ? TR('res.absent') + ' \u00b7 ' : '') +
         p.hand.length + ' ' + NC(p.hand.length) +
         '</div></div><div class="fan">' + fan + '</div>';
       box.appendChild(d);
@@ -1411,7 +1414,8 @@
       var p = game.players[i];
       var actif = (i === game.current) && !game.finished;
       var d = document.createElement('div');
-      d.className = 'mini' + (actif ? ' actif' : '') + (actif && !p.human && thinking ? ' pense' : '');
+      d.className = 'mini' + (actif ? ' actif' : '') + (p.absent ? ' absent' : '') +
+        (actif && !p.human && thinking ? ' pense' : '');
       /* L'etoile marque votre place ; pour les autres le nom suffit, et
          l'initiale en plus rognait ce nom sur un telephone. */
       d.innerHTML = (p.human ? '<b>\u2605</b>' : '') +
@@ -2859,6 +2863,11 @@
          trouve juste sans qu'on y touche. */
       game.players[i].human = (i === etat.vous);
       game.players[i].melded = !!etat.melded[i];
+      /* Absent : une personne qui a quitté son siège, par opposition à un
+         siège que personne n'a pris — celui-là est tenu par un adversaire
+         virtuel et n'a rien d'anormal. */
+      game.players[i].absent = !!(etat.humains && etat.humains[i] &&
+                                  etat.connectes && !etat.connectes[i]);
     }
 
     var sets = etat.board.map(function (ids) { return ids.map(carteDe); });
@@ -2888,6 +2897,7 @@
     turnStack = [];
     piochee = null;
     busy = false;
+    surveillerAbsent();
 
     if (etat.fini) {
       /* La partie est jouée : les mains peuvent enfin être dites, et il le
@@ -2906,6 +2916,41 @@
 
     render();
     updateBar();
+  }
+
+  /* Un joueur parti arrête tout le monde : les autres attendent un coup qui
+     ne viendra pas. On redemande donc au serveur de passer son tour, et
+     c'est lui qui juge — il refuse tant que son délai de grâce court, de
+     sorte qu'un tunnel ou un téléphone endormi ne coûte pas un tour.
+     Redemander plutôt que compter nous-mêmes : l'horloge qui décide doit
+     être celle du serveur, pas celle du plus impatient. */
+  var RELANCE_MS = 10000;
+  var relanceTimer = null;
+  var absenceDite = -1;
+
+  function surveillerAbsent() {
+    clearInterval(relanceTimer);
+    relanceTimer = null;
+    if (!reseau || !game || game.finished) { absenceDite = -1; return; }
+    if (game.current === reseau.siege) { absenceDite = -1; return; }
+
+    var qui = game.players[game.current];
+    if (qui && qui.absent && absenceDite !== game.current) {
+      absenceDite = game.current;
+      info(TR('res.attendRetour', { nom: qui.name }));
+    }
+
+    /* On redemande dès que l'on attend quelqu'un, sans attendre de savoir
+       qu'il est parti — et c'est tout le point. Un fil peut mourir sans que
+       le serveur l'apprenne : un téléphone qui s'endort ne dit pas au
+       revoir, et le serveur ne constate l'absence qu'en recevant un
+       message. Ne redemander qu'une fois l'absence connue, c'était attendre
+       une nouvelle que personne n'allait donner — chacun attendait l'autre.
+       Le coût est nul : le serveur refuse sans bruit tant que son délai de
+       grâce court, et les messages entrants se comptent vingt pour un. */
+    relanceTimer = setInterval(function () {
+      RESEAU.envoyer({ t: 'relancer' });
+    }, RELANCE_MS);
   }
 
   /** Notre tour, tel qu'on le propose au serveur. */
@@ -2983,6 +3028,9 @@
   }
 
   function quitterReseau() {
+    clearInterval(relanceTimer);
+    relanceTimer = null;
+    absenceDite = -1;
     RESEAU.fermer();
     reseau = null;
     cartesConnues = {};

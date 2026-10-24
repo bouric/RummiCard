@@ -931,3 +931,8 @@ header .brand span { color: var(--gold); }
   text-transform: none;
   font-family: inherit;
 }
+
+/* Un joueur qui a quitté la partie : on le montre éteint plutôt que de
+   l'effacer — sa place l'attend, et ses cartes aussi. */
+.opp.absent, .mini.absent { opacity: .45; }
+.opp.absent .av { border-style: dashed; }

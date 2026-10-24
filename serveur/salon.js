@@ -29,6 +29,12 @@ import { verifierTour } from './validation.js';
    large et borne le pire cas. */
 const TOURS_MAX = 1000;
 
+/* Combien de temps on attend un joueur parti avant de passer son tour.
+   Assez pour un tunnel, un téléphone qui s'endort ou un changement de
+   réseau ; pas assez pour que les autres se demandent si la partie est
+   morte. */
+const GRACE_ABSENCE = 45000;
+
 export class Salon {
   /**
    * @param {{places?: number, difficulte?: string}} options
@@ -100,9 +106,50 @@ export class Salon {
    * @param {Array<string>} jetons les jetons actuellement connectés
    */
   presence(jetons) {
+    const maintenant = Date.now();
     for (const s of this.sieges) {
       s.connecte = !!s.jeton && jetons.indexOf(s.jeton) >= 0;
+      if (s.connecte) {
+        s.depuis = null;
+      } else if (s.jeton && !s.depuis) {
+        /* On date la première fois qu'on CONSTATE l'absence, et non la
+           transition. La nuance a coûté un essai : quitter() met le siège à
+           « déconnecté » de son côté, si bien que la transition n'avait
+           déjà plus lieu quand presence() passait — le départ n'était
+           jamais daté, et le tour ne se passait jamais.
+           Dater ce qu'on constate est d'ailleurs plus juste : si le serveur
+           dormait, le délai de grâce doit courir depuis le moment où l'on
+           pouvait s'en apercevoir, pas depuis un départ que personne n'a vu. */
+        s.depuis = maintenant;
+      }
     }
+  }
+
+  /**
+   * Passer le tour d'un joueur parti.
+   *
+   * Sans cela, une déconnexion arrête tout le monde : les autres attendent
+   * un coup qui ne viendra pas, et rien à l'écran ne dit pourquoi.
+   *
+   * N'importe quel client peut le demander — c'est le serveur qui juge, sur
+   * sa propre horloge, et refuse tant que le délai de grâce court. Un
+   * téléphone qui s'endort ou un tunnel ne coûtent donc pas un tour.
+   *
+   * On **pioche** pour l'absent plutôt que de jouer sa main : perdre un tour
+   * est moins grave que se faire dépenser ses cartes par une machine, et il
+   * retrouvera son jeu tel qu'il l'a laissé, une carte de plus.
+   */
+  relancer(maintenant) {
+    if (!this.commencee || this.partie.finished) return { ok: false, cle: 'res.rienAPasser' };
+    const siege = this.partie.current;
+    const s = this.sieges[siege];
+    if (!s.humain || s.connecte) return { ok: false, cle: 'res.rienAPasser' };
+    if (!s.depuis || maintenant - s.depuis < GRACE_ABSENCE) {
+      return { ok: false, cle: 'res.encoreUnPeu' };
+    }
+    this.partie.draw();
+    this.terminerTour();
+    return { ok: true, siege: siege, nom: s.nom };
   }
 
   /* ---- Le départ ---------------------------------------------------- */

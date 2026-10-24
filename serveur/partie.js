@@ -134,6 +134,19 @@ export class Partie {
         if (!r.ok) return this.envoyer(ws, { t: 'refus', cle: r.cle });
         break;
 
+      case 'relancer':
+        /* Demande de passer le tour d'un absent. Le serveur juge sur sa
+           propre horloge, et refuse tant que le délai de grâce court.
+           Même refusée, la demande sert : elle fait constater la présence,
+           et le nouvel état l'apprend aux autres. C'est ainsi qu'une
+           déconnexion silencieuse finit par se voir. On n'enregistre que si
+           quelque chose a bougé — une écriture vaut une ligne facturée. */
+        this.salon.presence(this.jetonsConnectes());
+        r = salon.relancer(Date.now());
+        if (r.ok) await this.enregistrer();
+        this.diffuser();
+        return;
+
       default:
         return this.envoyer(ws, { t: 'refus', cle: 'res.messageInvalide' });
     }
@@ -169,14 +182,18 @@ export class Partie {
   }
 
   /** À chacun son état : ce n'est pas le même message pour tout le monde. */
-  diffuser() {
-    const fils = this.ctx.getWebSockets();
+  jetonsConnectes() {
     const jetons = [];
-    for (const ws of fils) {
+    for (const ws of this.ctx.getWebSockets()) {
       const moi = ws.deserializeAttachment();
       if (moi && moi.jeton) jetons.push(moi.jeton);
     }
-    this.salon.presence(jetons);
+    return jetons;
+  }
+
+  diffuser() {
+    const fils = this.ctx.getWebSockets();
+    this.salon.presence(this.jetonsConnectes());
     for (const ws of fils) {
       const moi = ws.deserializeAttachment();
       if (!moi || moi.siege < 0) continue;

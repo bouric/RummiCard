@@ -211,6 +211,9 @@
 
     /* ---- Jouer en réseau ---- */
     'res.votreNom': 'Votre nom',
+    'res.attendRetour': 'On attend le retour de {nom}…',
+    'res.rienAPasser': 'Il n’y a pas de tour à passer.',
+    'res.encoreUnPeu': 'On lui laisse encore un instant.',
     'res.titre': 'Jouer entre amis',
     'res.explique': 'Ouvrez une partie et envoyez le code à vos amis, ou entrez le code qu’on vous a donné.',
     'res.ouvrir': 'Ouvrir une partie',
@@ -423,6 +426,9 @@
 
     /* ---- Jouer en réseau ---- */
     'res.votreNom': 'Your name',
+    'res.attendRetour': 'Waiting for {nom} to come back…',
+    'res.rienAPasser': 'There is no turn to skip.',
+    'res.encoreUnPeu': 'Giving them a moment longer.',
     'res.titre': 'Play with friends',
     'res.explique': 'Open a game and send the code to your friends, or enter the code you were given.',
     'res.ouvrir': 'Open a game',
@@ -635,6 +641,9 @@
 
     /* ---- Jouer en réseau ---- */
     'res.votreNom': 'Ihr Name',
+    'res.attendRetour': 'Wir warten auf die Rückkehr von {nom}…',
+    'res.rienAPasser': 'Es gibt keinen Zug zu überspringen.',
+    'res.encoreUnPeu': 'Wir lassen ihm noch einen Augenblick.',
     'res.titre': 'Mit Freunden spielen',
     'res.explique': 'Eröffnen Sie eine Partie und schicken Sie den Code an Ihre Freunde, oder geben Sie den Code ein, den Sie bekommen haben.',
     'res.ouvrir': 'Partie eröffnen',
@@ -847,6 +856,9 @@
 
     /* ---- Jouer en réseau ---- */
     'res.votreNom': 'Il suo nome',
+    'res.attendRetour': 'Si aspetta il ritorno di {nom}…',
+    'res.rienAPasser': 'Non c’è nessun turno da saltare.',
+    'res.encoreUnPeu': 'Gli si lascia ancora un istante.',
     'res.titre': 'Giocare tra amici',
     'res.explique': 'Apra una partita e mandi il codice ai suoi amici, oppure inserisca il codice che le hanno dato.',
     'res.ouvrir': 'Aprire una partita',
@@ -1059,6 +1071,9 @@
 
     /* ---- Jouer en réseau ---- */
     'res.votreNom': 'Uw naam',
+    'res.attendRetour': 'We wachten tot {nom} terug is…',
+    'res.rienAPasser': 'Er is geen beurt om over te slaan.',
+    'res.encoreUnPeu': 'We geven hem nog even.',
     'res.titre': 'Met vrienden spelen',
     'res.explique': 'Open een spel en stuur de code naar uw vrienden, of voer de code in die u hebt gekregen.',
     'res.ouvrir': 'Een spel openen',
@@ -1271,6 +1286,9 @@
 
     /* ---- Jouer en réseau ---- */
     'res.votreNom': 'Su nombre',
+    'res.attendRetour': 'Se espera el regreso de {nom}…',
+    'res.rienAPasser': 'No hay ningún turno que saltar.',
+    'res.encoreUnPeu': 'Se le deja un instante más.',
     'res.titre': 'Jugar entre amigos',
     'res.explique': 'Abra una partida y envíe el código a sus amigos, o introduzca el código que le han dado.',
     'res.ouvrir': 'Abrir una partida',

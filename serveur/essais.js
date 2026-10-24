@@ -310,6 +310,68 @@ section('4. Reprise');
     'on n’entre pas dans une partie commencée', tiers.cle);
 }
 
+/* ---- 4 bis. Un joueur qui s'en va ----------------------------------- */
+
+section('4 bis. Quand un joueur quitte la partie');
+{
+  const salon = new Salon({ places: 3 });
+  salon.rejoindre('jeton-A', 'Richard');
+  salon.rejoindre('jeton-B', 'Ami');
+  salon.demarrer();
+
+  /* On amène la main au siège 1, puis il disparaît. */
+  while (salon.partie.current !== 1 && !salon.partie.finished) {
+    salon.piocher(salon.partie.current);
+  }
+  verifier(salon.partie.current === 1, 'la main est au siège qui va partir');
+
+  salon.presence(['jeton-A']);            // B a disparu
+  verifier(salon.sieges[1].connecte === false, 'son départ est vu');
+  verifier(typeof salon.sieges[1].depuis === 'number', '… et daté');
+
+  const avantMain = salon.partie.players[1].hand.length;
+  const tot = salon.relancer(Date.now());
+  verifier(!tot.ok && tot.cle === 'res.encoreUnPeu',
+    'on ne passe pas son tour tout de suite', tot.ok ? 'PASSÉ !' : tot.cle);
+  verifier(salon.partie.current === 1, '… la main lui reste');
+
+  /* Une minute plus tard, la partie ne doit plus attendre. */
+  const tard = salon.relancer(Date.now() + 60000);
+  verifier(tard.ok, 'après le délai, son tour est passé', tard.ok ? '' : tard.cle);
+  verifier(salon.partie.current !== 1 || salon.partie.finished,
+    '… et la main a bougé', 'siège ' + salon.partie.current);
+  verifier(salon.partie.players[1].hand.length === avantMain + 1,
+    '… il a pioché, sa main est intacte à une carte près',
+    salon.partie.players[1].hand.length + ' au lieu de ' + (avantMain + 1));
+
+  /* Le chemin qui avait échappé : quitter() marque le siège déconnecté de
+     son côté, sans dater. Si presence() ne datait que la transition, elle
+     n'avait déjà plus lieu, et le tour ne se passait jamais. */
+  {
+    const autre = new Salon({ places: 3 });
+    autre.rejoindre('jeton-A', 'Richard');
+    autre.rejoindre('jeton-B', 'Ami');
+    autre.demarrer();
+    while (autre.partie.current !== 1 && !autre.partie.finished) {
+      autre.piocher(autre.partie.current);
+    }
+    autre.quitter('jeton-B');                 // le fil tombe, sans date
+    verifier(!autre.sieges[1].depuis, 'quitter() ne date pas, c’est son droit');
+    autre.presence(['jeton-A']);              // le serveur constate
+    verifier(typeof autre.sieges[1].depuis === 'number',
+      'le constat date l’absence, même sans transition');
+    const apres = autre.relancer(Date.now() + 60000);
+    verifier(apres.ok, 'et le tour finit par se passer', apres.ok ? '' : apres.cle);
+  }
+
+  /* Et l'on ne passe pas le tour de quelqu'un qui est là. */
+  salon.presence(['jeton-A', 'jeton-B']);
+  verifier(salon.sieges[1].depuis === null, 'son retour efface la date');
+  const present = salon.relancer(Date.now() + 60000);
+  verifier(!present.ok, 'on ne passe pas le tour d’un joueur présent',
+    present.ok ? 'PASSÉ !' : present.cle);
+}
+
 /* ---- 5. Mise en veille et réveil -------------------------------------- */
 
 section('5. Mise en veille');
