@@ -2815,7 +2815,15 @@
   /** Tout ce que le serveur dit, posé dans la partie locale. */
   function appliquerEtat(etat) {
     attendreServeur(false);
-    if (etat.t === 'salon') { montrerAmis(etat); return; }
+    if (etat.t === 'salon') {
+      /* Gardé : rouvrir le panneau ne doit pas demander au serveur de
+         redire ce qu'il vient de dire. Sans cela, un second « Jouer entre
+         amis » affichait le code sans la liste des joueurs ni le bouton
+         pour commencer — un cul-de-sac. */
+      reseau.dernierSalon = etat;
+      montrerAmis(etat);
+      return;
+    }
 
     var joueurs = etat.noms.length;
     var neuve = !game || !reseau || reseau.siege !== etat.vous ||
@@ -3032,7 +3040,7 @@
     relanceTimer = null;
     absenceDite = -1;
     RESEAU.fermer();
-    reseau = null;
+    reseau = null;                // le souvenir du salon s'en va avec lui
     cartesConnues = {};
     attendreServeur(false);
   }
@@ -3055,6 +3063,7 @@
   function montrerAmis(salon) {
     var ov = $('#overlay');
     var code = RESEAU.codePartie();
+    if (!salon && reseau) salon = reseau.dernierSalon || null;
     var html = '<div class="panel"><h2>' + TR('res.titre') + '</h2>';
 
     if (!code) {
@@ -3093,6 +3102,11 @@
           html += '<p class="resou">' + TR('res.attente') + '</p>';
         }
       }
+      /* Une sortie, toujours : sans elle, rester connecté à un salon
+         interdisait d'en ouvrir ou d'en rejoindre un autre, puisque le
+         panneau ne montre le formulaire que hors connexion. */
+      html += '<div class="row"><button class="btn" id="amisQuitter" style="flex:1">' +
+        TR('res.quitter') + '</button></div>';
     }
     html += '<div class="row"><button class="linkbtn" id="amisFermer" style="flex:1">' +
       TR('btn.fermer') + '</button></div></div>';
@@ -3133,6 +3147,16 @@
     }
     if ($('#amisCommencer')) {
       $('#amisCommencer').onclick = function () { RESEAU.envoyer({ t: 'demarrer' }); };
+    }
+    if ($('#amisQuitter')) {
+      $('#amisQuitter').onclick = function () {
+        quitterReseau();
+        game = null;
+        $('#game').classList.add('hidden');
+        $('#menu').classList.remove('hidden');
+        buildMenu();
+        montrerAmis(null);        // et l'on repart sur le formulaire
+      };
     }
     $('#amisFermer').onclick = function () {
       ov.classList.add('hidden');
