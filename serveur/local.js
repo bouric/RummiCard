@@ -225,7 +225,10 @@ function traiter(chambre, prise, brut) {
         diffuser(chambre);
         const avis = { t: 'avis', cle: 'res.aPrisLaPlace',
                        nom: salon.sieges[r.siege].nom, remplace: r.remplace };
-        for (const p2 of chambre.prises) envoyer(p2, avis);
+        for (const p2 of chambre.prises) {
+          if (p2 === prise) continue;      // pas à celui qui vient d'arriver
+          envoyer(p2, avis);
+        }
         return;
       }
       break;

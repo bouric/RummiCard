@@ -118,8 +118,11 @@ export class Partie {
         /* Une relève se dit : sans cela, un adversaire virtuel changerait de
            nom au milieu d'une partie sans que personne sache pourquoi. */
         if (r.remplace) {
+          /* Pas à celui qui vient de s'asseoir : lui apprendre ce qu'il
+             vient de faire, dans une boîte à fermer, serait du bruit. */
           this.avis = { t: 'avis', cle: 'res.aPrisLaPlace',
-                        nom: salon.sieges[r.siege].nom, remplace: r.remplace };
+                        nom: salon.sieges[r.siege].nom, remplace: r.remplace,
+                        sauf: m.jeton };
         }
         break;
 
@@ -170,8 +173,14 @@ export class Partie {
     this.diffuser();
     if (this.avis) {
       const avis = this.avis;
+      const sauf = avis.sauf;
+      delete avis.sauf;
       this.avis = null;
-      for (const fil of this.ctx.getWebSockets()) this.envoyer(fil, avis);
+      for (const fil of this.ctx.getWebSockets()) {
+        const qui = fil.deserializeAttachment();
+        if (qui && qui.jeton === sauf) continue;
+        this.envoyer(fil, avis);
+      }
     }
   }
 

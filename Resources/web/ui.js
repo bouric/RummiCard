@@ -2869,7 +2869,7 @@
       $('#game').classList.add('hidden');
       $('#menu').classList.remove('hidden');
       buildMenu();
-      info(TR('res.aQuitte', { nom: parti }), 'bad');
+      montrerMessage(TR('res.aQuitte', { nom: parti }), TR('res.partieInterrompue'));
       return;
     }
     if (etat.t === 'salon') {
@@ -3111,7 +3111,10 @@
 
   /** L'état du fil, dit sans alarmer : une coupure se répare toute seule. */
   function etatConnexion(etat, cle) {
-    if (etat === 'impossible') { info(TR(cle || 'res.pasDeServeur'), 'bad'); return; }
+    if (etat === 'impossible') {
+      montrerMessage(TR(cle || 'res.pasDeServeur'), TR('res.titre'));
+      return;
+    }
     if (etat === 'coupe') info(TR('res.coupe'));
     if (etat === 'reprise') info(TR('res.reprise'));
   }
@@ -3122,8 +3125,14 @@
     RESEAU.onEtat = appliquerEtat;
     RESEAU.onRefus = refusDuServeur;
     RESEAU.onConnexion = etatConnexion;
+    /* Un avis raconte ce qui est arrivé sans vous : quelqu'un s'est assis à
+       la table, quelqu'un l'a quittée. On ne le laisse pas s'effacer tout
+       seul — c'est précisément ce qu'on risque de manquer en regardant ses
+       cartes. Les refus, eux, restent des bandeaux : ils répondent à un
+       geste qu'on vient de faire, et l'on regarde déjà là. */
     RESEAU.onAvis = function (m) {
-      info(TR(m.cle, { nom: m.nom || '', remplace: m.remplace || '' }), 'good');
+      montrerMessage(TR(m.cle, { nom: m.nom || '', remplace: m.remplace || '' }),
+                     TR('res.titre'));
     };
   }
 
@@ -3177,6 +3186,21 @@
   function lienDePartie(code) {
     var base = window.location.href.split('#')[0];
     return base + '#partie=' + code;
+  }
+
+  /* Un message qu'on doit avoir lu, et qui attend donc qu'on le ferme.
+     Le bandeau convient à ce qui accompagne un geste — un refus, une carte
+     piochée, un indice — parce qu'on vient de regarder là. Il ne convient
+     pas à ce qui met fin à la partie : on peut lever les yeux trois
+     secondes et ne jamais savoir pourquoi tout s'est arrêté. */
+  function montrerMessage(texte, titre) {
+    var ov = $('#overlay');
+    ov.innerHTML = '<div class="panel"><h2>' + echapper(titre || TR('res.titre')) + '</h2>' +
+      '<p>' + echapper(texte) + '</p>' +
+      '<div class="row"><button class="cta" id="msgFermer" style="flex:1">' +
+      TR('btn.fermer') + '</button></div></div>';
+    ov.classList.remove('hidden');
+    $('#msgFermer').onclick = function () { ov.classList.add('hidden'); };
   }
 
   /* ---- Le panneau des amis ------------------------------------------ */
