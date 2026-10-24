@@ -931,7 +931,3 @@ header .brand span { color: var(--gold); }
   text-transform: none;
   font-family: inherit;
 }
-.opp .moi {
-  opacity: .55;
-  font-weight: 400;
-}

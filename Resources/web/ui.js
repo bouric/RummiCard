@@ -1382,12 +1382,7 @@
            avant d'avoir ouvert soi-meme. Ici la seule contrainte porte sur la
            table vide, et elle s'impose a qui joue a ce moment-la. Les mots
            annoncaient donc une regle que le jeu n'applique pas. */
-        /* En réseau, les noms sont ceux que chacun s'est donné, et rien ne
-           dirait lequel est le vôtre : l'étoile seule ne suffit pas quand on
-           joue sur deux appareils à la fois. On le dit en toutes lettres. */
-        '<div class="who"><div class="nm">' + echapper(p.name) +
-        (reseau && p.human ? ' <span class="moi">(' + TR('joueur.vous') + ')</span>' : '') +
-        '</div><div class="sub">' +
+        '<div class="who"><div class="nm">' + echapper(p.name) + '</div><div class="sub">' +
         p.hand.length + ' ' + NC(p.hand.length) +
         '</div></div><div class="fan">' + fan + '</div>';
       box.appendChild(d);
@@ -2840,7 +2835,12 @@
     }
 
     for (i = 0; i < joueurs; i++) {
-      game.players[i].name = etat.noms[i];
+      /* Chez soi, on ne s'appelle pas par son nom. Le solo nomme déjà le
+         joueur 0 « Vous », et c'est ce qu'on lit sans y penser ; le nom
+         qu'on s'est donné sert aux autres, pas à soi. En le posant ici
+         plutôt qu'à chaque endroit d'affichage, la rangée des joueurs et le
+         bandeau compact le disent tous les deux, sans se répéter. */
+      game.players[i].name = (i === etat.vous) ? TR('joueur.vous') : etat.noms[i];
       /* `human` ne veut plus dire « une personne » mais « moi » : c'est ce
          que tout le reste du fichier entend par là, et isHumanTurn() s'en
          trouve juste sans qu'on y touche. */
