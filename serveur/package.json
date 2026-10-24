@@ -2,5 +2,12 @@
   "name": "rummicard-serveur",
   "private": true,
   "type": "module",
-  "description": "Le serveur de partie. Le type module ne vaut que pour ce dossier : les fichiers du jeu, dans Resources/web, restent des scripts ordinaires et ne sont pas touches."
+  "description": "Le serveur de partie. Le type module ne vaut que pour ce dossier : les fichiers du jeu, dans Resources/web, restent des scripts ordinaires et ne sont pas touches.",
+  "devDependencies": {
+    "wrangler": "^4.152.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true,
+    "workerd@1.20261019.1": true
+  }
 }

@@ -20,12 +20,12 @@
 (function (root) {
   'use strict';
 
-  /* L'adresse du serveur de parties, à remplir après le premier
-     déploiement du Worker (voir serveur/LISEZMOI.md). Tant qu'elle est
-     vide, le jeu entre amis ne fonctionne qu'en local — ce qui suffit
-     pour la mise au point, et ce que l'interface dit clairement plutôt
-     que d'échouer sans expliquer. */
-  var SERVEUR_PUBLIC = '';
+  /* L'adresse du serveur de parties, déployé chez Cloudflare le 24 octobre
+     2026. Un Durable Object par partie, le code du salon donnant son nom à
+     l'objet : même code, même objet, où que soient les joueurs.
+     Pour la mise au point, localhost l'emporte (voir adresse()), ce qui
+     permet d'éprouver le jeu sans toucher au serveur en ligne. */
+  var SERVEUR_PUBLIC = 'wss://rummicard.bouric.workers.dev';
 
   /* On réessaie de plus en plus lentement : inutile de marteler un réseau
      absent, et inutile d'attendre une minute quand il revient tout de

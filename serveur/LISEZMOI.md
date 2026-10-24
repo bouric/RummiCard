@@ -55,18 +55,28 @@ déploiement déconnecte tout le monde.
 Deux onglets d'un même navigateur ne font **pas** deux joueurs : ils
 partagent le stockage, donc le jeton, donc le siège.
 
-## Mettre le jeu entre amis en ligne
+## En ligne
 
-Deux choses, dans cet ordre :
+Déployé le 24 octobre 2026 sur **`wss://rummicard.bouric.workers.dev`**,
+adresse déjà posée dans `Resources/web/reseau.js`.
 
-1. `cd serveur && npx wrangler deploy` — notez l'adresse donnée,
-   `https://rummicard.<compte>.workers.dev` ;
-2. dans `Resources/web/reseau.js`, remplissez `SERVEUR_PUBLIC` avec cette
-   adresse en `wss://`.
+Pour republier après une modification du serveur :
 
-Tant que `SERVEUR_PUBLIC` est vide, le bouton « Jouer entre amis » ne
-paraît pas en ligne : il ne promettrait rien qu'il puisse tenir. Il
-fonctionne en revanche sur `localhost` sans rien configurer.
+```bash
+cd serveur && npx wrangler deploy
+```
+
+Attention : un déploiement **coupe toutes les connexions en cours**. Les
+parties ne sont pas perdues — elles sont dans le stockage du Durable
+Object — et les clients se rebranchent seuls avec leur jeton. Mais mieux
+vaut ne pas republier au milieu d'une partie entre amis.
+
+Si `node` ou `npx` manque dans le terminal, c'est que nvm n'est pas chargé
+par le profil du shell ; le chemin complet marche :
+`~/.nvm/versions/node/v24.19.0/bin/node node_modules/.bin/wrangler deploy`.
+
+Sur `localhost`, le serveur local l'emporte sur celui en ligne : on peut
+donc tout éprouver sans toucher aux parties en cours.
 
 ## Un piège pour qui écrira un client
 

@@ -8,3 +8,8 @@ RummiCard.app/
 # Verrous LibreOffice sur les documents ouverts
 .~lock.*#
 .parties.json
+
+# Outillage du serveur : wrangler et ses dépendances se réinstallent par
+# « npm install » dans serveur/. .wrangler/ est son cache de travail local.
+serveur/node_modules/
+serveur/.wrangler/
