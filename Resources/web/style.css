@@ -685,6 +685,10 @@ header .brand span { color: var(--gold); }
   /* Le compte de la pioche cède sa place aux noms : sur une ligne de 357
      pixels, les deux ne tiennent pas, et savoir qui joue passe avant. */
   #oppmini .mini.pioche { display: none; }
+  /* Le code de la partie cède aussi : il se lit rarement, et un appui sur
+     la rangée le montre en grand. Un message le dit au début de chaque
+     partie, puisque ce geste ne se devine pas. */
+  #oppmini .mini.code { display: none; }
   /* Les boutons au ras du bas : seule la zone réservée au trait tactile de
      l'iPhone est préservée, le rembourrage décoratif est rendu au tapis. */
   #game { padding-bottom: calc(2px + env(safe-area-inset-bottom)); gap: 5px; }
@@ -936,3 +940,27 @@ header .brand span { color: var(--gold); }
    l'effacer — sa place l'attend, et ses cartes aussi. */
 .opp.absent, .mini.absent { opacity: .45; }
 .opp.absent .av { border-style: dashed; }
+
+/* Le code de la partie en cours, dans l'en-tête. C'est un bouton, et cela
+   doit se voir : on le dicte à qui a perdu sa page, et on l'ouvre pour
+   copier le lien ou quitter. Chasse fixe et lettres espacées, comme un
+   numéro qu'on lit à voix haute. */
+.codepill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .1em;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  font-size: 12.5px;
+}
+.codepill:hover { border-color: var(--gold, #f0b429); }
+
+/* Le code de la partie dans le bandeau compact : chasse fixe et lettres
+   espacées, comme un numéro qu'on lit à voix haute. */
+#oppmini .mini.code { color: var(--dim); }
+#oppmini .mini.code .n {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .08em;
+}
+/* En réseau, toute la rangée ouvre le panneau de la partie. */
+#oppmini.ouvrable { cursor: pointer; }

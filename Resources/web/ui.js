@@ -1400,14 +1400,32 @@
     var box = $('#oppmini');
     if (!box) return;
     remplirMini(box, thinking, false);
-    /* Les noms rognes ne disent plus rien : des que le bandeau deborde de sa
-       place, on repasse aux initiales, qui tiennent toujours. Les pastilles
-       ne se compriment pas — c'est ce debordement, et non un nom tronque par
-       l'ellipse, qui se mesure franchement. */
-    if (box.scrollWidth > box.clientWidth + 1) remplirMini(box, thinking, true);
+    /* Les noms rognés ne disent plus rien : dès que le bandeau déborde de sa
+       place, on repasse aux initiales, qui tiennent toujours.
+       La mesure, elle, ne peut pas passer par scrollWidth : sur une boîte en
+       overflow:hidden il rend clientWidth, donc « ça tient » quoi qu'il
+       arrive — la bascule ne se déclenchait jamais et les dernières
+       pastilles étaient simplement rognées. Même piège que la rangée de
+       boutons le 20 octobre, et même remède : on somme les enfants et leurs
+       écarts. */
+    if (debordeMini(box)) remplirMini(box, thinking, true);
+    /* S'il déborde encore — un téléphone étroit, quatre joueurs — c'est le
+       code qui cède. On le lit rarement, et un appui sur la rangée le montre
+       en grand ; le nombre de cartes de chacun et la pioche, eux, servent à
+       chaque tour. Mieux vaut une information retirée franchement qu'une
+       rangée rognée où l'on ne sait plus ce qui manque. */
+    if (debordeMini(box)) remplirMini(box, thinking, true, true);
   }
 
-  function remplirMini(box, thinking, initiales) {
+  function debordeMini(box) {
+    var ecart = parseFloat(getComputedStyle(box).gap) || 0;
+    var large = 0, n = box.children.length, i;
+    for (i = 0; i < n; i++) large += box.children[i].getBoundingClientRect().width;
+    large += (n - 1) * ecart;
+    return large > box.clientWidth + 1;
+  }
+
+  function remplirMini(box, thinking, initiales, sansCode) {
     box.innerHTML = '';
     box.classList.toggle('initiales', !!initiales);
     for (var i = 0; i < game.players.length; i++) {
@@ -1435,7 +1453,20 @@
       manche.innerHTML = '<span class="lbl">' + TR('hud.manche') + '</span><span class="n">' +
         match.manche + '/' + match.total + '</span>';
       box.appendChild(manche);
+    } else if (reseau && RESEAU.codePartie() && !sansCode) {
+      /* Le code de la partie prend la place de la pastille des manches, qui
+         ne sert qu'en solo : les deux ne se rencontrent jamais.
+         Il lui faut cette place-là, et pas celle de l'en-tête : sur un
+         écran tactile toutes les pastilles de l'en-tête disparaissent au
+         profit de ce bandeau — et c'est justement sur un téléphone qu'on
+         dicte un code à quelqu'un. Si la rangée déborde, les noms passent
+         en initiales d'eux-mêmes, comme ils le font déjà. */
+      var cc = document.createElement('div');
+      cc.className = 'mini code';
+      cc.innerHTML = '<span class="n">' + echapper(RESEAU.codePartie()) + '</span>';
+      box.appendChild(cc);
     }
+    box.classList.toggle('ouvrable', !!reseau);
   }
 
   function capture() {
@@ -1508,6 +1539,15 @@
           (match.scores[0] ? ' &middot; ' + TR('hud.vous') + '&nbsp;<b>' +
             (match.scores[0] > 0 ? '+' : '') + match.scores[0] + '</b>' : '');
       }
+    }
+    /* Le code de la partie, lisible sans rien ouvrir : c'est lui qu'on dicte
+       à qui a perdu sa page, et son jeton le ramènera à sa place. On le
+       loge dans le créneau de la pastille des manches, inoccupé en réseau. */
+    var cp = $('#codepill');
+    if (cp) {
+      var codeEnCours = reseau ? RESEAU.codePartie() : null;
+      cp.classList.toggle('hidden', !codeEnCours);
+      if (codeEnCours) cp.innerHTML = '<b>' + echapper(codeEnCours) + '</b>';
     }
     flip(prev, opts);
   }
@@ -2872,6 +2912,11 @@
       $('#menu').classList.add('hidden');
       $('#game').classList.remove('hidden');
       $('#overlay').classList.add('hidden');
+      /* Le code, dit une fois au départ, avec le geste pour le revoir : sur
+         un téléphone la rangée n'a pas la place de l'afficher en
+         permanence, et un appui dessus ne se devine pas. */
+      var codeDit = RESEAU.codePartie();
+      if (codeDit) info(TR('res.codeDeLaPartie', { code: codeDit }));
     }
 
     /* Ce qui a changé sur la table depuis le dernier état : c'est ce qu'on
@@ -3125,17 +3170,38 @@
         '<div class="codepartie">' + echapper(code) + '</div>' +
         '<div class="row"><button class="btn" id="amisCopier" style="flex:1">' +
         TR('res.partager') + '</button></div>';
-      if (salon && salon.joueurs) {
+      /* Une fois la partie commencée, les joueurs à montrer sont ceux de la
+         partie, pas ceux du salon d'avant : le salon ne dit plus la vérité
+         sur les absences, et son bouton « Commencer » n'aurait plus de
+         sens. C'est aussi là qu'on explique à quoi sert ce code — revenir,
+         et non inviter : on n'entre plus dans une partie commencée, mais
+         le jeton de celui qui a perdu sa page lui rend sa place. */
+      var enCours = !!(game && reseau);
+      var liste = null;
+      if (enCours) {
+        liste = game.players.map(function (p) {
+          return { nom: p.name, connecte: !p.absent, prise: true };
+        });
+      } else if (salon && salon.joueurs) {
+        liste = salon.joueurs.map(function (j) {
+          return { nom: j.nom, connecte: j.connecte, prise: !!j.nom };
+        });
+      }
+      if (liste) {
         var lignes = '';
-        for (var i = 0; i < salon.joueurs.length; i++) {
-          var j = salon.joueurs[i];
+        for (var i = 0; i < liste.length; i++) {
+          var j = liste[i];
           /* « Absent » ne vaut que pour quelqu'un : un siège que
              personne n'a pris est libre, pas absent. */
-          lignes += '<li>' + (j.nom ? echapper(j.nom) : '<i>' + TR('res.place') + '</i>') +
-            (j.nom && !j.connecte ? ' <span class="hors">' + TR('res.absent') + '</span>' : '') +
+          lignes += '<li>' + (j.prise ? echapper(j.nom) : '<i>' + TR('res.place') + '</i>') +
+            (j.prise && !j.connecte ? ' <span class="hors">' + TR('res.absent') + '</span>' : '') +
             '</li>';
         }
         html += '<ul class="joueursalon">' + lignes + '</ul>';
+      }
+      if (enCours) {
+        html += '<p class="resou">' + TR('res.codePourRevenir') + '</p>';
+      } else if (salon && salon.joueurs) {
         if (salon.vous === 0) {
           html += '<div class="row"><button class="cta" id="amisCommencer" style="flex:1">' +
             TR('res.commencer') + '</button></div>';
@@ -3901,6 +3967,11 @@
     $('#game').classList.add('hidden');
     $('#menu').classList.remove('hidden');
   };
+  /* Deux portes vers le panneau de la partie, selon la place disponible :
+     la pastille de l'en-tête sur un écran large, le bandeau compact sur un
+     téléphone — où l'en-tête n'a plus de pastilles du tout. */
+  $('#codepill').onclick = function () { montrerAmis(null); };
+  $('#oppmini').onclick = function () { if (reseau) montrerAmis(null); };
   $('#options').onclick = showOptions;
   $('#menu-options').onclick = showOptions;
   $('#sound').onclick = function () {

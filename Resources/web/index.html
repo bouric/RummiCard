@@ -82,6 +82,10 @@
     <div class="brand">Rummi<span>Card</span></div>
     <div class="pill"><span data-i18n="hud.pioche"></span>&nbsp;<b id="deckcount">0</b></div>
     <div class="pill hidden" id="roundpill">Manche&nbsp;<b>1/3</b></div>
+    <!-- Le code de la partie en réseau prend la place de la pastille des
+         manches, qui ne sert qu'en solo : les deux ne coexistent jamais,
+         donc l'en-tête ne s'allonge pas d'un pixel. -->
+    <button class="pill codepill hidden" id="codepill" data-i18n-title="res.titre"></button>
     <div id="oppmini"></div>
     <div class="spacer"></div>
     <button class="iconbtn" id="options" data-i18n-title="tip.options">&#9881;</button>
