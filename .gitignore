@@ -7,3 +7,4 @@ RummiCard.app/
 
 # Verrous LibreOffice sur les documents ouverts
 .~lock.*#
+.parties.json

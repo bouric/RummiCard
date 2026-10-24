@@ -91,6 +91,20 @@ export class Salon {
     return i;
   }
 
+  /**
+   * Qui est là, constaté sur les connexions vivantes plutôt que déduit des
+   * départs. La nuance n'est pas théorique : un même jeton peut tenir deux
+   * fils — deux onglets, ou un téléphone qui rouvre avant que l'ancien fil
+   * soit tombé. En comptant les départs, la fermeture du second marquait
+   * absent quelqu'un qui était toujours là.
+   * @param {Array<string>} jetons les jetons actuellement connectés
+   */
+  presence(jetons) {
+    for (const s of this.sieges) {
+      s.connecte = !!s.jeton && jetons.indexOf(s.jeton) >= 0;
+    }
+  }
+
   /* ---- Le départ ---------------------------------------------------- */
 
   /**

@@ -40,12 +40,37 @@ La formule gratuite de Cloudflare suffit très largement : une partie de
 cent tours coûte une dizaine de requêtes sur les 100 000 quotidiennes. Voir
 le § 10 de l'étude pour les chiffres et leur source.
 
-## Ce qui reste à faire
+## Jouer à deux, tout de suite
 
-Le client (étape 3). Aujourd'hui `ui.js` est le maître de la partie ; en
-réseau il devient le reflet d'un état reçu. Voir le § 8 de l'étude.
+```bash
+node serveur/local.js
+```
 
-Un client qui s'appuierait sur le solveur pour jouer doit **réattribuer les
+Sert le jeu **et** les parties sur http://localhost:8777. Ouvrez
+`http://localhost:8777/#partie=ESSAI` et envoyez la même adresse à un autre
+appareil du réseau local. Les parties survivent à un redémarrage du serveur,
+comme elles survivront chez Cloudflare — c'est le cas qui compte, puisqu'un
+déploiement déconnecte tout le monde.
+
+Deux onglets d'un même navigateur ne font **pas** deux joueurs : ils
+partagent le stockage, donc le jeton, donc le siège.
+
+## Mettre le jeu entre amis en ligne
+
+Deux choses, dans cet ordre :
+
+1. `cd serveur && npx wrangler deploy` — notez l'adresse donnée,
+   `https://rummicard.<compte>.workers.dev` ;
+2. dans `Resources/web/reseau.js`, remplissez `SERVEUR_PUBLIC` avec cette
+   adresse en `wss://`.
+
+Tant que `SERVEUR_PUBLIC` est vide, le bouton « Jouer entre amis » ne
+paraît pas en ligne : il ne promettrait rien qu'il puisse tenir. Il
+fonctionne en revanche sur `localhost` sans rien configurer.
+
+## Un piège pour qui écrira un client
+
+Un client qui s'appuie sur le solveur pour jouer doit **réattribuer les
 exemplaires** avant d'envoyer sa table : les deux exemplaires d'une carte
 sont interchangeables pour le solveur, mais le serveur vérifie par
 identifiant que toutes les cartes de la table y sont restées.

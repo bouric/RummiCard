@@ -877,3 +877,48 @@ header .brand span { color: var(--gold); }
   .btn { padding: 8px 9px; }
   #bar { gap: 4px; }
 }
+
+/* ---- Jouer en réseau -------------------------------------------------
+   Le code de partie est fait pour être lu à voix haute et recopié : il
+   mérite donc d'être gros, espacé et en chiffres à chasse fixe, comme on
+   écrit un numéro qu'on dicte. */
+.codepartie {
+  font: 700 30px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .18em;
+  text-align: center;
+  padding: 14px 10px;
+  margin: 4px 0 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .14);
+  user-select: all;                 /* un seul geste pour le sélectionner */
+}
+.codein {
+  flex: 1;
+  min-width: 0;
+  font: 600 18px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(0, 0, 0, .25);
+  color: inherit;
+}
+.resou {
+  text-align: center;
+  opacity: .6;
+  margin: 10px 0;
+}
+.joueursalon {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+}
+.joueursalon li {
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .05);
+  margin-bottom: 5px;
+}
+.joueursalon .hors { opacity: .55; }

@@ -167,6 +167,12 @@
     if (journal.actes.length > 600) journal.actes.shift();
   }
   var history = [];          // état au début de chacun de vos tours
+  /* Mode réseau : nul en jeu solo, sinon { siege, places } — le siège que
+     le serveur nous a donné. Tant qu'il est nul, rien de ce fichier ne
+     change de comportement : le jeu contre les adversaires virtuels ne
+     connaît pas le réseau et n'a pas à le connaître. */
+  var reseau = null;
+  var cartesConnues = {};    // id -> objet carte, pour garder la même entre deux états
   var aiJustPlayed = {};     // cartes ajoutées par les adversaires virtuels depuis votre tour
   var match = null;          // { total, manche, scores, noms } quand on joue en plusieurs manches
   var turnStack = [];        // états successifs pendant le tour en cours
@@ -1538,8 +1544,12 @@
        montrer cote a cote revenait a demander lequel avant de savoir qu'il y
        avait un choix. */
     var peutAnnuler = human && turnStack.length > 0;
-    $('#undo').classList.toggle('hidden', !peutAnnuler);
-    $('#rewind').classList.toggle('hidden', peutAnnuler);
+    /* « Défaire » n'a pas de sens en réseau : il effacerait le tour des
+       autres joueurs, qui ne l'ont pas demandé. « Annuler » reste, éteint
+       tant qu'il n'y a rien à reprendre — il garde ainsi sa place dans la
+       rangée au lieu de la voir se réorganiser à chaque geste. */
+    $('#undo').classList.toggle('hidden', !peutAnnuler && !reseau);
+    $('#rewind').classList.toggle('hidden', peutAnnuler || !!reseau);
     $('#commit').disabled = !human || !check.ok;
     $('#undo').disabled = !peutAnnuler;
     $('#draw').disabled = !human;
@@ -2361,6 +2371,10 @@
   /* La partie en cours est enregistrée au début de chacun de vos tours : de
      quoi la retrouver si l'app est fermée ou déchargée par le système. */
   function saveGame() {
+    /* Une partie en réseau est gardée par le serveur, et c'est le jeton
+       qui y ramène. L'enregistrer ici donnerait un « Reprendre la partie »
+       qui rouvrirait une copie morte, sans les autres joueurs. */
+    if (reseau) return;
     if (!game || game.finished) { prefs.saved = null; savePrefs(); return; }
     var d = game.serialize();
     d.match = match;
@@ -2415,6 +2429,16 @@
     if (!isHumanTurn()) return;
     jrn('suivant');
     eteindreMagicien(true);
+    if (reseau) {
+      /* En réseau on ne tranche pas, on propose : c'est le serveur qui
+         valide, et son état reviendra par appliquerEtat(). On vérifie tout
+         de même localement, pour dire tout de suite ce qui cloche plutôt
+         que d'attendre un aller-retour. */
+      var local = game.checkCommit();
+      if (!local.ok) { info(local.reason); return; }
+      envoyerCoup();
+      return;
+    }
     var res = game.commit();
     if (!res.ok) { info(res.reason); return; }
     var n = game.stagedCards().length;
@@ -2454,6 +2478,11 @@
     if (game.stagedCards().length) { info(TR('tip.piocheBloquee')); return; }
     eteindreMagicien(true);
     jrn('pioche');
+    if (reseau) {
+      attendreServeur(true);
+      RESEAU.envoyer({ t: 'piocher' });
+      return;
+    }
     var card = game.draw();
     /* La carte piochée se range aussitôt parmi les autres : sans repère, on
        ne sait plus laquelle on vient de prendre. Elle reste signalée tant
@@ -2704,6 +2733,327 @@
     savePrefs();
     game.sortHand(game.human(), prefs.tri);
     render();
+  }
+
+  /* ================= Jouer en réseau ==============================
+     En solo, `game` fait autorité : l'interface le modifie et se redessine
+     d'après lui. En réseau il devient un reflet — on le reconstruit à
+     partir de ce que le serveur envoie, on le laisse être bricolé
+     localement pendant notre propre tour, puis on propose le résultat.
+
+     Ce qui reste purement local, et doit le rester : le glisser-déposer,
+     « Annuler », le magicien, le tri de la main. Rien de tout cela ne
+     regarde les autres joueurs tant qu'on n'a pas dit « au suivant ».
+
+     Ce qui disparaît : « Défaire », qui effacerait le tour des autres, et
+     la sauvegarde locale, puisque la partie vit chez le serveur. */
+
+  var attenteServeur = null;     // minuteur : le serveur a-t-il répondu ?
+  var DELAI_SERVEUR = 12000;
+
+  function enReseau() { return !!reseau; }
+
+  /* Une carte d'après son identifiant. On garde celles déjà fabriquées :
+     une carte doit rester le même objet d'un état à l'autre, sans quoi les
+     animations la croient nouvelle et la font surgir au lieu de glisser. */
+  function carteDe(id) {
+    var c = cartesConnues[id];
+    if (!c) {
+      var p = String(id).split('-');
+      c = { id: id, suit: +p[0], rank: +p[1], copy: +p[2] };
+      cartesConnues[id] = c;
+    }
+    return c;
+  }
+
+  /* Les cartes qu'on n'a pas le droit de voir : celles des autres et la
+     pioche. On en connaît le nombre, jamais la nature — et l'interface ne
+     demande jamais autre chose que le nombre. Elles portent un rang nul :
+     si un jour du code se mettait à les lire, il se trahirait aussitôt
+     plutôt que d'afficher une carte plausible et fausse. */
+  function cartesInconnues(n, prefixe) {
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      out.push({ id: prefixe + i, suit: -1, rank: 0, inconnue: true });
+    }
+    return out;
+  }
+
+  /* Votre main garde l'ordre que vous lui avez donné : les cartes déjà là
+     ne bougent pas, les nouvelles arrivent au bout. Trier d'office à chaque
+     tour déferait l'arrangement qu'on vient de faire — et le bouton de tri
+     est là pour qui le veut. */
+  function mainOrdonnee(ids) {
+    var ancien = reseau && reseau.ordreMain ? reseau.ordreMain : [];
+    var reste = ids.slice(), out = [], i, k;
+    for (i = 0; i < ancien.length; i++) {
+      k = reste.indexOf(ancien[i]);
+      if (k >= 0) out.push(reste.splice(k, 1)[0]);
+    }
+    for (i = 0; i < reste.length; i++) out.push(reste[i]);
+    if (reseau) reseau.ordreMain = out.slice();
+    return out.map(carteDe);
+  }
+
+  /** Tout ce que le serveur dit, posé dans la partie locale. */
+  function appliquerEtat(etat) {
+    attendreServeur(false);
+    if (etat.t === 'salon') { montrerAmis(etat); return; }
+
+    var joueurs = etat.noms.length;
+    var neuve = !game || !reseau || reseau.siege !== etat.vous ||
+                game.players.length !== joueurs;
+    if (!reseau) reseau = {};
+    reseau.siege = etat.vous;
+
+    if (neuve) {
+      game = new E.Game(joueurs - 1);
+      match = null;              // une manche à la fois en réseau
+      history = [];
+      cartesConnues = {};
+      reseau.ordreMain = null;
+      aiJustPlayed = {};
+      $('#menu').classList.add('hidden');
+      $('#game').classList.remove('hidden');
+      $('#overlay').classList.add('hidden');
+    }
+
+    /* Ce qui a changé sur la table depuis le dernier état : c'est ce qu'on
+       cercle de bleu, exactement comme après le tour des virtuels. */
+    var avant = {}, i, k;
+    if (!neuve) {
+      var bc = game.boardCards();
+      for (i = 0; i < bc.length; i++) avant[bc[i].id] = true;
+    }
+
+    for (i = 0; i < joueurs; i++) {
+      game.players[i].name = etat.noms[i];
+      /* `human` ne veut plus dire « une personne » mais « moi » : c'est ce
+         que tout le reste du fichier entend par là, et isHumanTurn() s'en
+         trouve juste sans qu'on y touche. */
+      game.players[i].human = (i === etat.vous);
+      game.players[i].melded = !!etat.melded[i];
+    }
+
+    var sets = etat.board.map(function (ids) { return ids.map(carteDe); });
+    game.board = E.alignBoard(game.board, sets);
+    game.players[etat.vous].hand = mainOrdonnee(etat.main);
+    for (i = 0; i < etat.mains.length; i++) {
+      if (i !== etat.vous) {
+        game.players[i].hand = cartesInconnues(etat.mains[i], 'x' + i + '-');
+      }
+    }
+    game.deck = cartesInconnues(etat.pioche, 'p-');
+    game.current = etat.courant;
+    game.turnCount = etat.tour || 0;
+    game.passStreak = 0;
+    game.finished = !!etat.fini;
+    game.winner = null;
+
+    if (!neuve && etat.courant === etat.vous) {
+      var apres = game.boardCards();
+      aiJustPlayed = {};
+      for (k = 0; k < apres.length; k++) {
+        if (!avant[apres[k].id]) aiJustPlayed[apres[k].id] = true;
+      }
+    }
+
+    game.beginTurn();
+    turnStack = [];
+    piochee = null;
+    busy = false;
+
+    if (etat.fini) {
+      /* La partie est jouée : les mains peuvent enfin être dites, et il le
+         faut pour compter les points. */
+      if (etat.mainsFinales) {
+        for (i = 0; i < etat.mainsFinales.length; i++) {
+          game.players[i].hand = etat.mainsFinales[i].map(carteDe);
+        }
+      }
+      if (typeof etat.gagnant === 'number') game.winner = game.players[etat.gagnant];
+      render();
+      updateBar();
+      gameOver();
+      return;
+    }
+
+    render();
+    updateBar();
+  }
+
+  /** Notre tour, tel qu'on le propose au serveur. */
+  function envoyerCoup() {
+    var board = game.board.map(function (s) {
+      return s.cards.map(function (c) { return c.id; });
+    });
+    var main = game.players[reseau.siege].hand.map(function (c) { return c.id; });
+    reseau.ordreMain = main.slice();
+    attendreServeur(true);
+    if (!RESEAU.envoyer({ t: 'jouer', board: board, main: main })) {
+      attendreServeur(false);
+      info(TR('res.coupe'), 'bad');
+    }
+  }
+
+  /* Tant que le serveur n'a pas répondu, les boutons se taisent : deux
+     envois pour un même tour en feraient refuser un, et le refus serait
+     incompréhensible. Mais un message peut se perdre — on ne reste donc
+     pas muet pour toujours. */
+  function attendreServeur(oui) {
+    clearTimeout(attenteServeur);
+    attenteServeur = null;
+    busy = !!oui;
+    if (oui) {
+      attenteServeur = setTimeout(function () {
+        busy = false;
+        if (game) updateBar();
+        info(TR('res.serveurMuet'), 'bad');
+      }, DELAI_SERVEUR);
+    }
+    /* Au salon, la partie n'existe pas encore : il n'y a pas de rangée de
+       boutons à mettre à jour, et updateBar irait lire une partie nulle. */
+    if (game) updateBar();
+  }
+
+  /** Le serveur refuse : on le dit dans la langue du joueur. */
+  function refusDuServeur(m) {
+    attendreServeur(false);
+    if (m.cle === 'res.combinaison' && m.cartes && m.cartes.length) {
+      /* Le serveur ne compose pas de phrase — il n'a pas de langue. Il
+         désigne les cartes fautives, et c'est nous qui expliquons, avec le
+         moteur et les traductions que nous avons sous la main. */
+      var cartes = m.cartes.map(carteDe);
+      info(cartes.map(E.label).join(' ') + ' : ' + E.whyInvalid(cartes) + '.', 'bad');
+      return;
+    }
+    info(TR(m.cle), 'bad');
+  }
+
+  /** L'état du fil, dit sans alarmer : une coupure se répare toute seule. */
+  function etatConnexion(etat, cle) {
+    if (etat === 'impossible') { info(TR(cle || 'res.pasDeServeur'), 'bad'); return; }
+    if (etat === 'coupe') info(TR('res.coupe'));
+    if (etat === 'reprise') info(TR('res.reprise'));
+  }
+
+  /* ---- Entrer dans une partie -------------------------------------- */
+
+  function brancherReseau() {
+    RESEAU.onEtat = appliquerEtat;
+    RESEAU.onRefus = refusDuServeur;
+    RESEAU.onConnexion = etatConnexion;
+  }
+
+  function rejoindrePartie(code, places) {
+    if (!RESEAU.disponible()) { info(TR('res.pasDeServeur'), 'bad'); return false; }
+    brancherReseau();
+    reseau = { siege: -1, places: places || 2, ordreMain: null };
+    if (!RESEAU.connecter(code, places || 2, prefs.nom || '')) {
+      reseau = null;
+      return false;
+    }
+    return true;
+  }
+
+  function quitterReseau() {
+    RESEAU.fermer();
+    reseau = null;
+    cartesConnues = {};
+    attendreServeur(false);
+  }
+
+  /* Le code de partie passe par l'adresse : c'est ce qu'on envoie à un ami
+     par message, et il n'a qu'à l'ouvrir. */
+  function codeDeLAdresse() {
+    var h = String(window.location.hash || '');
+    var m = h.match(/partie=([A-Za-z0-9]{4,12})/);
+    return m ? m[1].toUpperCase() : null;
+  }
+
+  function lienDePartie(code) {
+    var base = window.location.href.split('#')[0];
+    return base + '#partie=' + code;
+  }
+
+  /* ---- Le panneau des amis ------------------------------------------ */
+
+  function montrerAmis(salon) {
+    var ov = $('#overlay');
+    var code = RESEAU.codePartie();
+    var html = '<div class="panel"><h2>' + TR('res.titre') + '</h2>';
+
+    if (!code) {
+      /* Pas encore connecté : on choisit d'ouvrir ou de rejoindre. */
+      html += '<p>' + TR('res.explique') + '</p>' +
+        '<div class="row"><button class="cta" id="amisOuvrir" style="flex:1">' +
+        TR('res.ouvrir') + '</button></div>' +
+        '<p class="resou">' + TR('res.ou') + '</p>' +
+        '<div class="row"><input id="amisCode" class="codein" maxlength="12" ' +
+        'autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="' +
+        TR('res.codeIci') + '"><button class="btn" id="amisRejoindre">' +
+        TR('res.rejoindre') + '</button></div>';
+    } else {
+      html += '<p>' + TR('res.votreCode') + '</p>' +
+        '<div class="codepartie">' + echapper(code) + '</div>' +
+        '<div class="row"><button class="btn" id="amisCopier" style="flex:1">' +
+        TR('res.partager') + '</button></div>';
+      if (salon && salon.joueurs) {
+        var lignes = '';
+        for (var i = 0; i < salon.joueurs.length; i++) {
+          var j = salon.joueurs[i];
+          /* « Absent » ne vaut que pour quelqu'un : un siège que
+             personne n'a pris est libre, pas absent. */
+          lignes += '<li>' + (j.nom ? echapper(j.nom) : '<i>' + TR('res.place') + '</i>') +
+            (j.nom && !j.connecte ? ' <span class="hors">' + TR('res.absent') + '</span>' : '') +
+            '</li>';
+        }
+        html += '<ul class="joueursalon">' + lignes + '</ul>';
+        if (salon.vous === 0) {
+          html += '<div class="row"><button class="cta" id="amisCommencer" style="flex:1">' +
+            TR('res.commencer') + '</button></div>';
+        } else {
+          html += '<p class="resou">' + TR('res.attente') + '</p>';
+        }
+      }
+    }
+    html += '<div class="row"><button class="linkbtn" id="amisFermer" style="flex:1">' +
+      TR('btn.fermer') + '</button></div></div>';
+
+    ov.innerHTML = html;
+    ov.classList.remove('hidden');
+
+    if ($('#amisOuvrir')) {
+      $('#amisOuvrir').onclick = function () {
+        rejoindrePartie(RESEAU.codeNeuf(), nVirtual + 1);
+      };
+    }
+    if ($('#amisRejoindre')) {
+      $('#amisRejoindre').onclick = function () {
+        var v = ($('#amisCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (v.length < 4) { info(TR('res.codeInvalide'), 'bad'); return; }
+        rejoindrePartie(v, nVirtual + 1);
+      };
+    }
+    if ($('#amisCopier')) {
+      $('#amisCopier').onclick = function () {
+        var lien = lienDePartie(code);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(lien).then(function () {
+            info(TR('res.copie'), 'good');
+          }, function () { info(lien); });
+        } else {
+          info(lien);
+        }
+      };
+    }
+    if ($('#amisCommencer')) {
+      $('#amisCommencer').onclick = function () { RESEAU.envoyer({ t: 'demarrer' }); };
+    }
+    $('#amisFermer').onclick = function () {
+      ov.classList.add('hidden');
+      if (!game || game.finished) quitterReseau();
+    };
   }
 
   /* ================= Tours des adversaires virtuels =================== */
@@ -3334,6 +3684,14 @@
   /* ================= Branchements ================================= */
 
   $('#start').onclick = function () { newGame(); };
+  /* Tant que le serveur de parties n'est pas en ligne, le bouton ne
+     promettrait rien qu'il puisse tenir : on ne le montre pas. Il
+     réapparaîtra tout seul le jour où reseau.js connaîtra une adresse. */
+  if (RESEAU.disponible()) {
+    $('#amis').onclick = function () { montrerAmis(null); };
+  } else {
+    $('#amis').classList.add('hidden');
+  }
   $('#replay').onclick = replayDeal;
   $('#thanks').onclick = function () { montrerSoutien(function () { $('#overlay').classList.add('hidden'); }); };
   $('#resume').onclick = resumeGame;
@@ -3547,6 +3905,15 @@
   applyFelt();
   traduirePage();
   stampFooter();
+
+  /* Un lien reçu par message — #partie=4F2K — entre directement dans la
+     partie, sans passer par le menu : c'est tout l'intérêt de l'envoyer.
+     Ici, et pas dans traduirePage() : on ne rejoint pas une partie parce
+     que quelqu'un a changé de langue. */
+  (function () {
+    var code = codeDeLAdresse();
+    if (code && RESEAU.disponible()) rejoindrePartie(code, nVirtual + 1);
+  })();
   buildMenu();
 
   /* Point d'acces utilise par les tests automatises. */

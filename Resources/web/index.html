@@ -18,7 +18,7 @@
   script-src 'self';
   style-src 'self' 'unsafe-inline';
   img-src 'self' data:;
-  connect-src 'self';
+  connect-src 'self' ws://localhost:* ws://127.0.0.1:* wss://*.workers.dev;
   manifest-src 'self';
   worker-src 'self';
   base-uri 'none';
@@ -66,6 +66,7 @@
   <button class="btn hidden" id="resume"></button>
   <button class="btn hidden" id="replay"></button>
   <button class="cta" id="start" data-i18n="accueil.commencer"></button>
+  <button class="btn" id="amis" data-i18n="res.titre"></button>
   <button class="linkbtn hidden" id="thanks"></button>
   <div style="display:flex;gap:18px">
     <button class="linkbtn" id="rules-link" data-i18n="accueil.voirRegles"></button>
@@ -136,6 +137,7 @@
 <script src="engine.js"></script>
 <script src="solver.js"></script>
 <script src="ai.js"></script>
+<script src="reseau.js"></script>
 <script src="ui.js"></script>
 </body>
 </html>

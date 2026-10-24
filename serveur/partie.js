@@ -170,7 +170,14 @@ export class Partie {
 
   /** À chacun son état : ce n'est pas le même message pour tout le monde. */
   diffuser() {
-    for (const ws of this.ctx.getWebSockets()) {
+    const fils = this.ctx.getWebSockets();
+    const jetons = [];
+    for (const ws of fils) {
+      const moi = ws.deserializeAttachment();
+      if (moi && moi.jeton) jetons.push(moi.jeton);
+    }
+    this.salon.presence(jetons);
+    for (const ws of fils) {
       const moi = ws.deserializeAttachment();
       if (!moi || moi.siege < 0) continue;
       this.envoyer(ws, this.salon.etatPour(moi.siege));
