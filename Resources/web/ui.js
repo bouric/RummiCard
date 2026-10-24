@@ -1700,7 +1700,20 @@
      à une n'aurait pas de sens : leurs placements s'excluent souvent, et on
      ne pourrait pas les poser ensemble. */
   function playableIds() {
-    if (!prefs.hints || !game || !isHumanTurn()) return null;
+    if (!prefs.hints || !game || game.finished) return null;
+    /* Hors de son tour, le calcul rendait « rien », et render() n'ayant rien
+       à filtrer montrait la main entière — ce qui, indices allumés, se lit
+       exactement à l'envers : « tout est jouable ». En réseau l'attente peut
+       durer des minutes, et le mensonge avec elle.
+       On calcule donc aussi pendant le tour des autres : la table ne bouge
+       qu'entre deux coups validés, la réponse est donc vraie, et voir ce
+       qu'on pourrait poser pendant qu'on attend est justement ce qu'on
+       cherche. Le cache fait que cela ne coûte qu'un calcul par changement
+       de table, pas un par repeint.
+       En solo on s'en abstient : le tour des adversaires virtuels dure une
+       seconde, et la table y bouge sous l'animation. */
+    if (!reseau) { if (!isHumanTurn()) return null; }
+    else if (busy) return null;
     var hand = game.human().hand, i;
     var key = game.boardCards().map(function (c) { return c.id; }).sort().join(',') +
       '|' + hand.map(function (c) { return c.id; }).sort().join(',');
