@@ -2815,6 +2815,23 @@
   /** Tout ce que le serveur dit, posé dans la partie locale. */
   function appliquerEtat(etat) {
     attendreServeur(false);
+    if (etat.abandon) {
+      /* Quelqu'un est parti pour de bon : la partie s'arrête là. On ne
+         montre pas le décompte — compter les points d'une partie
+         abandonnée n'apprendrait rien à personne. */
+      var parti = etat.abandon.nom || '';
+      /* La partie s'efface avant le fil : tout ce qui se redessine pendant
+         la coupure doit trouver un terrain net plutôt qu'une partie à
+         moitié démontée. */
+      game = null;
+      quitterReseau();
+      $('#overlay').classList.add('hidden');
+      $('#game').classList.add('hidden');
+      $('#menu').classList.remove('hidden');
+      buildMenu();
+      info(TR('res.aQuitte', { nom: parti }), 'bad');
+      return;
+    }
     if (etat.t === 'salon') {
       /* Gardé : rouvrir le panneau ne doit pas demander au serveur de
          redire ce qu'il vient de dire. Sans cela, un second « Jouer entre
@@ -2840,7 +2857,13 @@
          de cartes factices : « carte undefined ». Les dix-neuf endroits de
          ce fichier qui appellent game.human() se trouvent corrigés d'un
          coup, plutôt qu'un par un. */
-      game.human = function () { return this.players[reseau.siege]; };
+      /* Le siège est capturé ici, et non relu dans `reseau` à chaque appel :
+         quitter la partie met `reseau` à nul alors que la partie existe
+         encore une fraction de seconde, et human() levait alors une
+         exception en plein milieu du départ — l'écran restait sur le jeu.
+         Un changement de siège reconstruit la partie de toute façon. */
+      var monSiege = etat.vous;
+      game.human = function () { return this.players[monSiege]; };
       match = null;              // une manche à la fois en réseau
       history = [];
       cartesConnues = {};
@@ -3035,6 +3058,24 @@
     return true;
   }
 
+  /** S'en aller pour de bon, en prévenant ceux qui restent. */
+  function quitterPartie() {
+    /* Partir au milieu d'une partie l'arrête pour tout le monde : cela ne
+       doit pas tenir à un bouton effleuré. Avant qu'elle ne commence, il
+       n'y a rien à arrêter et rien à demander. */
+    if (reseau && game && !game.finished && !window.confirm(TR('res.confirmerQuitter'))) {
+      return false;
+    }
+    if (reseau) RESEAU.envoyer({ t: 'partir' });
+    game = null;
+    quitterReseau();
+    $('#overlay').classList.add('hidden');
+    $('#game').classList.add('hidden');
+    $('#menu').classList.remove('hidden');
+    buildMenu();
+    return true;
+  }
+
   function quitterReseau() {
     clearInterval(relanceTimer);
     relanceTimer = null;
@@ -3150,12 +3191,7 @@
     }
     if ($('#amisQuitter')) {
       $('#amisQuitter').onclick = function () {
-        quitterReseau();
-        game = null;
-        $('#game').classList.add('hidden');
-        $('#menu').classList.remove('hidden');
-        buildMenu();
-        montrerAmis(null);        // et l'on repart sur le formulaire
+        if (quitterPartie()) montrerAmis(null);   // on repart sur le formulaire
       };
     }
     $('#amisFermer').onclick = function () {
@@ -3856,6 +3892,10 @@
   }
 
   $('#restart').onclick = function () {
+    /* En réseau, quitter n'est pas seulement rentrer chez soi : cela arrête
+       la partie des autres. La croix passe donc par le même chemin que le
+       bouton du panneau, avec sa propre question. */
+    if (reseau) { quitterPartie(); return; }
     if (game && !game.finished && !confirmQuit()) return;
     $('#overlay').classList.add('hidden');
     $('#game').classList.add('hidden');

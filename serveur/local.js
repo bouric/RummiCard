@@ -234,6 +234,11 @@ function traiter(chambre, prise, brut) {
       r = salon.piocher(moi.siege);
       if (!r.ok) return envoyer(prise, { t: 'refus', cle: r.cle });
       break;
+    case 'partir':
+      r = salon.partir(moi.jeton);
+      if (!r.ok) return envoyer(prise, { t: 'refus', cle: r.cle });
+      prise.moi = { siege: -1, jeton: null };
+      break;
     case 'relancer': {
       /* Même refusée, la demande fait constater la présence : c'est ainsi
          qu'une déconnexion silencieuse finit par se voir. */

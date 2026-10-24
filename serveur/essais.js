@@ -372,6 +372,64 @@ section('4 bis. Quand un joueur quitte la partie');
     present.ok ? 'PASSÉ !' : present.cle);
 }
 
+/* ---- 4 ter. Un joueur qui s'en va pour de bon ------------------------ */
+
+section('4 ter. Partir, ce n’est pas se déconnecter');
+{
+  /* Avant le départ : la place redevient simplement libre. */
+  {
+    const salon = new Salon({ places: 3 });
+    salon.rejoindre('jeton-A', 'Richard');
+    salon.rejoindre('jeton-B', 'Ami');
+    const r = salon.partir('jeton-B');
+    verifier(r.ok && r.salon === true, 'avant le début, partir libère la place',
+      r.ok ? '' : r.cle);
+    verifier(!salon.sieges[1].jeton && !salon.sieges[1].humain,
+      '… et la place est reprenable');
+    const reprise = salon.rejoindre('jeton-C', 'Autre');
+    verifier(reprise.ok && reprise.siege === 1, '… quelqu’un d’autre peut s’y asseoir');
+  }
+
+  /* En cours de partie : tout s'arrête, et l'on dit qui est parti. */
+  {
+    const salon = new Salon({ places: 3 });
+    salon.rejoindre('jeton-A', 'Richard');
+    salon.rejoindre('jeton-B', 'Ami');
+    salon.demarrer();
+    const r = salon.partir('jeton-B');
+    verifier(r.ok && r.salon === false, 'en cours de partie, partir l’arrête',
+      r.ok ? '' : r.cle);
+    verifier(!!salon.abandon && salon.abandon.nom === 'Ami',
+      '… et l’on sait qui', JSON.stringify(salon.abandon));
+
+    const etat = salon.etatPour(0);
+    verifier(!!etat.abandon, 'l’état le dit aux autres');
+    verifier(etat.fini !== true,
+      '… sans prétendre que la partie est finie — on n’en compte pas les points');
+
+    /* Et plus personne ne joue. */
+    const main = etat.main.slice();
+    verifier(salon.piocher(salon.partie.current).cle === 'res.partieAbandonnee',
+      'on ne pioche plus');
+    verifier(salon.jouer(salon.partie.current, [], main).cle === 'res.partieAbandonnee',
+      'on ne pose plus');
+    verifier(!salon.relancer(Date.now() + 60000).ok,
+      'et il n’y a plus de tour à passer');
+
+    /* La mémoire du serveur la retient abandonnée. */
+    const reveille = Salon.deserialiser(JSON.parse(JSON.stringify(salon.serialiser())));
+    verifier(!!reveille.abandon, 'le réveil se souvient de l’abandon');
+  }
+
+  /* Un jeton inconnu ne fait rien. */
+  {
+    const salon = new Salon({ places: 2 });
+    salon.rejoindre('jeton-A', 'Richard');
+    const r = salon.partir('jeton-inconnu');
+    verifier(!r.ok, 'un jeton inconnu ne peut pas arrêter la partie des autres', r.cle);
+  }
+}
+
 /* ---- 5. Mise en veille et réveil -------------------------------------- */
 
 section('5. Mise en veille');

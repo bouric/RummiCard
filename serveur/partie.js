@@ -134,6 +134,15 @@ export class Partie {
         if (!r.ok) return this.envoyer(ws, { t: 'refus', cle: r.cle });
         break;
 
+      case 'partir':
+        /* Un départ voulu, à distinguer du fil qui tombe : celui-ci arrête
+           la partie pour tout le monde, et les autres doivent l'apprendre
+           avant que ce joueur ne referme sa connexion. */
+        r = salon.partir(moi.jeton);
+        if (!r.ok) return this.envoyer(ws, { t: 'refus', cle: r.cle });
+        ws.serializeAttachment({ siege: -1, jeton: null });
+        break;
+
       case 'relancer':
         /* Demande de passer le tour d'un absent. Le serveur juge sur sa
            propre horloge, et refuse tant que le délai de grâce court.

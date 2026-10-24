@@ -140,7 +140,9 @@ export class Salon {
    * retrouvera son jeu tel qu'il l'a laissé, une carte de plus.
    */
   relancer(maintenant) {
-    if (!this.commencee || this.partie.finished) return { ok: false, cle: 'res.rienAPasser' };
+    if (!this.commencee || this.partie.finished || this.abandon) {
+      return { ok: false, cle: 'res.rienAPasser' };
+    }
     const siege = this.partie.current;
     const s = this.sieges[siege];
     if (!s.humain || s.connecte) return { ok: false, cle: 'res.rienAPasser' };
@@ -150,6 +152,35 @@ export class Salon {
     this.partie.draw();
     this.terminerTour();
     return { ok: true, siege: siege, nom: s.nom };
+  }
+
+  /**
+   * S'en aller pour de bon.
+   *
+   * Partir et se déconnecter sont deux choses, et les confondre serait
+   * fâcheux dans les deux sens. Un fil qui tombe se répare — téléphone
+   * endormi, tunnel, changement de réseau — et la partie attend, quitte à
+   * passer un tour. Un joueur qui s'en va, lui, ne revient pas : continuer
+   * à l'attendre, ou jouer sa main à sa place, n'aurait aucun sens. On
+   * arrête la partie, et l'on dit pourquoi.
+   *
+   * Avant que la partie ne commence, c'est plus simple : la place
+   * redevient libre, et les autres continuent de s'organiser.
+   */
+  partir(jeton) {
+    const i = this.sieges.findIndex((s) => s.jeton === jeton);
+    if (i < 0) return { ok: false, cle: 'res.pasAssis' };
+    const nom = this.sieges[i].nom;
+    if (!this.commencee) {
+      this.sieges[i] = { jeton: null, nom: null, humain: false, connecte: false };
+      return { ok: true, siege: i, nom: nom, salon: true };
+    }
+    /* On ne marque pas la partie « finie » : finie, elle appellerait le
+       décompte des points, et compter les points d'une partie qu'on
+       abandonne n'a pas de sens. On la marque abandonnée, ce qui est
+       autre chose, et les clients repartent à l'accueil. */
+    this.abandon = { siege: i, nom: nom };
+    return { ok: true, siege: i, nom: nom, salon: false };
   }
 
   /* ---- Le départ ---------------------------------------------------- */
@@ -191,6 +222,7 @@ export class Salon {
    */
   jouer(siege, board, main) {
     if (!this.commencee) return { ok: false, cle: 'res.partieNonCommencee' };
+    if (this.abandon) return { ok: false, cle: 'res.partieAbandonnee' };
     const verdict = verifierTour(this.partie, siege, board, main);
     if (!verdict.ok) return verdict;
     const pose = this.partie.commit();
@@ -213,6 +245,7 @@ export class Salon {
    */
   piocher(siege) {
     if (!this.commencee) return { ok: false, cle: 'res.partieNonCommencee' };
+    if (this.abandon) return { ok: false, cle: 'res.partieAbandonnee' };
     if (this.partie.finished) return { ok: false, cle: 'res.partieFinie' };
     if (siege !== this.partie.current) return { ok: false, cle: 'res.pasVotreTour' };
     const carte = this.partie.draw();
@@ -277,6 +310,7 @@ export class Salon {
       melded: g.players.map((p) => p.melded),
       fini: g.finished
     };
+    if (this.abandon) etat.abandon = this.abandon;
     if (g.finished) {
       /* La partie est jouée : les mains peuvent enfin être dites, et il le
          faut — c'est le seul endroit de l'interface qui lit les cartes des
@@ -297,6 +331,7 @@ export class Salon {
       difficulte: this.difficulte,
       sieges: this.sieges,
       commencee: this.commencee,
+      abandon: this.abandon || null,
       partie: this.partie ? this.partie.serialize() : null
     };
   }
@@ -306,6 +341,7 @@ export class Salon {
     const salon = new Salon({ places: brut.places, difficulte: brut.difficulte });
     salon.sieges = brut.sieges;
     salon.commencee = brut.commencee;
+    salon.abandon = brut.abandon || null;
     if (brut.partie) {
       Engine.options.difficulty = brut.difficulte;
       salon.partie = new Engine.Game(brut.places - 1, brut.partie.deal);
