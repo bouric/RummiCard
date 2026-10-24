@@ -2915,6 +2915,20 @@
       /* Le code, dit une fois au départ, avec le geste pour le revoir : sur
          un téléphone la rangée n'a pas la place de l'afficher en
          permanence, et un appui dessus ne se devine pas. */
+      /* Le journal de mise au point naît dans newGame(), que le réseau
+         n'emprunte pas : sans cela « Enregistrer la partie » ne trouvait
+         rien à enregistrer. La donne, elle, reste chez le serveur — c'est
+         tout l'objet du jeu en ligne — et le journal s'en passe. */
+      jrnNouvelle();
+      if (journal) {
+        /* La donne n'a pas de sens ici : celle du moteur local est un
+           mélange jeté qui ne sert à rien, et la vraie reste chez le
+           serveur. Ce qui situe une partie en réseau, c'est son code et
+           le siège qu'on y occupe. */
+        journal.donne = null;
+        journal.partie = RESEAU.codePartie();
+        journal.siege = etat.vous;
+      }
       var codeDit = RESEAU.codePartie();
       if (codeDit) info(TR('res.codeDeLaPartie', { code: codeDit }));
     }
@@ -2946,9 +2960,22 @@
                                   etat.connectes && !etat.connectes[i]);
     }
 
-    var sets = etat.board.map(function (ids) { return ids.map(carteDe); });
-    game.board = E.alignBoard(game.board, sets);
-    game.players[etat.vous].hand = mainOrdonnee(etat.main);
+    /* Pendant VOTRE tour, la table ne bouge pas : personne d'autre ne peut
+       jouer. Un état qui arrive alors n'apporte des nouvelles que des
+       joueurs — une présence, une absence — et reconstruire le tapis
+       effacerait les cartes que vous venez d'y poser.
+       C'est ce qui se produisait toutes les dix secondes : un joueur qui
+       attend demande au serveur de constater les absences, le serveur
+       rediffuse à tout le monde, et la carte posée revenait en main sans
+       que rien ne l'explique. On reconnaît ce cas au numéro de tour, qui
+       n'a pas changé. */
+    var monTourIntact = !neuve && etat.courant === etat.vous &&
+                        etat.tour === game.turnCount;
+    if (!monTourIntact) {
+      var sets = etat.board.map(function (ids) { return ids.map(carteDe); });
+      game.board = E.alignBoard(game.board, sets);
+      game.players[etat.vous].hand = mainOrdonnee(etat.main);
+    }
     for (i = 0; i < etat.mains.length; i++) {
       if (i !== etat.vous) {
         game.players[i].hand = cartesInconnues(etat.mains[i], 'x' + i + '-');
@@ -2969,9 +2996,14 @@
       }
     }
 
-    game.beginTurn();
-    turnStack = [];
-    piochee = null;
+    /* Le même raisonnement vaut pour l'instantané de début de tour et la
+       pile d'annulation : les refaire au milieu du tour reviendrait à dire
+       que rien n'a été posé. */
+    if (!monTourIntact) {
+      game.beginTurn();
+      turnStack = [];
+      piochee = null;
+    }
     busy = false;
     surveillerAbsent();
 
