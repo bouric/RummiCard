@@ -1,0 +1,6 @@
+{
+  "name": "rummicard-serveur",
+  "private": true,
+  "type": "module",
+  "description": "Le serveur de partie. Le type module ne vaut que pour ce dossier : les fichiers du jeu, dans Resources/web, restent des scripts ordinaires et ne sont pas touches."
+}

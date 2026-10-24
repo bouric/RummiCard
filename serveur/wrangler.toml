@@ -1,0 +1,25 @@
+# RummiCard — configuration du serveur de parties
+#
+# Déploiement :   npx wrangler deploy        (depuis ce dossier)
+# En local    :   npx wrangler dev
+#
+# Rien de tout cela n'est nécessaire pour éprouver le jeu : salon.js et
+# validation.js s'exécutent dans node, sans compte et sans réseau, par
+#     node serveur/essais.js
+
+name = "rummicard"
+main = "partie.js"
+compatibility_date = "2026-10-24"
+
+# Un Durable Object par partie. Son nom est le code du salon : même code,
+# même objet, où que soient les joueurs.
+[[durable_objects.bindings]]
+name = "PARTIE"
+class_name = "Partie"
+
+# « new_sqlite_classes » et non « new_classes » : la formule gratuite de
+# Cloudflare ne permet que les objets adossés à SQLite. Sans conséquence
+# pour ce jeu, qui n'y range qu'une partie à la fois.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Partie"]
