@@ -1943,13 +1943,18 @@
     tone(1318, .50, 'sine', .030, .33);
   }
 
-  /* « À vous. » Deux notes qui montent, en cloche douce : c'est un
-     appel, pas une alarme — il peut sonner trente fois dans une partie.
-     Distinct de tout le reste : rien d'autre ici ne monte d'une quarte en
-     sinus. */
+  /* « À vous. » Le seul son du jeu qui doive porter : tous les autres
+     accompagnent un geste qu'on est en train de faire, celui-ci appelle
+     quelqu'un qui regarde ailleurs. Il est donc nettement plus fort que le
+     reste, et en triangle plutôt qu'en sinus — à volume égal, un sinus
+     n'a presque pas d'harmoniques et s'efface dans une pièce.
+     Trois notes qui montent, mi-la-do dièse : un accord majeur, reconnu
+     avant d'être écouté, et la dernière tenue une demi-seconde pour laisser
+     le temps de lever les yeux. */
   function sndAToi() {
-    tone(660, .16, 'sine', .055);
-    tone(880, .34, 'sine', .050, .13);
+    tone(659, .16, 'triangle', .15);
+    tone(880, .18, 'triangle', .15, .13);
+    tone(1109, .55, 'triangle', .16, .27);
   }
 
   /* Une descente mineure — la, fa, ré — qui se pose sur sa fondamentale,
