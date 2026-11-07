@@ -1914,7 +1914,27 @@
     });
   }
 
-  function sndWin() { [523, 659, 784, 1046].forEach(function (f, i) { tone(f, .22, 'triangle', .07, i * .11); }); }
+  /* La fin de partie a deux visages, et le même air pour les deux sonnait
+     faux : on fêtait vos défaites avec la même fanfare que vos victoires.
+     Désormais une montée majeure quand vous l'emportez, une descente
+     mineure sinon — de quoi savoir, sans lever les yeux, de quel côté la
+     partie est tombée. */
+
+  /* Do majeur qui monte, puis la tonique tenue avec sa tierce : c'est
+     l'accord à la fin qui fait la joie, pas la vitesse de la montée. */
+  function sndWin() {
+    [523, 659, 784].forEach(function (f, i) { tone(f, .18, 'triangle', .07, i * .10); });
+    tone(1046, .55, 'triangle', .08, .30);
+    tone(1318, .50, 'sine', .030, .33);
+  }
+
+  /* Une descente mineure — la, fa, ré — qui se pose sur sa fondamentale,
+     en sinus doux et sans hâte. De la déception, pas une moquerie : on perd
+     souvent, et il faut pouvoir l'entendre dix fois sans grincer. */
+  function sndLose() {
+    [440, 349, 294].forEach(function (f, i) { tone(f, .30, 'sine', .055, i * .20); });
+    tone(147, .90, 'sine', .050, .62);
+  }
 
   /* ================= Bulles / toasts ============================== */
 
@@ -3417,10 +3437,14 @@
   }
 
   function gameOver() {
-    sndWin();
     var w = game.winner;
     var m = match || { total: 1, manche: 1, scores: game.players.map(function () { return 0; }) };
     var r = roundScores();
+    /* C'est le gagnant du décompte qui décide de l'air, et non game.winner :
+       une partie close par la pioche vide n'a pas de vainqueur déclaré, et
+       c'est alors la plus petite main qui l'emporte. En réseau, « vous »
+       n'est pas le joueur zéro mais votre siège — game.human() le sait. */
+    if (r.gagnant === game.human().index) sndWin(); else sndLose();
     for (var s = 0; s < r.pts.length; s++) m.scores[s] += r.pts[s];
     var plusieurs = m.total > 1;
     var derniere = m.manche >= m.total;
