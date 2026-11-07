@@ -974,3 +974,13 @@ header .brand span { color: var(--gold); }
   margin: 6px 0 16px;
   line-height: 1.35;
 }
+
+/* En réseau, votre main s'allume quand c'est à vous. Un anneau porté par
+   l'ombre et non par la bordure : celle-ci sert déjà au survol d'un
+   glisser-déposer, et les deux signaux doivent pouvoir coexister. */
+#rackwrap.atoi {
+  box-shadow: 0 0 0 2px var(--gold), 0 0 22px -6px var(--gold);
+}
+/* Le libellé « Votre main » se dore avec elle : sur un téléphone, l'anneau
+   est au bord de l'écran et passe inaperçu, pas le mot. */
+#rackwrap.atoi .racklabel { color: var(--gold); }

@@ -1594,6 +1594,12 @@
        rangée au lieu de la voir se réorganiser à chaque geste. */
     $('#undo').classList.toggle('hidden', !peutAnnuler && !reseau);
     $('#rewind').classList.toggle('hidden', peutAnnuler || !!reseau);
+    /* Votre main s'allume quand c'est à vous. En solo ce serait un collier
+       de lumière permanent, donc muet : c'est presque toujours votre tour.
+       En réseau celui d'un autre peut durer dix minutes, et l'on doit le
+       savoir d'un regard, sans chercher quelle pastille est dorée. */
+    var wrap = $('#rackwrap');
+    if (wrap) wrap.classList.toggle('atoi', cestMonTour());
     $('#commit').disabled = !human || !check.ok;
     $('#undo').disabled = !peutAnnuler;
     $('#draw').disabled = !human;
@@ -1647,7 +1653,16 @@
     /* Pendant le tour des autres, la barre se tait : la pastille doree du
        joueur en cours et les points de suspension apres son nom disent deja
        qui joue, et le tapis s'assombrit derriere ce qu'il vient de poser. */
-    if (!human) return { cls: '', html: '' };
+    if (!human) {
+      /* En solo la barre se tait : le tour des virtuels dure une seconde.
+         En réseau il peut durer dix minutes, et un silence de dix minutes
+         ne se distingue pas d'une panne. Elle dit donc qui l'on attend. */
+      if (reseau && game && !game.finished && game.current !== reseau.siege) {
+        return { cls: '', html: TR('bar.auTourDe',
+          { nom: echapper(game.players[game.current].name) }) };
+      }
+      return { cls: '', html: '' };
+    }
     /* Le mode loupe passe avant tout le reste : c'est une reponse a une
        question qu'on vient de poser. */
     /* Rien en bulle pendant le geste : on balaie sa main, les cartes
@@ -1926,6 +1941,15 @@
     [523, 659, 784].forEach(function (f, i) { tone(f, .18, 'triangle', .07, i * .10); });
     tone(1046, .55, 'triangle', .08, .30);
     tone(1318, .50, 'sine', .030, .33);
+  }
+
+  /* « À vous. » Deux notes qui montent, en cloche douce : c'est un
+     appel, pas une alarme — il peut sonner trente fois dans une partie.
+     Distinct de tout le reste : rien d'autre ici ne monte d'une quarte en
+     sinus. */
+  function sndAToi() {
+    tone(660, .16, 'sine', .055);
+    tone(880, .34, 'sine', .050, .13);
   }
 
   /* Une descente mineure — la, fa, ré — qui se pose sur sa fondamentale,
@@ -2837,6 +2861,14 @@
 
   function enReseau() { return !!reseau; }
 
+  /* Le tour vous appartient-il ? Distinct d'isHumanTurn(), qui exige en
+     plus que rien ne soit en vol : pendant le court instant où l'on attend
+     la réponse du serveur, le tour reste le vôtre, et les signaux qui le
+     disent ne doivent pas clignoter. */
+  function cestMonTour() {
+    return !!reseau && !!game && !game.finished && game.current === reseau.siege;
+  }
+
   /* Une carte d'après son identifiant. On garde celles déjà fabriquées :
      une carte doit rester le même objet d'un état à l'autre, sans quoi les
      animations la croient nouvelle et la font surgir au lieu de glisser. */
@@ -3009,6 +3041,25 @@
       }
     }
     game.deck = cartesInconnues(etat.pioche, 'p-');
+    /* Le passage de main, et lui seul : un état qui arrive pendant votre
+       tour — la demande de présence, toutes les dix secondes — ne doit pas
+       resonner une seconde fois. */
+    var etaitAMoi = reseau.dernierCourant === etat.vous;
+    var devientAMoi = etat.courant === etat.vous && !etaitAMoi && !etat.fini;
+    if (etaitAMoi && !devientAMoi) reseau.finDeMonTour = Date.now();
+    reseau.dernierCourant = etat.courant;
+
+    /* Le carillon ne sonne que si l'on a vraiment attendu. Contre des
+       adversaires rapides — des virtuels, surtout — le tour revient en deux
+       secondes, et un appel toutes les deux secondes n'appelle plus
+       personne : il agace. Au-delà du seuil, en revanche, on a pu poser son
+       téléphone, et c'est là qu'il sert. Le premier tour sonne aussi : il
+       n'y a pas d'attente avant lui, mais il ouvre la partie. */
+    if (devientAMoi && reseau.finDeMonTour &&
+        Date.now() - reseau.finDeMonTour < ATTENTE_CARILLON) {
+      devientAMoi = false;
+    }
+
     game.current = etat.courant;
     game.turnCount = etat.tour || 0;
     game.passStreak = 0;
@@ -3033,6 +3084,8 @@
     }
     busy = false;
     surveillerAbsent();
+    if (devientAMoi) sndAToi();
+    marquerLeTitre();
 
     if (etat.fini) {
       /* La partie est jouée : les mains peuvent enfin être dites, et il le
@@ -3060,6 +3113,8 @@
      Redemander plutôt que compter nous-mêmes : l'horloge qui décide doit
      être celle du serveur, pas celle du plus impatient. */
   var RELANCE_MS = 10000;
+  /* En deçà, on n'a pas eu le temps de regarder ailleurs. */
+  var ATTENTE_CARILLON = 6000;
   var relanceTimer = null;
   var absenceDite = -1;
 
@@ -3086,6 +3141,16 @@
     relanceTimer = setInterval(function () {
       RESEAU.envoyer({ t: 'relancer' });
     }, RELANCE_MS);
+  }
+
+  /* Le titre de la fenêtre porte une pastille quand c'est à vous. Posé
+     dans le Dock ou dans un onglet d'arrière-plan, le jeu n'a que son nom
+     pour se signaler — autant qu'il dise quelque chose. */
+  var TITRE = document.title;
+  function marquerLeTitre() {
+    try {
+      document.title = (cestMonTour() ? '\u25cf ' : '') + TITRE;
+    } catch (e) { /* sans conséquence */ }
   }
 
   /** Notre tour, tel qu'on le propose au serveur. */
@@ -3202,6 +3267,7 @@
     absenceDite = -1;
     RESEAU.fermer();
     reseau = null;                // le souvenir du salon s'en va avec lui
+    marquerLeTitre();
     cartesConnues = {};
     attendreServeur(false);
   }
