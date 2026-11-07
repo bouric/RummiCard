@@ -2491,7 +2491,14 @@
        « Refaire » efface un tour entier, le sien et les reponses des
        virtuels, et rien a l'ecran ne le laisse deviner avant que ce soit
        fait. Le rejeu d'un journal, lui, ne doit rien demander a personne. */
-    if (!rejeuEnCours && !window.confirm(TR('toast.refaire'))) return;
+    if (!rejeuEnCours) {
+      demander(TR('toast.refaire'), TR('btn.refaire'), TR('btn.garder'), faireRewind);
+      return;
+    }
+    faireRewind();
+  }
+
+  function faireRewind() {
     jrn('refaire');
     eteindreMagicien(true);
     history.pop();
@@ -3168,21 +3175,25 @@
   }
 
   /** S'en aller pour de bon, en prévenant ceux qui restent. */
-  function quitterPartie() {
+  function quitterPartie(apres) {
     /* Partir au milieu d'une partie l'arrête pour tout le monde : cela ne
        doit pas tenir à un bouton effleuré. Avant qu'elle ne commence, il
        n'y a rien à arrêter et rien à demander. */
-    if (reseau && game && !game.finished && !window.confirm(TR('res.confirmerQuitter'))) {
-      return false;
+    function partir() {
+      if (reseau) RESEAU.envoyer({ t: 'partir' });
+      game = null;
+      quitterReseau();
+      $('#overlay').classList.add('hidden');
+      $('#game').classList.add('hidden');
+      $('#menu').classList.remove('hidden');
+      buildMenu();
+      if (apres) apres();
     }
-    if (reseau) RESEAU.envoyer({ t: 'partir' });
-    game = null;
-    quitterReseau();
-    $('#overlay').classList.add('hidden');
-    $('#game').classList.add('hidden');
-    $('#menu').classList.remove('hidden');
-    buildMenu();
-    return true;
+    if (reseau && game && !game.finished) {
+      demander(TR('res.confirmerQuitter'), TR('btn.quitter'), TR('btn.rester'), partir);
+      return;
+    }
+    partir();
   }
 
   function quitterReseau() {
@@ -3221,6 +3232,26 @@
       TR('btn.fermer') + '</button></div></div>';
     ov.classList.remove('hidden');
     $('#msgFermer').onclick = function () { ov.classList.add('hidden'); };
+  }
+
+  /* window.confirm n'offre que « OK » et « Annuler ». Sur « Abandonner la
+     partie en cours ? », les deux veulent dire la même chose à une lettre
+     près : on ne sait pas lequel abandonne. Et ses libellés ne se changent
+     pas — ni dans le navigateur, ni dans l'app, où ils viennent du Swift et
+     valent pour toutes les questions à la fois.
+     On pose donc nos propres boutons, qui portent le verbe de ce qu'ils
+     font. Le choix sûr est le bouton plein : une question qu'on lit de
+     travers ne doit pas détruire une partie. */
+  function demander(texte, labelOui, labelNon, siOui) {
+    var ov = $('#overlay');
+    ov.innerHTML = '<div class="panel"><p class="question">' + echapper(texte) + '</p>' +
+      '<div class="row">' +
+      '<button class="btn" id="qOui" style="flex:1">' + echapper(labelOui) + '</button>' +
+      '<button class="cta" id="qNon" style="flex:1">' + echapper(labelNon) + '</button>' +
+      '</div></div>';
+    ov.classList.remove('hidden');
+    $('#qNon').onclick = function () { ov.classList.add('hidden'); };
+    $('#qOui').onclick = function () { ov.classList.add('hidden'); siOui(); };
   }
 
   /* ---- Le panneau des amis ------------------------------------------ */
@@ -3336,7 +3367,7 @@
     }
     if ($('#amisQuitter')) {
       $('#amisQuitter').onclick = function () {
-        if (quitterPartie()) montrerAmis(null);   // on repart sur le formulaire
+        quitterPartie(function () { montrerAmis(null); });   // puis le formulaire
       };
     }
     $('#amisFermer').onclick = function () {
@@ -4036,8 +4067,10 @@
   $('#sort').onclick = doSort;
   $('#rewind').onclick = doRewind;
   $('#hints').onclick = toggleHints;
-  function confirmQuit() {
-    return window.confirm(TR('toast.abandon'));
+  function rentrerAuMenu() {
+    $('#overlay').classList.add('hidden');
+    $('#game').classList.add('hidden');
+    $('#menu').classList.remove('hidden');
   }
 
   $('#restart').onclick = function () {
@@ -4045,10 +4078,11 @@
        la partie des autres. La croix passe donc par le même chemin que le
        bouton du panneau, avec sa propre question. */
     if (reseau) { quitterPartie(); return; }
-    if (game && !game.finished && !confirmQuit()) return;
-    $('#overlay').classList.add('hidden');
-    $('#game').classList.add('hidden');
-    $('#menu').classList.remove('hidden');
+    if (game && !game.finished) {
+      demander(TR('toast.abandon'), TR('btn.abandonner'), TR('btn.rester'), rentrerAuMenu);
+      return;
+    }
+    rentrerAuMenu();
   };
   /* Deux portes vers le panneau de la partie, selon la place disponible :
      la pastille de l'en-tête sur un écran large, le bandeau compact sur un
@@ -4238,10 +4272,14 @@
     prefs: function () { return prefs; },
     rewind: doRewind,
     showMenu: function () {
-      if (game && !game.finished && !confirmQuit()) return;
-      $('#overlay').classList.add('hidden');
-      $('#game').classList.add('hidden');
-      $('#menu').classList.remove('hidden');
+      /* Le point d'accès des essais passe par le même chemin que la croix,
+         question comprise : ce qu'on éprouve doit être ce qu'on livre. */
+      if (reseau) { quitterPartie(); return; }
+      if (game && !game.finished) {
+        demander(TR('toast.abandon'), TR('btn.abandonner'), TR('btn.rester'), rentrerAuMenu);
+        return;
+      }
+      rentrerAuMenu();
     }
   };
 })();

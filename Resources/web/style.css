@@ -964,3 +964,13 @@ header .brand span { color: var(--gold); }
 }
 /* En réseau, toute la rangée ouvre le panneau de la partie. */
 #oppmini.ouvrable { cursor: pointer; }
+
+/* La question d'une boîte de confirmation : c'est elle qu'on lit, elle
+   porte donc le poids d'un titre sans en être un. */
+.panel .question {
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  margin: 6px 0 16px;
+  line-height: 1.35;
+}
