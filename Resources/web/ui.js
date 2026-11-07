@@ -22,7 +22,7 @@
        keepPlaces : garder les combinaisons à leur place sur la table */
   var prefs = { langue: null, debug: false,
                 tri: 'suit', keepPlaces: true, hints: false, autoArrange: false, felt: 0,
-                niveau: 'normal', manches: 3, sensSuites: 'asc',
+                niveau: 'normal', manches: 3, sensSuites: 'asc', volume: 'normal',
                 parties: 0, sansRappel: false, magicienVu: false,
                 lastDeal: null, saved: null };
 
@@ -1852,6 +1852,16 @@
     } catch (e) { /* audio indisponible */ }
   }
 
+  /* Trois niveaux plutôt qu'un curseur : on règle le son une fois, pas en
+     jouant, et trois rangées se lisent et se touchent mieux qu'une glissière
+     — surtout sur un téléphone. « Normal » est ce que le jeu faisait jusqu'ici,
+     de sorte que ne rien changer ne change rien. */
+  var VOLUMES = { doux: 0.5, normal: 1, fort: 2 };
+  function facteurVolume() {
+    var f = VOLUMES[prefs.volume];
+    return typeof f === 'number' ? f : 1;
+  }
+
   function tone(freq, dur, type, vol, delay) {
     auReveil(function (actx) {
       var t0 = actx.currentTime + (delay || 0);
@@ -1859,7 +1869,7 @@
       o.type = type || 'triangle';
       o.frequency.setValueAtTime(freq, t0);
       g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(vol || .06, t0 + .008);
+      g.gain.linearRampToValueAtTime((vol || .06) * facteurVolume(), t0 + .008);
       g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
       o.connect(g); g.connect(actx.destination);
       o.start(t0); o.stop(t0 + dur + .02);
@@ -1912,9 +1922,10 @@
       nasal.gain.value = 7;
 
       var g = actx.createGain();
+      var vh = 0.075 * facteurVolume();
       g.gain.setValueAtTime(0, t0);
-      g.gain.linearRampToValueAtTime(0.075, t0 + 0.08);
-      g.gain.setValueAtTime(0.075, t0 + dur * 0.62);
+      g.gain.linearRampToValueAtTime(vh, t0 + 0.08);
+      g.gain.setValueAtTime(vh, t0 + dur * 0.62);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
 
       osc.connect(filt);
@@ -3682,6 +3693,10 @@
       '<h3>' + TR('opt.sens') + '</h3>' +
       optionRow('sensSuites', 'asc', prefs.sensSuites === 'asc', TR('opt.asc'), TR('opt.asc.d')) +
       optionRow('sensSuites', 'desc', prefs.sensSuites === 'desc', TR('opt.desc'), TR('opt.desc.d')) +
+      '<h3>' + TR('opt.volume') + '</h3>' +
+      optionRow('volume', 'doux', prefs.volume === 'doux', TR('opt.vol.doux'), TR('opt.vol.doux.d')) +
+      optionRow('volume', 'normal', prefs.volume === 'normal', TR('opt.vol.normal'), TR('opt.vol.normal.d')) +
+      optionRow('volume', 'fort', prefs.volume === 'fort', TR('opt.vol.fort'), TR('opt.vol.fort.d')) +
       '<h3>' + TR('opt.tapis') + '</h3>' + feltRow() +
       '<h3>' + TR('opt.table') + '</h3>' +
       optionRow('keepPlaces', '1', prefs.keepPlaces, TR('opt.rangee'), TR('opt.rangee.d')) +
@@ -3726,6 +3741,13 @@
           prefs.tri = value;
           E.options.sort = value;
           if (game) { game.sortHand(game.human(), value); render(); }
+        } else if (name === 'volume') {
+          prefs.volume = value;
+          /* On l'entend en le choisissant : régler un volume à l'aveugle
+             demanderait de fermer le panneau, de jouer, puis de revenir.
+             C'est le carillon qu'on fait sonner, puisque c'est lui qu'on
+             vient régler. */
+          sndAToi();
         } else if (name === 'sensSuites') {
           prefs.sensSuites = value;
         } else if (name === 'manches') {
